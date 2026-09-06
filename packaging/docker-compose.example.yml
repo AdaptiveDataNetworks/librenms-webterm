@@ -1,0 +1,48 @@
+# Add this service alongside your existing LibreNMS compose stack.
+#
+# The gateway is a separate container by necessity: the official LibreNMS image
+# runs nginx, php-fpm and snmpd under one supervisor, and a Composer package
+# cannot add a daemon to it.
+services:
+  webterm-gateway:
+    image: ghcr.io/adn/librenms-webterm-gw:1.0.0
+    restart: unless-stopped
+
+    # No published ports. The control plane has no transport security, so it is
+    # reached only over the compose network, and the browser reaches /ws
+    # through the LibreNMS reverse proxy.
+    expose:
+      - "8377"
+
+    environment:
+      # 0.0.0.0 inside a container with no published ports is reachable only on
+      # the compose network -- which is why the loopback guard is waived here
+      # and nowhere else.
+      WEBTERM_LISTEN: "0.0.0.0:8377"
+      WEBTERM_METRICS_LISTEN: "127.0.0.1:8378"
+      WEBTERM_INSECURE_CONTROL_PLANE: "true"
+      WEBTERM_SECRET_FILE: /run/secrets/webterm_gateway_secret
+      WEBTERM_ALLOWED_ORIGINS: https://librenms.example.com
+      WEBTERM_LOG_LEVEL: info
+
+    secrets:
+      - webterm_gateway_secret
+
+    networks:
+      - librenms
+
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    cap_drop:
+      - ALL
+
+secrets:
+  webterm_gateway_secret:
+    # Generate with: librenms-webterm-gw init --path ./webterm_gateway_secret
+    # LibreNMS must be able to read the same value.
+    file: ./webterm_gateway_secret
+
+networks:
+  librenms:
+    external: true

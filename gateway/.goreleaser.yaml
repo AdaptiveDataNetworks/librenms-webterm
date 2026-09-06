@@ -1,0 +1,113 @@
+version: 2
+
+project_name: librenms-webterm-gw
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: gateway
+    main: ./cmd/librenms-webterm-gw
+    binary: librenms-webterm-gw
+    # Static: the binary must run on a minimal container and on distributions
+    # whose glibc is older than the build host's.
+    env:
+      - CGO_ENABLED=0
+    goos: [linux]
+    # Only what we actually test. Promising darwin or armv7 without a CI job
+    # exercising them means shipping a platform we cannot support.
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    files:
+      - LICENSE
+      - README.md
+      - packaging/systemd/librenms-webterm-gw.service
+      - packaging/install.sh
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+# The source tarball must contain the Go sources: GPL-3.0-or-later, and a
+# release without them is not a compliant distribution.
+source:
+  enabled: true
+
+nfpms:
+  - id: packages
+    package_name: librenms-webterm-gw
+    vendor: adn
+    homepage: https://github.com/adn/librenms-webterm
+    maintainer: Lee Clements <lee.clements@adaptivedatanetworks.com>
+    description: |
+      SSH gateway for the LibreNMS WebTerm plugin.
+      Terminates browser WebSockets and dials monitored devices.
+    license: GPL-3.0-or-later
+    formats: [deb, rpm]
+    bindir: /usr/bin
+    contents:
+      - src: packaging/systemd/librenms-webterm-gw.service
+        dst: /lib/systemd/system/librenms-webterm-gw.service
+      - src: packaging/systemd/librenms-webterm-gw.env.example
+        dst: /etc/librenms-webterm/gateway.env
+        type: config|noreplace
+      - dst: /etc/librenms-webterm
+        type: dir
+        file_info:
+          mode: 0750
+    scripts:
+      preinstall: packaging/scripts/preinstall.sh
+      postinstall: packaging/scripts/postinstall.sh
+      preremove: packaging/scripts/preremove.sh
+
+dockers:
+  - image_templates:
+      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-amd64
+    dockerfile: packaging/Dockerfile
+    use: buildx
+    goarch: amd64
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.source=https://github.com/adn/librenms-webterm
+      - --label=org.opencontainers.image.licenses=GPL-3.0-or-later
+  - image_templates:
+      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-arm64
+    dockerfile: packaging/Dockerfile
+    use: buildx
+    goarch: arm64
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.source=https://github.com/adn/librenms-webterm
+      - --label=org.opencontainers.image.licenses=GPL-3.0-or-later
+
+docker_manifests:
+  - name_template: ghcr.io/adn/librenms-webterm-gw:{{ .Version }}
+    image_templates:
+      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-amd64
+      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-arm64
+
+release:
+  prerelease: auto
+  footer: |
+    ## Verifying this release
+
+    Every artifact is covered by build provenance attestation:
+
+        gh attestation verify librenms-webterm-gw_..._linux_amd64.tar.gz --repo adn/librenms-webterm
+
+    The plugin half is installed separately, through LibreNMS:
+
+        ./lnms plugin:add adn/librenms-webterm
+
+    Plugin and gateway version independently and support one protocol version
+    of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.

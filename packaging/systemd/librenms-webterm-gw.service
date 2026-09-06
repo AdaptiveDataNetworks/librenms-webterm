@@ -1,0 +1,55 @@
+[Unit]
+Description=LibreNMS WebTerm SSH gateway
+Documentation=https://adn.github.io/librenms-webterm/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=librenms-webterm
+Group=librenms-webterm
+EnvironmentFile=/etc/librenms-webterm/gateway.env
+ExecStart=/usr/bin/librenms-webterm-gw serve
+Restart=on-failure
+RestartSec=5s
+
+# A terminal gateway is a high-value target: it holds live SSH sessions and, for
+# a few milliseconds at a time, credentials. The sandbox below is not
+# decoration.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete
+
+# Only the two address families it needs. Notably absent: AF_NETLINK, and
+# anything that would let it talk to a local unix socket it has no business
+# reaching.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# It reads one secret and writes nothing.
+ReadOnlyPaths=/etc/librenms-webterm
+CapabilityBoundingSet=
+
+LimitNOFILE=8192
+# Bounded so that a runaway session cannot take the host down with it.
+MemoryMax=512M
+TasksMax=512
+
+[Install]
+WantedBy=multi-user.target

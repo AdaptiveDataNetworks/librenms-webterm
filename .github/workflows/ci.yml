@@ -119,3 +119,52 @@ jobs:
             echo "::error::Cross-implementation tests skipped; they must run here."
             exit 1
           fi
+
+  packaging:
+    name: Packaging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # A malformed unit fails at `systemctl start`, on the user's machine,
+      # after they have already installed it.
+      - name: Verify the systemd unit
+        run: |
+          systemd-analyze verify packaging/systemd/librenms-webterm-gw.service 2>&1 | tee /tmp/unit.log
+
+          # systemd-analyze exits 0 even on warnings, so the output is what
+          # matters. The one expected complaint is that ExecStart does not
+          # exist -- the binary is not installed on a CI runner -- so that line
+          # is filtered and anything else is a real problem.
+          grep -v 'is not executable: No such file or directory' /tmp/unit.log > /tmp/unit-real.log || true
+
+          if [ -s /tmp/unit-real.log ]; then
+            echo "::error::systemd-analyze reported problems with the unit"
+            cat /tmp/unit-real.log
+            exit 1
+          fi
+
+      - name: Shell scripts must parse
+        run: |
+          for f in packaging/install.sh packaging/scripts/*.sh; do
+            sh -n "$f" || exit 1
+          done
+
+      - name: install.sh refuses to run without a pinned version
+        run: |
+          if sh packaging/install.sh --dry-run 2>/dev/null; then
+            echo "::error::install.sh should require --version"
+            exit 1
+          fi
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache-dependency-path: gateway/go.sum
+
+      - name: GoReleaser config must be valid
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: '~> v2'
+          args: check
+          workdir: gateway
