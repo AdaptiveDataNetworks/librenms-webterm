@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm\Librenms;
 
+use Adn\WebTerm\Authorization\Contracts\TwoFactorSource;
 use Adn\WebTerm\Support\Guard;
 use App\Facades\LibrenmsConfig;
 use App\Models\UserPref;
@@ -24,7 +25,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
  *
  * There is a regression test asserting the session flag is never consulted.
  */
-final class TwoFactorReader implements CoreDependency
+final class TwoFactorReader implements CoreDependency, TwoFactorSource
 {
     public static function coreSymbols(): array
     {
