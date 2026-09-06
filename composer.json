@@ -1,7 +1,14 @@
 {
     "name": "adn/librenms-webterm",
     "description": "In-browser SSH terminal for LibreNMS devices, with HashiCorp Vault or encrypted database credential backends.",
-    "keywords": ["librenms", "librenms-plugin", "ssh", "terminal", "webssh", "vault"],
+    "keywords": [
+        "librenms",
+        "librenms-plugin",
+        "ssh",
+        "terminal",
+        "webssh",
+        "vault"
+    ],
     "homepage": "https://github.com/adn/librenms-webterm",
     "type": "library",
     "license": "GPL-3.0-or-later",
@@ -58,7 +65,11 @@
         }
     },
     "scripts": {
-        "test": ["@test:lint", "@test:types", "@test:unit"],
+        "test": [
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
+        ],
         "test:lint": "pint --test",
         "test:types": "phpstan analyse --ansi",
         "test:unit": "pest --colors=always",

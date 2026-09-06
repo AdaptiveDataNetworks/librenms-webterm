@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm\Librenms;
 
+use Adn\WebTerm\Authorization\Contracts\RoleSource;
 use Adn\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 
@@ -18,7 +19,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
  * true for every ability for any admin, which would silently defeat a
  * gate-based design.
  */
-final class RoleReader implements CoreDependency
+final class RoleReader implements CoreDependency, RoleSource
 {
     public static function coreSymbols(): array
     {

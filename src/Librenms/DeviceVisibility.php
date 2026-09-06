@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm\Librenms;
 
+use Adn\WebTerm\Authorization\Contracts\VisibilityCheck;
 use Adn\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Gate;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Gate;
  * property test asserts the invariant in the safe direction: anything admit()
  * allows, this must also allow.
  */
-final class DeviceVisibility implements CoreDependency
+final class DeviceVisibility implements CoreDependency, VisibilityCheck
 {
     public static function coreSymbols(): array
     {

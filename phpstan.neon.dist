@@ -1,3 +1,6 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
 parameters:
     level: 5
     paths:
@@ -6,17 +9,16 @@ parameters:
     excludePaths:
         analyse:
             # Generated from protocol/protocol.json; the protocol-drift CI job
-            # is what guards this file, not static analysis.
+            # guards this file, not static analysis.
             - src/Protocol.php
     ignoreErrors:
         # LibreNMS core classes are absent when analysing standalone. Hooks name
-        # App\Models\Device only in docblocks. The Librenms\ adapter layer added
-        # in Phase 2 will need its own entry here.
+        # App\Models\Device only in docblocks; src/Librenms is the only place
+        # allowed to reference core, and tests/Contract asserts those symbols
+        # still exist against a real checkout.
         -
             identifier: class.notFound
             path: src/Hooks/*
-        # Contract tests name core symbols on purpose -- asserting they exist
-        # is the whole job. They skip when LibreNMS is absent.
         -
             identifier: class.notFound
             path: tests/Contract/*
