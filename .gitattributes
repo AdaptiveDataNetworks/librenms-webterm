@@ -1,0 +1,20 @@
+* text=auto eol=lf
+
+# Keep the Composer dist small. NOTE: /gateway is deliberately NOT export-ignored --
+# the Go source must ship in the source tarball for GPL compliance and for
+# `go install`-style consumption from a release tarball.
+/docs               export-ignore
+/tests              export-ignore
+/tools              export-ignore
+/.github            export-ignore
+/.editorconfig      export-ignore
+/.gitattributes     export-ignore
+/.gitignore         export-ignore
+/mkdocs.yml         export-ignore
+/phpstan.neon.dist  export-ignore
+/phpunit.xml        export-ignore
+/pint.json          export-ignore
+/rector.php         export-ignore
+
+*.go     linguist-language=Go
+*.blade.php linguist-language=Blade

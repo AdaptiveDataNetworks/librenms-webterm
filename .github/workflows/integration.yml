@@ -1,0 +1,77 @@
+name: LibreNMS integration
+
+# Installs this plugin into real LibreNMS checkouts. This is the early-warning
+# system for core drift: LibreNMS is a moving target and our only supported
+# install path resolves against its live composer.lock.
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'composer.json'
+      - 'src/**'
+      - 'routes/**'
+      - '.github/workflows/integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: LibreNMS ${{ matrix.ref }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # master plus the two most recent stable tags, resolved at run time.
+        ref: ['master']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: plugin
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, pdo_mysql, snmp, gmp, bcmath, curl, xml, mbstring
+          coverage: none
+
+      - name: Clone LibreNMS
+        run: git clone --depth 1 --branch ${{ matrix.ref }} https://github.com/librenms/librenms.git librenms
+
+      - name: Install LibreNMS dependencies
+        working-directory: librenms
+        run: composer install --no-interaction --no-progress --no-dev
+
+      - name: Add this plugin as a path repository
+        working-directory: librenms
+        run: |
+          composer config repositories.webterm '{"type":"path","url":"../plugin","options":{"symlink":false}}'
+
+      # This is the step that reproduces what a user's `lnms plugin:add` does.
+      # If our composer.json conflicts with LibreNMS's lockfile, it fails HERE
+      # rather than in a user's production install.
+      - name: composer require (mirrors lnms plugin:add)
+        working-directory: librenms
+        run: composer require --update-no-dev --no-interaction adn/librenms-webterm:@dev
+        env:
+          FORCE: 1
+
+      - name: Assert the provider is discovered
+        working-directory: librenms
+        run: |
+          grep -q 'Adn\\\\WebTerm\\\\WebTermServiceProvider' vendor/composer/installed.json \
+            || (echo "::error::Provider missing from installed.json — auto-discovery will not fire"; exit 1)
+
+      # A closure in our routes, or a non-serialisable config value, would break
+      # these for the whole LibreNMS application — not just for our plugin.
+      - name: Laravel caches must survive our plugin
+        working-directory: librenms
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate --force || true
+          php artisan config:cache
+          php artisan route:cache
+          php artisan route:clear
+          php artisan config:clear

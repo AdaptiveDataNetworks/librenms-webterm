@@ -1,0 +1,69 @@
+{
+    "name": "adn/librenms-webterm",
+    "description": "In-browser SSH terminal for LibreNMS devices, with HashiCorp Vault or encrypted database credential backends.",
+    "keywords": ["librenms", "librenms-plugin", "ssh", "terminal", "webssh", "vault"],
+    "homepage": "https://github.com/adn/librenms-webterm",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Lee Clements",
+            "email": "lee.clements@adaptivedatanetworks.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/adn/librenms-webterm/issues",
+        "docs": "https://adn.github.io/librenms-webterm/"
+    },
+    "require": {
+        "php": "^8.2",
+        "librenms/plugin-interfaces": "^1.0"
+    },
+    "suggest": {
+        "illuminate/support": "Provided by LibreNMS; required at runtime for the Laravel integration.",
+        "illuminate/contracts": "Provided by LibreNMS; required at runtime for the Laravel integration."
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/framework": "^12.10",
+        "laravel/pint": "^1.30",
+        "orchestra/testbench": "^10.0",
+        "pestphp/pest": "^3.0",
+        "phpstan/phpstan": "^2.0",
+        "rector/rector": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Adn\\WebTerm\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Adn\\WebTerm\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Adn\\WebTerm\\WebTermServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "preferred-install": "dist",
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "test": ["@test:lint", "@test:types", "@test:unit"],
+        "test:lint": "pint --test",
+        "test:types": "phpstan analyse --ansi",
+        "test:unit": "pest --colors=always",
+        "fix": "pint"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

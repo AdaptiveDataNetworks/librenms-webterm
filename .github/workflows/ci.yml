@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  composer-guard:
+    name: Dependency guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - run: composer validate --strict --no-check-lock
+      # The single most important job in this repo. See tools/composer-guard.php
+      # for why: a stray runtime dependency breaks `lnms plugin:add` for every
+      # user and can block their next LibreNMS update.
+      - run: php tools/composer-guard.php
+
+  protocol-drift:
+    name: Protocol codegen is current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      # Needed so the generator can gofmt its Go output.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      - run: php tools/generate-protocol.php
+      - name: Fail if generated files differ from protocol.json
+        run: |
+          if ! git diff --exit-code -- src/Protocol.php gateway/internal/proto/proto.go; then
+            echo "::error::Generated protocol files are stale. Run: php tools/generate-protocol.php"
+            exit 1
+          fi
+
+  php:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - run: vendor/bin/pint --test
+      - run: vendor/bin/phpstan analyse --ansi --no-progress
+      - run: vendor/bin/pest --colors=always
+
+  gateway:
+    name: Gateway (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache-dependency-path: gateway/go.sum
+      # `gofmt -l` exits 0 even when it lists unformatted files, so the exit
+      # code cannot be used directly -- check that its output is empty.
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - run: go vet ./...
+      - run: go build ./...
+      # -race needs cgo, which the runner has. Release builds are CGO_ENABLED=0.
+      - run: go test -race ./...

@@ -1,0 +1,12 @@
+/vendor/
+/node_modules/
+/.phpunit.cache/
+/.phpstan.cache/
+composer.lock
+.phpunit.result.cache
+.DS_Store
+/site/
+/dist/
+/gateway/bin/
+*.secret
+.env

@@ -1,0 +1,17 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests
+    excludePaths:
+        analyse:
+            # Generated from protocol/protocol.json; the protocol-drift CI job
+            # is what guards this file, not static analysis.
+            - src/Protocol.php
+    ignoreErrors:
+        # LibreNMS core classes are absent when analysing standalone. Hooks name
+        # App\Models\Device only in docblocks. The Librenms\ adapter layer added
+        # in Phase 2 will need its own entry here.
+        -
+            identifier: class.notFound
+            path: src/Hooks/*
