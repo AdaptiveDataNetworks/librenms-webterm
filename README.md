@@ -87,9 +87,9 @@ Nothing can open a shell yet — the plugin ships default-deny. The [10-minute q
 | [Quickstart](docs/getting-started/quickstart.md) | Zero to a working terminal on one device |
 | [HashiCorp Vault](docs/vault/index.md) | The enterprise path, end to end |
 | [Security & hardening](docs/security/index.md) | Including "should you enable this?" |
-| [RBAC](docs/security/index.md) | Who may open a shell on what |
-| [Reverse proxy](docs/getting-started/quickstart.md#3-let-the-browser-reach-it) | nginx and Apache recipes |
-| [Troubleshooting](docs/getting-started/quickstart.md#when-it-does-not-work) | Symptom → cause → fix |
+| [RBAC](docs/operate/rbac.md) | Who may open a shell on what |
+| [Reverse proxy](docs/operate/reverse-proxy.md) | nginx and Apache recipes |
+| [Troubleshooting](docs/gateway/troubleshooting.md) | Symptom → cause → fix |
 | [LibreNMS updates](docs/install/librenms-updates.md) | **Read this before your next LibreNMS update** |
 
 ---
@@ -98,7 +98,7 @@ Nothing can open a shell yet — the plugin ships default-deny. The [10-minute q
 
 **v1.0** — SSH. Vault (signed certificates + KV v2) and encrypted-database credential drivers. Per-device and per-group RBAC with deny precedence. TOTP step-up. Host-key pinning. Audit to the LibreNMS eventlog and off-box syslog.
 
-**Deferred, deliberately** — session recording, RDP/VNC via Guacamole, just-in-time access approvals, per-user Vault identity. See [the plan](docs/architecture/index.md) for why each was cut rather than rushed.
+**Deferred, deliberately** — session recording, RDP/VNC via Guacamole, just-in-time access approvals, per-user Vault identity. See the [threat model](docs/security/threat-model.md) and [FAQ](docs/faq.md) for why each was cut rather than rushed.
 
 ---
 

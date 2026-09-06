@@ -60,14 +60,47 @@ nav:
   - Getting started:
       - Quickstart: getting-started/quickstart.md
   - Installation:
+      - Requirements: install/requirements.md
+      - Bare metal: install/bare-metal.md
+      - Docker: install/docker.md
       - LibreNMS updates: install/librenms-updates.md
+      - Upgrading: install/upgrading.md
+      - Uninstalling: install/uninstall.md
+  - The gateway:
+      - Configure: gateway/configure.md
+      - Run: gateway/run.md
+      - Verify: gateway/verify.md
+      - Troubleshooting: gateway/troubleshooting.md
   - Credentials:
-      - HashiCorp Vault: vault/index.md
+      - Overview: credentials/index.md
+      - Database driver: credentials/db-driver.md
+      - Key management: credentials/key-management.md
+  - HashiCorp Vault:
+      - Overview: vault/index.md
+      - Policies and auth: vault/policies.md
+      - SSH certificates: vault/ssh-engine.md
+      - KV v2: vault/kv-v2.md
+      - Worked example: vault/worked-example.md
+      - Troubleshooting: vault/troubleshooting.md
+      - Reference: vault/reference.md
+  - Operating:
+      - Who may open a shell: operate/rbac.md
+      - Reverse proxy: operate/reverse-proxy.md
+      - Audit: operate/audit.md
   - Security:
       - Should you enable this?: security/index.md
+      - Threat model: security/threat-model.md
+      - Host keys: security/host-keys.md
+      - Reporting an issue: security/disclosure.md
   - Architecture:
       - How it works: architecture/index.md
+      - Credential flow: architecture/credential-flow.md
   - Reference:
+      - Commands: reference/cli.md
+      - Configuration: reference/configuration.md
       - Compatibility: reference/compatibility.md
+      - FAQ: faq.md
   - Contributing:
+      - Development: contributing/development.md
       - Style guide: contributing/style-guide.md
+      - Releasing: contributing/releasing.md
