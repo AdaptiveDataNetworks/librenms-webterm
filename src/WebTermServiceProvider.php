@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm;
 
+use Adn\WebTerm\Console\ReconcileCommand;
 use Adn\WebTerm\Console\RekeyCredentialsCommand;
 use Adn\WebTerm\Credentials\CredentialManager;
 use Adn\WebTerm\Hooks\DeviceOverview;
@@ -41,6 +42,7 @@ final class WebTermServiceProvider extends ServiceProvider
         // misconfigured, and a doctor you cannot run is no use.
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ReconcileCommand::class,
                 RekeyCredentialsCommand::class,
             ]);
         }

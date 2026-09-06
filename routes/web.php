@@ -2,21 +2,28 @@
 
 declare(strict_types=1);
 
+use Adn\WebTerm\Http\Controllers\SessionController;
+use Adn\WebTerm\Http\Middleware\EnsureWebTermEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
-| All routes sit behind LibreNMS's own 'web' and 'auth' middleware. The
-| session-mint route additionally carries CSRF, the plugin kill switch, the
-| step-up gate and a rate limit.
+| Loaded only when the plugin is enabled in LibreNMS, so a disabled plugin
+| presents no attack surface at all.
 |
-| These are loaded via loadRoutesFrom() only when the plugin is enabled, so a
-| disabled plugin has no attack surface at all.
+| 'web' brings session and CSRF; 'auth' is LibreNMS's own guard. The throttle
+| bounds how fast an attacker with a valid session can probe device ids or
+| grind step-up codes.
 */
 
-Route::middleware(['web', 'auth'])
+Route::middleware(['web', 'auth', EnsureWebTermEnabled::class])
     ->prefix('plugin/webterm')
     ->name('webterm.')
     ->group(function (): void {
-        // Placeholder. Real endpoints land in Phase 7 (session mint) and
-        // Phase 10 (admin console).
+        Route::post('session', [SessionController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('session.store');
+
+        Route::post('stepup', [SessionController::class, 'stepUp'])
+            ->middleware('throttle:10,1')
+            ->name('stepup');
     });

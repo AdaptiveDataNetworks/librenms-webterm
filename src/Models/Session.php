@@ -6,12 +6,21 @@ namespace Adn\WebTerm\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $session_id
  * @property int $user_id
  * @property int $device_id
  * @property string $state
+ * @property string|null $method
+ * @property string|null $principal
+ * @property string|null $target
+ * @property string|null $gateway_instance_id
+ * @property Carbon|null $started_at
+ * @property Carbon|null $last_seen_at
+ * @property Carbon|null $ended_at
+ * @property string|null $close_reason
  */
 final class Session extends Model
 {

@@ -93,3 +93,29 @@ jobs:
       - run: go build ./...
       # -race needs cgo, which the runner has. Release builds are CGO_ENABLED=0.
       - run: go test -race ./...
+
+      # Two implementations of one specification will drift, and the failure
+      # mode is a total outage neither side's unit tests would catch. So the
+      # PHP client is exercised against the real binary here.
+      - name: Build the gateway for cross-implementation tests
+        run: CGO_ENABLED=0 go build -o "$RUNNER_TEMP/librenms-webterm-gw" ./cmd/librenms-webterm-gw
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: ${{ github.workspace }}
+
+      - name: Cross-implementation tests (PHP signs, Go verifies)
+        working-directory: ${{ github.workspace }}
+        env:
+          WEBTERM_GATEWAY_BIN: ${{ runner.temp }}/librenms-webterm-gw
+        run: |
+          output=$(vendor/bin/pest tests/Feature/GatewayClientTest.php --colors=never)
+          echo "$output"
+          if echo "$output" | grep -q 'skipped'; then
+            echo "::error::Cross-implementation tests skipped; they must run here."
+            exit 1
+          fi
