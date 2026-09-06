@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm\Hooks;
 
+use Adn\WebTerm\Http\DevicePanelPresenter;
 use Adn\WebTerm\Support\Guard;
 use App\Models\Device;
 use Illuminate\Support\Facades\Auth;
@@ -51,13 +52,21 @@ final class DeviceOverview implements DeviceOverviewHook
     public function handle(string $pluginName, array $settings, $device): array
     {
         return Guard::safely(
-            static fn (): array => [
-                $pluginName.'::device-overview',
-                [
-                    'device' => $device,
-                    'pluginName' => $pluginName,
-                ],
-            ],
+            static function () use ($pluginName, $device): array {
+                $panel = (new DevicePanelPresenter)->present(Auth::user(), $device);
+
+                // Nothing to say about this device: render no panel at all
+                // rather than a permanent "not configured" box on every device
+                // in the estate.
+                if ($panel['state'] === 'hidden') {
+                    return [];
+                }
+
+                return [
+                    $pluginName.'::device-overview',
+                    ['device' => $device, 'pluginName' => $pluginName, 'panel' => $panel],
+                ];
+            },
             [],
             'DeviceOverview::handle'
         );

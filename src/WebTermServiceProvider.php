@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm;
 
+use Adn\WebTerm\Console\AbilityCommand;
+use Adn\WebTerm\Console\ConfigCommand;
+use Adn\WebTerm\Console\DoctorCommand;
+use Adn\WebTerm\Console\GrantCommand;
 use Adn\WebTerm\Console\HostKeyResetCommand;
 use Adn\WebTerm\Console\HostKeyScanCommand;
 use Adn\WebTerm\Console\ReconcileCommand;
 use Adn\WebTerm\Console\RekeyCredentialsCommand;
+use Adn\WebTerm\Console\SessionsCommand;
+use Adn\WebTerm\Console\SetCredentialCommand;
+use Adn\WebTerm\Console\TargetCommand;
+use Adn\WebTerm\Console\WhyCommand;
 use Adn\WebTerm\Credentials\CredentialManager;
 use Adn\WebTerm\Hooks\DeviceOverview;
 use Adn\WebTerm\Hooks\Settings;
@@ -44,10 +52,18 @@ final class WebTermServiceProvider extends ServiceProvider
         // misconfigured, and a doctor you cannot run is no use.
         if ($this->app->runningInConsole()) {
             $this->commands([
+                AbilityCommand::class,
+                ConfigCommand::class,
+                DoctorCommand::class,
+                GrantCommand::class,
                 HostKeyResetCommand::class,
                 HostKeyScanCommand::class,
                 ReconcileCommand::class,
                 RekeyCredentialsCommand::class,
+                SessionsCommand::class,
+                SetCredentialCommand::class,
+                TargetCommand::class,
+                WhyCommand::class,
             ]);
         }
     }
