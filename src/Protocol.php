@@ -31,6 +31,8 @@ final class Protocol
     public const EP_HELLO_PATH = '/api/v1/hello';
     public const EP_SESSION_CREATE_METHOD = 'POST';
     public const EP_SESSION_CREATE_PATH = '/api/v1/sessions';
+    public const EP_HOSTKEY_SCAN_METHOD = 'POST';
+    public const EP_HOSTKEY_SCAN_PATH = '/api/v1/hostkey/scan';
     public const EP_SESSION_CREDENTIAL_METHOD = 'POST';
     public const EP_SESSION_CREDENTIAL_PATH = '/api/v1/sessions/{id}/credential';
     public const EP_SESSION_LIST_METHOD = 'GET';

@@ -5,7 +5,6 @@
   "subprotocol": "lnms-webterm.v1",
   "min_supported_version": 1,
   "max_supported_version": 1,
-
   "control_plane": {
     "default_listen": "127.0.0.1:8377",
     "default_metrics_listen": "127.0.0.1:8378",
@@ -23,18 +22,48 @@
       "reject_reason": "X-WebTerm-Reject"
     },
     "endpoints": {
-      "hello":              { "method": "GET",    "path": "/api/v1/hello" },
-      "session_create":     { "method": "POST",   "path": "/api/v1/sessions" },
-      "session_credential": { "method": "POST",   "path": "/api/v1/sessions/{id}/credential" },
-      "session_list":       { "method": "GET",    "path": "/api/v1/sessions" },
-      "session_delete":     { "method": "DELETE", "path": "/api/v1/sessions/{id}" },
-      "session_notice":     { "method": "POST",   "path": "/api/v1/sessions/{id}/notice" },
-      "healthz":            { "method": "GET",    "path": "/healthz" },
-      "readyz":             { "method": "GET",    "path": "/readyz" }
+      "hello": {
+        "method": "GET",
+        "path": "/api/v1/hello"
+      },
+      "session_create": {
+        "method": "POST",
+        "path": "/api/v1/sessions"
+      },
+      "hostkey_scan": {
+        "method": "POST",
+        "path": "/api/v1/hostkey/scan"
+      },
+      "session_credential": {
+        "method": "POST",
+        "path": "/api/v1/sessions/{id}/credential"
+      },
+      "session_list": {
+        "method": "GET",
+        "path": "/api/v1/sessions"
+      },
+      "session_delete": {
+        "method": "DELETE",
+        "path": "/api/v1/sessions/{id}"
+      },
+      "session_notice": {
+        "method": "POST",
+        "path": "/api/v1/sessions/{id}/notice"
+      },
+      "healthz": {
+        "method": "GET",
+        "path": "/healthz"
+      },
+      "readyz": {
+        "method": "GET",
+        "path": "/readyz"
+      }
     },
-    "proxied_paths": ["/ws", "/ui/"]
+    "proxied_paths": [
+      "/ws",
+      "/ui/"
+    ]
   },
-
   "ticket": {
     "bytes": 32,
     "encoding": "base64url_unpadded",
@@ -43,28 +72,77 @@
     "transport": "first_websocket_frame",
     "$comment": "Never a query parameter: query strings are written to nginx access logs and leak via Referer."
   },
-
-  "auth_methods": ["signed_certificate", "password", "private_key"],
-  "key_algorithms": ["ed25519", "ecdsa-p256", "rsa-4096"],
-  "host_key_policies": ["pin", "tofu_first_connect"],
-  "algorithm_profiles": ["modern", "legacy"],
-
+  "auth_methods": [
+    "signed_certificate",
+    "password",
+    "private_key"
+  ],
+  "key_algorithms": [
+    "ed25519",
+    "ecdsa-p256",
+    "rsa-4096"
+  ],
+  "host_key_policies": [
+    "pin",
+    "tofu_first_connect"
+  ],
+  "algorithm_profiles": [
+    "modern",
+    "legacy"
+  ],
   "frames": {
     "client": {
-      "auth":   { "fields": ["ticket", "cols", "rows"] },
-      "data":   { "fields": ["data"] },
-      "resize": { "fields": ["cols", "rows"] },
-      "ping":   { "fields": [] }
+      "auth": {
+        "fields": [
+          "ticket",
+          "cols",
+          "rows"
+        ]
+      },
+      "data": {
+        "fields": [
+          "data"
+        ]
+      },
+      "resize": {
+        "fields": [
+          "cols",
+          "rows"
+        ]
+      },
+      "ping": {
+        "fields": []
+      }
     },
     "server": {
-      "ready":  { "fields": ["session_id", "server_version"] },
-      "data":   { "fields": ["data"] },
-      "notice": { "fields": ["level", "message"] },
-      "error":  { "fields": ["code", "message"] },
-      "pong":   { "fields": [] }
+      "ready": {
+        "fields": [
+          "session_id",
+          "server_version"
+        ]
+      },
+      "data": {
+        "fields": [
+          "data"
+        ]
+      },
+      "notice": {
+        "fields": [
+          "level",
+          "message"
+        ]
+      },
+      "error": {
+        "fields": [
+          "code",
+          "message"
+        ]
+      },
+      "pong": {
+        "fields": []
+      }
     }
   },
-
   "close_codes": {
     "4400": "protocol_error",
     "4401": "ticket_invalid_or_expired",
@@ -76,7 +154,6 @@
     "4500": "gateway_internal_error",
     "4503": "upstream_unreachable"
   },
-
   "limits": {
     "max_output_buffer_bytes": 262144,
     "max_frame_bytes": 65536,

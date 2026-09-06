@@ -18,6 +18,7 @@ import (
 	"github.com/adn/librenms-webterm/gateway/internal/ctlauth"
 	"github.com/adn/librenms-webterm/gateway/internal/proto"
 	"github.com/adn/librenms-webterm/gateway/internal/session"
+	"github.com/adn/librenms-webterm/gateway/internal/sshx"
 	"github.com/adn/librenms-webterm/gateway/internal/ui"
 	"github.com/adn/librenms-webterm/gateway/internal/wsx"
 )
@@ -56,6 +57,7 @@ func (s *Server) Handler() http.Handler {
 	// the browser.
 	mux.Handle("GET /api/v1/hello", s.control(s.handleHello))
 	mux.Handle("POST /api/v1/sessions", s.control(s.handleCreateSession))
+	mux.Handle("POST /api/v1/hostkey/scan", s.control(s.handleHostKeyScan))
 	mux.Handle("POST /api/v1/sessions/{id}/credential", s.control(s.handleCredential))
 	mux.Handle("GET /api/v1/sessions", s.control(s.handleListSessions))
 	mux.Handle("DELETE /api/v1/sessions/{id}", s.control(s.handleDeleteSession))
@@ -212,6 +214,35 @@ func (s *Server) handleCreateSession(w http.ResponseWriter, r *http.Request, bod
 		slog.String("target", req.Target.IP))
 
 	writeJSON(w, http.StatusCreated, resp)
+}
+
+// handleHostKeyScan reports the host key a device presents, without
+// authenticating to it.
+func (s *Server) handleHostKeyScan(w http.ResponseWriter, r *http.Request, body []byte) {
+	var req struct {
+		IP   string `json:"ip"`
+		Port int    `json:"port"`
+	}
+	if err := json.Unmarshal(body, &req); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+
+		return
+	}
+	if req.Port == 0 {
+		req.Port = 22
+	}
+
+	keys, err := sshx.ScanHostKey(r.Context(), req.IP, req.Port, s.cfg.HandshakeTimeout)
+	if err != nil {
+		s.log.Warn("host key scan failed",
+			slog.String("ip", req.IP),
+			slog.String("error", err.Error()))
+		writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"keys": keys})
 }
 
 func (s *Server) handleCredential(w http.ResponseWriter, r *http.Request, body []byte) {

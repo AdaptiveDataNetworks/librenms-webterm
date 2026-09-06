@@ -23,6 +23,7 @@ const (
 
 	PathHello             = "/api/v1/hello"
 	PathSessionCreate     = "/api/v1/sessions"
+	PathHostkeyScan       = "/api/v1/hostkey/scan"
 	PathSessionCredential = "/api/v1/sessions/{id}/credential"
 	PathSessionList       = "/api/v1/sessions"
 	PathSessionDelete     = "/api/v1/sessions/{id}"

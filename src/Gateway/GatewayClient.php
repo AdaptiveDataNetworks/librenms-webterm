@@ -52,6 +52,21 @@ class GatewayClient
     }
 
     /**
+     * Ask the gateway what host key a device presents.
+     *
+     * The gateway never authenticates during a scan, so this is safe to run
+     * against a device nobody has decided to trust yet.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws GatewayException
+     */
+    public function scanHostKey(string $ip, int $port = 22): array
+    {
+        return $this->send('POST', Protocol::EP_HOSTKEY_SCAN_PATH, ['ip' => $ip, 'port' => $port]);
+    }
+
+    /**
      * Phase 3: hand over the resolved secret.
      *
      * The only request in the system carrying credential material. It travels

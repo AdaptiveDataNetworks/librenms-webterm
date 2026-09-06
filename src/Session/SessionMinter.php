@@ -14,6 +14,7 @@ use Adn\WebTerm\Credentials\CredentialRequest;
 use Adn\WebTerm\Credentials\Exceptions\CredentialException;
 use Adn\WebTerm\Gateway\GatewayClient;
 use Adn\WebTerm\Gateway\GatewayException;
+use Adn\WebTerm\HostKeys\HostKeyManager;
 use Adn\WebTerm\Librenms\DeviceTarget;
 use Adn\WebTerm\Models\HostKey;
 use Adn\WebTerm\Models\Session as SessionModel;
@@ -47,6 +48,7 @@ final class SessionMinter
         private readonly ?GatewayClient $gateway = null,
         private readonly ?CredentialManager $credentials = null,
         private readonly AuditLogger $audit = new AuditLogger,
+        private readonly ?HostKeyManager $hostKeys = null,
     ) {}
 
     /**
@@ -84,6 +86,14 @@ final class SessionMinter
         $sessionId = strtoupper((string) Str::ulid());
         $method = $this->methodFor($target);
         $gateway = $this->gateway ?? new GatewayClient;
+
+        // Trust-on-first-use records the pin BEFORE connecting, so the session
+        // itself runs against a pinned key like any other. Refused outright for
+        // reusable secrets: TOFU means handing the credential to whatever
+        // answers, and a password given to an impostor is a lasting compromise
+        // where a 30-minute certificate is not.
+        ($this->hostKeys ?? new HostKeyManager($gateway))
+            ->maybePinOnFirstConnect($target, $dial->ip, $dial->port, $method);
 
         // Phase 1.
         $created = $gateway->createSession([
