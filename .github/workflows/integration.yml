@@ -75,3 +75,23 @@ jobs:
           php artisan route:cache
           php artisan route:clear
           php artisan config:clear
+
+      # The contract suite skips when LibreNMS is absent, so this job is the
+      # only place it actually executes. It asserts every core symbol our
+      # adapters name still exists -- the early warning for upstream renames.
+      - name: Install dev dependencies for the contract suite
+        working-directory: plugin
+        run: composer install --no-interaction --no-progress
+
+      - name: Contract tests against real LibreNMS core
+        working-directory: plugin
+        env:
+          WEBTERM_LIBRENMS_PATH: ${{ github.workspace }}/librenms
+        run: |
+          output=$(vendor/bin/pest --testsuite=Contract --colors=never)
+          echo "$output"
+          # A contract suite that silently skips is worthless -- fail loudly.
+          if echo "$output" | grep -q 'skipped'; then
+            echo "::error::Contract tests skipped in the integration job; they must run here."
+            exit 1
+          fi

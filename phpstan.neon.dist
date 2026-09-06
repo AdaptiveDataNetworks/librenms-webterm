@@ -15,3 +15,8 @@ parameters:
         -
             identifier: class.notFound
             path: src/Hooks/*
+        # Contract tests name core symbols on purpose -- asserting they exist
+        # is the whole job. They skip when LibreNMS is absent.
+        -
+            identifier: class.notFound
+            path: tests/Contract/*
