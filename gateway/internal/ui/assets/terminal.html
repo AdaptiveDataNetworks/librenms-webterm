@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal</title>
+<link rel="stylesheet" href="./xterm.css">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0e14; }
+  #term { position: absolute; inset: 0; padding: 6px; }
+  #status {
+    position: absolute; inset: auto 0 0 0; padding: 6px 10px;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: #161b22; color: #d0d7de; border-top: 1px solid #30363d;
+  }
+  #status[hidden] { display: none; }
+  .err { color: #ff7b72; }
+</style>
+</head>
+<body>
+<div id="term"></div>
+<div id="status" hidden></div>
+<script src="./xterm.js"></script>
+<script src="./addon-fit.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // The ticket arrives from the parent frame via postMessage rather than in
+  // this page's URL: a query string is written to the proxy access log and
+  // leaks through Referer, and the ticket is a credential.
+  var params = new URLSearchParams(location.search);
+  var wsUrl = params.get('ws') || (location.origin.replace(/^http/, 'ws') + '/ws');
+
+  var term = new Terminal({
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    fontSize: 14,
+    cursorBlink: true,
+    scrollback: 5000,
+    theme: { background: '#0b0e14' }
+  });
+  var fit = new FitAddon.FitAddon();
+  term.loadAddon(fit);
+  term.open(document.getElementById('term'));
+  fit.fit();
+
+  var statusEl = document.getElementById('status');
+  function status(msg, isError) {
+    statusEl.hidden = false;
+    statusEl.className = isError ? 'err' : '';
+    statusEl.textContent = msg;
+  }
+
+  function connect(ticket) {
+    var ws = new WebSocket(wsUrl, 'lnms-webterm.v1');
+    var opened = false;
+
+    ws.onopen = function () {
+      opened = true;
+      ws.send(JSON.stringify({ type: 'auth', ticket: ticket, cols: term.cols, rows: term.rows }));
+    };
+
+    ws.onmessage = function (ev) {
+      var f;
+      try { f = JSON.parse(ev.data); } catch (e) { return; }
+
+      if (f.type === 'data') { term.write(f.data); return; }
+      if (f.type === 'ready') { statusEl.hidden = true; term.focus(); return; }
+      if (f.type === 'notice') { status(f.message, false); return; }
+      if (f.type === 'error') { status(f.message, true); return; }
+    };
+
+    ws.onerror = function () {
+      if (!opened) {
+        status('Could not reach the terminal gateway. Check the reverse proxy configuration.', true);
+      }
+    };
+
+    ws.onclose = function (ev) {
+      var reasons = {
+        4401: 'This terminal session has expired. Open a new one.',
+        4403: 'Your access to this device was revoked.',
+        4408: 'Disconnected after a period of inactivity.',
+        4413: 'Disconnected: too much output too quickly.',
+        4429: 'You already have the maximum number of sessions open.',
+        4503: 'The device could not be reached.'
+      };
+      status(reasons[ev.code] || ('Disconnected (' + ev.code + ') ' + (ev.reason || '')), true);
+      term.blur();
+    };
+
+    term.onData(function (d) {
+      if (ws.readyState === 1) { ws.send(JSON.stringify({ type: 'data', data: d })); }
+    });
+
+    term.onResize(function (size) {
+      if (ws.readyState === 1) {
+        ws.send(JSON.stringify({ type: 'resize', cols: size.cols, rows: size.rows }));
+      }
+    });
+
+    var ro = new ResizeObserver(function () { try { fit.fit(); } catch (e) {} });
+    ro.observe(document.getElementById('term'));
+  }
+
+  window.addEventListener('message', function (ev) {
+    if (!ev.data || ev.data.type !== 'webterm.connect' || !ev.data.ticket) { return; }
+    connect(ev.data.ticket);
+  });
+
+  status('Waiting for session…', false);
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'webterm.ready' }, '*');
+  }
+})();
+</script>
+</body>
+</html>
