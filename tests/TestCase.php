@@ -19,6 +19,11 @@ abstract class TestCase extends Orchestra
 
     protected function defineEnvironment($app): void
     {
+        // Fixed rather than random: the credential tests assert that a stored
+        // payload decrypts, and a key that changed between boot and assertion
+        // would fail for the wrong reason.
+        $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('webterm-test-key', 2)));
+
         // In-memory SQLite: the authorization matrix is thousands of
         // combinations and must stay fast enough to run on every save.
         $app['config']->set('database.default', 'testing');

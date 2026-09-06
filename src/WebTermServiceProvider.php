@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Adn\WebTerm;
 
+use Adn\WebTerm\Console\RekeyCredentialsCommand;
+use Adn\WebTerm\Credentials\CredentialManager;
 use Adn\WebTerm\Hooks\DeviceOverview;
 use Adn\WebTerm\Hooks\Settings;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +33,17 @@ final class WebTermServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/webterm.php', 'webterm');
+
+        $this->app->singleton(CredentialManager::class);
+
+        // Registered here, NOT behind the pluginEnabled() gate: the diagnostic
+        // commands are most needed precisely when the plugin is disabled or
+        // misconfigured, and a doctor you cannot run is no use.
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                RekeyCredentialsCommand::class,
+            ]);
+        }
     }
 
     public function boot(): void
@@ -83,10 +96,5 @@ final class WebTermServiceProvider extends ServiceProvider
             __DIR__.'/../config/webterm.php' => config_path('webterm.php'),
         ], 'webterm-config');
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                // Registered in Phase 10.
-            ]);
-        }
     }
 }
