@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Only require-dev is ever installed from here: `lnms plugin:add` runs with
+  # --no-dev, and the runtime require is capped at two packages by CI.
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: gomod
+    directory: /gateway
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # Release workflow actions are pinned to commit SHAs; Dependabot keeps those
+  # current, which is the only maintainable way to stay pinned.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

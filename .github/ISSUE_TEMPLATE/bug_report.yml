@@ -1,0 +1,71 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Not a security issue?** If this is a vulnerability, please report it privately:
+        https://github.com/adn/librenms-webterm/security/advisories/new
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `./lnms webterm:doctor`
+      description: |
+        Run as the librenms user. This answers most configuration questions
+        immediately, and it masks anything that looks like a secret.
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Plugin, gateway (`librenms-webterm-gw version`) and LibreNMS
+      placeholder: "plugin 1.0.0, gateway 1.0.0, LibreNMS 26.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: driver
+    attributes:
+      label: Credential driver
+      options: [database, vault (ssh_signer), vault (kv2)]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation
+      options: [bare metal, Docker, other]
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Gateway logs
+      description: |
+        `journalctl -u librenms-webterm-gw --since "10 minutes ago"`
+
+        These never contain credentials — there is a test asserting it — but do
+        check before pasting.
+      render: shell

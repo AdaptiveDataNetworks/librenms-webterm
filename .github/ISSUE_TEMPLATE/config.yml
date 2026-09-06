@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/adn/librenms-webterm/security/advisories/new
+    about: Report privately, not as a public issue.
+  - name: Documentation
+    url: https://adn.github.io/librenms-webterm/
+    about: Installation, Vault, troubleshooting and the threat model.
+  - name: LibreNMS itself
+    url: https://community.librenms.org/
+    about: Questions about LibreNMS rather than this plugin.

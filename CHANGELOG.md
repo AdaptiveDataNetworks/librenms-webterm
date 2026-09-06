@@ -4,15 +4,38 @@ All notable changes to this project are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
+
 ## [Unreleased]
 
 ### Added
 
-- Plugin scaffold: service provider with device-overview, settings and single-page hooks, registered through Laravel package auto-discovery.
-- Wire protocol v1, specified in `protocol/PROTOCOL.md` and generated into both implementations from `protocol/protocol.json`.
-- `Guard` — the single chokepoint ensuring no hook can throw and trigger LibreNMS's plugin auto-disable.
-- Closed-by-default configuration: plugin disabled, no allow-listed origins, host-key pinning required, step-up authentication on.
-- CI: dependency guard, protocol drift check, PHP matrix, LibreNMS integration install, docs build.
-- Documentation: quickstart, security guide, LibreNMS update behaviour, Vault overview, architecture, compatibility, style guide.
+**In-browser SSH terminals** for LibreNMS devices, opened from the device page.
+
+**Two credential drivers.**
+- `database` — encrypted at rest with a key derived from `APP_KEY` (or a dedicated `WEBTERM_CREDENTIAL_KEY`), with per-row key ids and a resumable `webterm:credentials:rekey` so rotating `APP_KEY` does not destroy your credentials.
+- `vault` — HashiCorp Vault, with the SSH secrets engine issuing 30-minute signed certificates (nothing reusable is stored anywhere) or KV v2 for devices that cannot use certificates. Vault Agent and AppRole authentication; Enterprise namespaces supported.
+
+**Authorization that is narrower than LibreNMS's own.** Being an administrator grants no terminal access. Abilities plus allow/deny grants over users, roles, devices and static device groups, with deny always winning and limits intersecting rather than widening. A property test asserts shell access is always a strict subset of device visibility.
+
+**TOTP step-up authentication** at connect time, reusing the enrolment LibreNMS already holds, with a rolling grace, an absolute cap and single-use enforcement per TOTP step. Deliberately independent of LibreNMS's login two-factor session flag.
+
+**SSH host key pinning**, verified before any authentication method is offered. Trust-on-first-use is available but refused for reusable secrets.
+
+**An audit trail** written off-box before the database for security-relevant events, mirrored into LibreNMS's own eventlog, append-only, with all text sanitised of terminal escape sequences.
+
+**A Go gateway** shipped as a static binary, deb, rpm and distroless container, with build provenance attestation. It holds no database credentials, no Vault token and no LibreNMS session, and never calls back into LibreNMS.
+
+**Ten CLI commands**, including `webterm:doctor` and `webterm:why`, which run the real code paths and print the command that fixes what they find.
+
+**38 pages of documentation**, including a complete Vault worked example and an honest threat model.
+
+### Security
+
+Defaults are closed. A fresh install cannot open a terminal to anything until an administrator enables the plugin, allow-lists an origin, enables a target, pins a host key and issues a grant.
+
+### Deliberately not included
+
+Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
 [Unreleased]: https://github.com/adn/librenms-webterm/compare/main...HEAD

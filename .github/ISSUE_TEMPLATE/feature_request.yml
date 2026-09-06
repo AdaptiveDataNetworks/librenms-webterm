@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest something
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Some things are deliberately out of scope for v1.0 and explained in the
+        docs rather than left as gaps — session recording, RDP, break-glass
+        credentials, cryptographic operator attribution. Worth a look at the
+        [FAQ](https://adn.github.io/librenms-webterm/faq/) and
+        [threat model](https://adn.github.io/librenms-webterm/security/threat-model/)
+        first; if you disagree with a reason given there, say so — that is
+        useful feedback.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that you cannot do today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security implications
+      description: |
+        This plugin opens shells on network devices. If your suggestion widens
+        access, relaxes a default, or adds a place a secret could live, please
+        say so — it will not disqualify the idea, but it shapes the design.
