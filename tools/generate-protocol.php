@@ -20,7 +20,7 @@ TXT;
 /* ----------------------------------------------------------------- PHP --- */
 
 $cp = $spec['control_plane'];
-$php = "<?php\n\ndeclare(strict_types=1);\n\n// {$banner}\n\nnamespace Adn\\WebTerm;\n\nfinal class Protocol\n{\n";
+$php = "<?php\n\ndeclare(strict_types=1);\n\n// {$banner}\n\nnamespace AdaptiveDataNetworks\\WebTerm;\n\nfinal class Protocol\n{\n";
 $php .= '    public const NAME = '.var_export($spec['name'], true).";\n";
 $php .= "    public const VERSION = {$spec['version']};\n";
 $php .= '    public const SUBPROTOCOL = '.var_export($spec['subprotocol'], true).";\n";

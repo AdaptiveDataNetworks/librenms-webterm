@@ -14,7 +14,7 @@
         <p class="text-muted" style="margin-bottom: 0;">
             <small>
                 {{ __('No credential or shared secret is ever stored in plugin settings: LibreNMS keeps this bag as plaintext JSON.') }}
-                <a href="https://adn.github.io/librenms-webterm/" target="_blank" rel="noopener">{{ __('Documentation') }}</a>
+                <a href="https://adaptivedatanetworks.github.io/librenms-webterm/" target="_blank" rel="noopener">{{ __('Documentation') }}</a>
             </small>
         </p>
     </div>

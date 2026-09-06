@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Models\Session;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Throwable;

@@ -26,7 +26,7 @@ Examples of unacceptable behaviour:
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported to the project maintainers through a [GitHub Security Advisory](https://github.com/adn/librenms-webterm/security/advisories/new) or by opening an issue if the matter is not sensitive. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported to the project maintainers through a [GitHub Security Advisory](https://github.com/AdaptiveDataNetworks/librenms-webterm/security/advisories/new) or by opening an issue if the matter is not sensitive. All complaints will be reviewed and investigated promptly and fairly.
 
 Maintainers are obligated to respect the privacy and security of the reporter of any incident.
 

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Audit\Severity;
-use Adn\WebTerm\Librenms\CoreDependency;
-use Adn\WebTerm\Librenms\DeviceTarget;
-use Adn\WebTerm\Librenms\DeviceVisibility;
-use Adn\WebTerm\Librenms\EventlogWriter;
-use Adn\WebTerm\Librenms\RoleReader;
-use Adn\WebTerm\Librenms\TwoFactorReader;
+use AdaptiveDataNetworks\WebTerm\Audit\Severity;
+use AdaptiveDataNetworks\WebTerm\Librenms\CoreDependency;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceVisibility;
+use AdaptiveDataNetworks\WebTerm\Librenms\EventlogWriter;
+use AdaptiveDataNetworks\WebTerm\Librenms\RoleReader;
+use AdaptiveDataNetworks\WebTerm\Librenms\TwoFactorReader;
 use App\Models\Device;
 
 /*

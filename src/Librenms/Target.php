@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Librenms;
+namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
 /**
  * A validated dial target: always an IP literal, always a valid port.

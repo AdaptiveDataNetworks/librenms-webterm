@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Gateway;
+namespace AdaptiveDataNetworks\WebTerm\Gateway;
 
 use RuntimeException;
 

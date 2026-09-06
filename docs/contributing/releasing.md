@@ -28,8 +28,8 @@ The release workflow builds the gateway for amd64 and arm64, publishes deb/rpm/t
 
 - [ ] Packagist shows the new version (the webhook is near-instant; without it, crawling takes about a week)
 - [ ] GitHub Releases lists all artifacts and `checksums.txt`
-- [ ] `gh attestation verify <artifact> --repo adn/librenms-webterm` passes
-- [ ] `ghcr.io/adn/librenms-webterm-gw:1.2.3` pulls
+- [ ] `gh attestation verify <artifact> --repo adaptivedatanetworks/librenms-webterm` passes
+- [ ] `ghcr.io/adaptivedatanetworks/librenms-webterm-gw:1.2.3` pulls
 - [ ] The docs site shows the new version, **and it appears in `versions.json`** — the workflow checks this, but confirm
 - [ ] `mike` has moved the `latest` alias
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Protocol;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 
 it('is generated from protocol.json and stays in sync', function () {
     $spec = json_decode(

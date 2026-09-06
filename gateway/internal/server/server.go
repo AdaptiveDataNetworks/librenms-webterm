@@ -14,13 +14,13 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/adn/librenms-webterm/gateway/internal/config"
-	"github.com/adn/librenms-webterm/gateway/internal/ctlauth"
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
-	"github.com/adn/librenms-webterm/gateway/internal/session"
-	"github.com/adn/librenms-webterm/gateway/internal/sshx"
-	"github.com/adn/librenms-webterm/gateway/internal/ui"
-	"github.com/adn/librenms-webterm/gateway/internal/wsx"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/config"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/ctlauth"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/session"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/sshx"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/ui"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/wsx"
 )
 
 type Server struct {

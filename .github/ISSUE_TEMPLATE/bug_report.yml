@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         **Not a security issue?** If this is a vulnerability, please report it privately:
-        https://github.com/adn/librenms-webterm/security/advisories/new
+        https://github.com/AdaptiveDataNetworks/librenms-webterm/security/advisories/new
 
   - type: textarea
     id: doctor

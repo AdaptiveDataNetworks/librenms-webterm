@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Audit;
+namespace AdaptiveDataNetworks\WebTerm\Audit;
 
 /**
  * The single chokepoint for text entering the audit trail.

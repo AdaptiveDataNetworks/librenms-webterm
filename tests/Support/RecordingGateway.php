@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
-use Adn\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 
 /**
  * A GatewayClient that records what it was asked to do.

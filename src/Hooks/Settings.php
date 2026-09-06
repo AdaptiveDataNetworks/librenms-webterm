@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Hooks;
+namespace AdaptiveDataNetworks\WebTerm\Hooks;
 
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use LibreNMS\Interfaces\Plugins\Hooks\SettingsHook;
 

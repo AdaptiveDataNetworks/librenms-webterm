@@ -14,7 +14,7 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
 )
 
 // Frame is the JSON envelope in both directions.

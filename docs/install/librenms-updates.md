@@ -31,7 +31,7 @@ If you need reproducible upgrades, register an exact version:
 
 ```bash
 # LibreNMS server, as the librenms user
-./lnms plugin:add adn/librenms-webterm 1.2.3
+./lnms plugin:add adaptivedatanetworks/librenms-webterm 1.2.3
 ```
 
 Verify what is registered:
@@ -62,7 +62,7 @@ After a LibreNMS update, if the banner appears, upgrade the gateway to match.
 
     A dependency conflict between WebTerm and LibreNMS's own locked packages.
 
-    This should not happen: WebTerm deliberately requires **only** `php` and `librenms/plugin-interfaces`, and CI resolves it against LibreNMS `master` nightly precisely to catch this before you do. If you see it, please [open an issue](https://github.com/adn/librenms-webterm/issues) with the full output — it is a bug on our side.
+    This should not happen: WebTerm deliberately requires **only** `php` and `librenms/plugin-interfaces`, and CI resolves it against LibreNMS `master` nightly precisely to catch this before you do. If you see it, please [open an issue](https://github.com/AdaptiveDataNetworks/librenms-webterm/issues) with the full output — it is a bug on our side.
 
 ??? failure "Running composer update is not advisable. Please run composer install to update instead."
 
@@ -87,7 +87,7 @@ After a LibreNMS update, if the banner appears, upgrade the gateway to match.
 
 ```bash
 # LibreNMS server, as the librenms user
-./lnms plugin:remove adn/librenms-webterm
+./lnms plugin:remove adaptivedatanetworks/librenms-webterm
 ```
 
 This deregisters the plugin so `daily.sh` stops reinstating it. Stop and remove the gateway separately — it is a system service and is not managed by Composer.

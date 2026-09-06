@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\HostKeys\HostKeyManager;
+use AdaptiveDataNetworks\WebTerm\HostKeys\HostKeyManager;
 use Illuminate\Console\Command;
 
 /**

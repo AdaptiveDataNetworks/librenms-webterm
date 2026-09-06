@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 
 /*
 | LibreNMS sets plugin_active = 0 on any Throwable escaping a hook. These tests

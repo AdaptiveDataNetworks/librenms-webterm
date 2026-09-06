@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Contracts;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Contracts;
 
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\Exceptions\CredentialException;
-use Adn\WebTerm\Credentials\ProviderHealth;
-use Adn\WebTerm\Credentials\ResolvedCredential;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialException;
+use AdaptiveDataNetworks\WebTerm\Credentials\ProviderHealth;
+use AdaptiveDataNetworks\WebTerm\Credentials\ResolvedCredential;
 
 /**
  * A source of device credentials.

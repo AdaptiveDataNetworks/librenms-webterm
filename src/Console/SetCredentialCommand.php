@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Console\Concerns\ResolvesDevices;
-use Adn\WebTerm\Credentials\CredentialEncrypter;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Models\Credential;
-use Adn\WebTerm\Support\SshKey;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Support\SshKey;
 use Illuminate\Console\Command;
 
 /**
@@ -95,7 +95,7 @@ final class SetCredentialCommand extends Command
         $this->line('');
         $this->line('  This secret is reusable and now lives in your monitoring database.');
         $this->line('  For anything beyond a small estate, consider Vault:');
-        $this->line('    https://adn.github.io/librenms-webterm/vault/');
+        $this->line('    https://adaptivedatanetworks.github.io/librenms-webterm/vault/');
 
         return self::SUCCESS;
     }

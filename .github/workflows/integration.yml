@@ -54,7 +54,7 @@ jobs:
       # rather than in a user's production install.
       - name: composer require (mirrors lnms plugin:add)
         working-directory: librenms
-        run: composer require --update-no-dev --no-interaction adn/librenms-webterm:@dev
+        run: composer require --update-no-dev --no-interaction adaptivedatanetworks/librenms-webterm:@dev
         env:
           FORCE: 1
 

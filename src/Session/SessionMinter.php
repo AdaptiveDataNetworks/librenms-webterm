@@ -2,25 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Session;
+namespace AdaptiveDataNetworks\WebTerm\Session;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Authorization\ShellAuthorizer;
-use Adn\WebTerm\Credentials\CredentialManager;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\Exceptions\CredentialException;
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Gateway\GatewayException;
-use Adn\WebTerm\HostKeys\HostKeyManager;
-use Adn\WebTerm\Librenms\DeviceTarget;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Session as SessionModel;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Models\Ticket;
-use Adn\WebTerm\Protocol;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialException;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
+use AdaptiveDataNetworks\WebTerm\HostKeys\HostKeyManager;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Session as SessionModel;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Models\Ticket;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Console\Concerns\ResolvesDevices;
-use Adn\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Librenms;
+namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
-use Adn\WebTerm\Audit\Severity;
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Audit\Severity;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use App\Models\Eventlog;
 
 /**

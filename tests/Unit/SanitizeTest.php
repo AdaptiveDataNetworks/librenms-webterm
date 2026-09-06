@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Audit\Sanitize;
+use AdaptiveDataNetworks\WebTerm\Audit\Sanitize;
 
 /*
 | Audit records carry attacker-influenced text: hostnames, SSH banners, error

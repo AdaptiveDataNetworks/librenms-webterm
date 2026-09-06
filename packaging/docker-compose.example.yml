@@ -5,7 +5,7 @@
 # cannot add a daemon to it.
 services:
   webterm-gateway:
-    image: ghcr.io/adn/librenms-webterm-gw:1.0.0
+    image: ghcr.io/adaptivedatanetworks/librenms-webterm-gw:1.0.0
     restart: unless-stopped
 
     # No published ports. The control plane has no transport security, so it is

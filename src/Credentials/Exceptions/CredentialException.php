@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Exceptions;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Exceptions;
 
 use RuntimeException;
 

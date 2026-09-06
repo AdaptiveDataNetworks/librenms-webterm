@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests;
+namespace AdaptiveDataNetworks\WebTerm\Tests;
 
-use Adn\WebTerm\WebTermServiceProvider;
+use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra

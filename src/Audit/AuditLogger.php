@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Audit;
+namespace AdaptiveDataNetworks\WebTerm\Audit;
 
-use Adn\WebTerm\Librenms\EventlogWriter;
-use Adn\WebTerm\Models\AuditEntry;
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Librenms\EventlogWriter;
+use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 

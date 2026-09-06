@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Drivers;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Drivers;
 
-use Adn\WebTerm\Credentials\Contracts\CredentialProvider;
-use Adn\WebTerm\Credentials\CredentialEncrypter;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
-use Adn\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
-use Adn\WebTerm\Credentials\ProviderHealth;
-use Adn\WebTerm\Credentials\ResolvedCredential;
-use Adn\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Credentials\Contracts\CredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
+use AdaptiveDataNetworks\WebTerm\Credentials\ProviderHealth;
+use AdaptiveDataNetworks\WebTerm\Credentials\ResolvedCredential;
+use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use Throwable;
 
 /**

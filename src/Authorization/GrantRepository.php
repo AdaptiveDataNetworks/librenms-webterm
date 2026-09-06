@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Authorization;
+namespace AdaptiveDataNetworks\WebTerm\Authorization;
 
-use Adn\WebTerm\Authorization\Contracts\GroupSource;
-use Adn\WebTerm\Authorization\Contracts\RoleSource;
-use Adn\WebTerm\Librenms\DeviceGroups;
-use Adn\WebTerm\Librenms\RoleReader;
-use Adn\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\RoleSource;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
+use AdaptiveDataNetworks\WebTerm\Librenms\RoleReader;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 

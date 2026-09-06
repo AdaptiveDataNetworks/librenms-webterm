@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Auth\Totp;
-use Adn\WebTerm\Authorization\TotpStepUp;
-use Adn\WebTerm\Models\StepUp;
-use Adn\WebTerm\Tests\Support\FakeTwoFactor;
-use Adn\WebTerm\Tests\Support\FakeUser;
+use AdaptiveDataNetworks\WebTerm\Auth\Totp;
+use AdaptiveDataNetworks\WebTerm\Authorization\TotpStepUp;
+use AdaptiveDataNetworks\WebTerm\Models\StepUp;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeTwoFactor;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 

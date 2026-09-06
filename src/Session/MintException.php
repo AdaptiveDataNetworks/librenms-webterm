@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Session;
+namespace AdaptiveDataNetworks\WebTerm\Session;
 
-use Adn\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
 use RuntimeException;
 
 final class MintException extends RuntimeException

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\ResolvedCredential;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\ResolvedCredential;
 
 /*
 | These are blocking tests. If any of them fail, credential material can reach

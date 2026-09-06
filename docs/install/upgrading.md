@@ -23,7 +23,7 @@ Check both halves at any time:
 
 ```bash
 # as the librenms user
-./lnms plugin:add adn/librenms-webterm     # re-resolves to the newest matching release
+./lnms plugin:add adaptivedatanetworks/librenms-webterm     # re-resolves to the newest matching release
 php artisan route:clear
 ./lnms migrate                              # if the release adds migrations
 ```

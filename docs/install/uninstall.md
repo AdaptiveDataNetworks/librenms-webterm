@@ -4,7 +4,7 @@
 
 ```bash
 # as the librenms user
-./lnms plugin:remove adn/librenms-webterm
+./lnms plugin:remove adaptivedatanetworks/librenms-webterm
 ```
 
 This deregisters it so `daily.sh` stops reinstating it on the next LibreNMS update.
@@ -31,7 +31,7 @@ The plugin's tables are not dropped on removal, so a reinstall keeps your grants
 
 ```bash
 # as the librenms user, BEFORE removing the plugin
-./lnms migrate:rollback --path=vendor/adn/librenms-webterm/database/migrations
+./lnms migrate:rollback --path=vendor/adaptivedatanetworks/librenms-webterm/database/migrations
 ```
 
 !!! warning "This destroys the audit trail"

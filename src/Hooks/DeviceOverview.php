@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Hooks;
+namespace AdaptiveDataNetworks\WebTerm\Hooks;
 
-use Adn\WebTerm\Http\DevicePanelPresenter;
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Http\DevicePanelPresenter;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use App\Models\Device;
 use Illuminate\Support\Facades\Auth;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;

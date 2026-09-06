@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Credentials\CredentialEncrypter;
-use Adn\WebTerm\Credentials\CredentialManager;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\Drivers\DatabaseCredentialProvider;
-use Adn\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
-use Adn\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
-use Adn\WebTerm\Models\Credential;
-use Adn\WebTerm\Support\SshKey;
-use Adn\WebTerm\Tests\Support\FakeUser;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\Drivers\DatabaseCredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
+use AdaptiveDataNetworks\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Support\SshKey;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

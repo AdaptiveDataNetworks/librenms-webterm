@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/adn/librenms-webterm/gateway/internal/session"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/session"
 )
 
 var (

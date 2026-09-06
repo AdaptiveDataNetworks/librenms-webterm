@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adn/librenms-webterm/gateway/internal/ctlauth"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/ctlauth"
 )
 
 type Config struct {

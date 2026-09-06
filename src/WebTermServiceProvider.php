@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm;
+namespace AdaptiveDataNetworks\WebTerm;
 
-use Adn\WebTerm\Console\AbilityCommand;
-use Adn\WebTerm\Console\ConfigCommand;
-use Adn\WebTerm\Console\DoctorCommand;
-use Adn\WebTerm\Console\GrantCommand;
-use Adn\WebTerm\Console\HostKeyResetCommand;
-use Adn\WebTerm\Console\HostKeyScanCommand;
-use Adn\WebTerm\Console\ReconcileCommand;
-use Adn\WebTerm\Console\RekeyCredentialsCommand;
-use Adn\WebTerm\Console\SessionsCommand;
-use Adn\WebTerm\Console\SetCredentialCommand;
-use Adn\WebTerm\Console\TargetCommand;
-use Adn\WebTerm\Console\WhyCommand;
-use Adn\WebTerm\Credentials\CredentialManager;
-use Adn\WebTerm\Hooks\DeviceOverview;
-use Adn\WebTerm\Hooks\Settings;
+use AdaptiveDataNetworks\WebTerm\Console\AbilityCommand;
+use AdaptiveDataNetworks\WebTerm\Console\ConfigCommand;
+use AdaptiveDataNetworks\WebTerm\Console\DoctorCommand;
+use AdaptiveDataNetworks\WebTerm\Console\GrantCommand;
+use AdaptiveDataNetworks\WebTerm\Console\HostKeyResetCommand;
+use AdaptiveDataNetworks\WebTerm\Console\HostKeyScanCommand;
+use AdaptiveDataNetworks\WebTerm\Console\ReconcileCommand;
+use AdaptiveDataNetworks\WebTerm\Console\RekeyCredentialsCommand;
+use AdaptiveDataNetworks\WebTerm\Console\SessionsCommand;
+use AdaptiveDataNetworks\WebTerm\Console\SetCredentialCommand;
+use AdaptiveDataNetworks\WebTerm\Console\TargetCommand;
+use AdaptiveDataNetworks\WebTerm\Console\WhyCommand;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
+use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
+use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use Illuminate\Support\ServiceProvider;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;
 use LibreNMS\Interfaces\Plugins\Hooks\SettingsHook;

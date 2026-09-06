@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adn/librenms-webterm/gateway/internal/config"
-	"github.com/adn/librenms-webterm/gateway/internal/ctlauth"
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/config"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/ctlauth"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
 )
 
 const canary = "CANARY-PASSWORD-DO-NOT-LOG"

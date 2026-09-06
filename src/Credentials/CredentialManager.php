@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials;
+namespace AdaptiveDataNetworks\WebTerm\Credentials;
 
-use Adn\WebTerm\Credentials\Contracts\CredentialProvider;
-use Adn\WebTerm\Credentials\Drivers\DatabaseCredentialProvider;
-use Adn\WebTerm\Credentials\Drivers\VaultCredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\Contracts\CredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\Drivers\DatabaseCredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\Drivers\VaultCredentialProvider;
 use Illuminate\Support\Manager;
 
 /**

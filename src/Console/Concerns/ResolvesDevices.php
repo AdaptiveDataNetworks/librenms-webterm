@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console\Concerns;
+namespace AdaptiveDataNetworks\WebTerm\Console\Concerns;
 
 /**
  * Shared device and user lookup for the commands.

@@ -17,7 +17,7 @@ Ten minutes from nothing to a working terminal on one device, using the **databa
 ```bash
 # LibreNMS server, as the librenms user
 cd /opt/librenms
-./lnms plugin:add adn/librenms-webterm
+./lnms plugin:add adaptivedatanetworks/librenms-webterm
 php artisan route:clear
 ```
 
@@ -35,7 +35,7 @@ The gateway is a single static binary. Download it, check it, then install it:
 
 ```bash
 # LibreNMS server, as root
-curl -fsSLO https://github.com/adn/librenms-webterm/releases/latest/download/install.sh
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
 less install.sh          # read it before you run it
 sh install.sh --version vX.Y.Z
 ```

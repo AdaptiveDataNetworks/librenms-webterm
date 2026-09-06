@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm;
+namespace AdaptiveDataNetworks\WebTerm;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use LibreNMS\Interfaces\Plugins\Hooks\SinglePageHook;

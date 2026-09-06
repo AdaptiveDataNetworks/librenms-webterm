@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Audit;
+namespace AdaptiveDataNetworks\WebTerm\Audit;
 
 /**
  * Our own severity vocabulary, with values chosen to match LibreNMS's

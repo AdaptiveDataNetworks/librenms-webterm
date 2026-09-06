@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Auth\Totp;
-use Adn\WebTerm\Support\Base32;
+use AdaptiveDataNetworks\WebTerm\Auth\Totp;
+use AdaptiveDataNetworks\WebTerm\Support\Base32;
 
 /*
 | RFC 6238 Appendix B test vectors.

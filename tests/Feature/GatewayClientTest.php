@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Gateway\GatewayException;
-use Adn\WebTerm\Gateway\GatewayUnreachableException;
-use Adn\WebTerm\Protocol;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayUnreachableException;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 
 /*
 | CROSS-IMPLEMENTATION TESTS

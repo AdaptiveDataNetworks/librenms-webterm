@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Librenms\TwoFactorReader;
+use AdaptiveDataNetworks\WebTerm\Librenms\TwoFactorReader;
 
 /*
 | A source-level regression guard.

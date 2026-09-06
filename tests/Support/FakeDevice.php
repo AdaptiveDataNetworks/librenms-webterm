@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
 /**
  * Stands in for App\Models\Device, modelling only the surface our adapters

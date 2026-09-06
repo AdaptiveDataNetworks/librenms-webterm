@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
-use Adn\WebTerm\Authorization\Contracts\GroupSource;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
 
 final class FakeGroups implements GroupSource
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials;
+namespace AdaptiveDataNetworks\WebTerm\Credentials;
 
 /**
  * Health of a credential backend, for `webterm:doctor` and the settings panel.

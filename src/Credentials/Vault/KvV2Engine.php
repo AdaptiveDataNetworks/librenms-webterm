@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Vault;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Vault;
 
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
-use Adn\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
-use Adn\WebTerm\Credentials\ResolvedCredential;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialResolutionFailedException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\NoCredentialConfiguredException;
+use AdaptiveDataNetworks\WebTerm\Credentials\ResolvedCredential;
 use InvalidArgumentException;
 use SensitiveParameter;
 

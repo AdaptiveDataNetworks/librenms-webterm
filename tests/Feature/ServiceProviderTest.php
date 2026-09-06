@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\WebTermServiceProvider;
+use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 
 /*
 | Testbench boots a bare Laravel app with NO LibreNMS core, so

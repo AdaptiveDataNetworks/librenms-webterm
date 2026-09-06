@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Http\Controllers;
+namespace AdaptiveDataNetworks\WebTerm\Http\Controllers;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Authorization\TotpStepUp;
-use Adn\WebTerm\Gateway\GatewayException;
-use Adn\WebTerm\Session\MintException;
-use Adn\WebTerm\Session\SessionMinter;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Authorization\TotpStepUp;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
+use AdaptiveDataNetworks\WebTerm\Session\MintException;
+use AdaptiveDataNetworks\WebTerm\Session\SessionMinter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

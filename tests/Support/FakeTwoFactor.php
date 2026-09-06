@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
-use Adn\WebTerm\Authorization\Contracts\TwoFactorSource;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\TwoFactorSource;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 final class FakeTwoFactor implements TwoFactorSource

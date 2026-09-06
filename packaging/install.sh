@@ -12,7 +12,7 @@
 #
 set -eu
 
-REPO="adn/librenms-webterm"
+REPO="adaptivedatanetworks/librenms-webterm"
 VERSION=""
 PREFIX="/usr/bin"
 CONFDIR="/etc/librenms-webterm"
@@ -150,5 +150,5 @@ Before starting it:
   4. Check both halves agree:
        ./lnms webterm:doctor
 
-Documentation: https://adn.github.io/librenms-webterm/
+Documentation: https://adaptivedatanetworks.github.io/librenms-webterm/
 NEXT

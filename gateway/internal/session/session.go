@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
 )
 
 var (

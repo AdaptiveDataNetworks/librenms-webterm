@@ -9,7 +9,7 @@ Open an issue first. A pull request that changes the trust boundaries — the th
 ## Local setup
 
 ```bash
-git clone https://github.com/adn/librenms-webterm.git
+git clone https://github.com/AdaptiveDataNetworks/librenms-webterm.git
 cd librenms-webterm
 composer install
 composer test
@@ -27,14 +27,14 @@ To develop against a real LibreNMS install without publishing:
 ```bash
 # in your LibreNMS directory, as the librenms user
 composer config repositories.webterm '{"type":"path","url":"/path/to/librenms-webterm","options":{"symlink":true}}'
-./lnms plugin:add adn/librenms-webterm @dev
+./lnms plugin:add adaptivedatanetworks/librenms-webterm @dev
 ```
 
 ## The rules that are not negotiable
 
 **Never add a runtime Composer dependency.** `composer.json`'s `require` is `php` and `librenms/plugin-interfaces`, and `tools/composer-guard.php` fails CI if that changes. This is not fussiness: `lnms plugin:add` resolves our package against LibreNMS's own lockfile on every user's server, and a third dependency can make installation impossible for everyone and block their next LibreNMS update. Dev tooling goes in `require-dev`, which is never installed on user systems.
 
-**Never let a hook throw.** LibreNMS catches any `Throwable` escaping a plugin hook, disables the plugin, and tells the user it broke. Route everything through `Adn\WebTerm\Support\Guard::safely()`.
+**Never let a hook throw.** LibreNMS catches any `Throwable` escaping a plugin hook, disables the plugin, and tells the user it broke. Route everything through `AdaptiveDataNetworks\WebTerm\Support\Guard::safely()`.
 
 **Never edit generated files.** `src/Protocol.php` and `gateway/internal/proto/proto.go` come from `protocol/protocol.json`. Edit the JSON and run `php tools/generate-protocol.php`.
 

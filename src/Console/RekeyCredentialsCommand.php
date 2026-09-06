@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Credentials\CredentialEncrypter;
-use Adn\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;

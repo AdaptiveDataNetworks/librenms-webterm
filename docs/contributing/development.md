@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/adn/librenms-webterm.git
+git clone https://github.com/AdaptiveDataNetworks/librenms-webterm.git
 cd librenms-webterm
 composer install
 composer test
@@ -23,7 +23,7 @@ go build ./cmd/librenms-webterm-gw
 # in your LibreNMS directory, as the librenms user
 composer config repositories.webterm \
   '{"type":"path","url":"/path/to/librenms-webterm","options":{"symlink":true}}'
-./lnms plugin:add adn/librenms-webterm @dev
+./lnms plugin:add adaptivedatanetworks/librenms-webterm @dev
 ```
 
 With `symlink: true`, edits are live.

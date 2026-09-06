@@ -1,4 +1,4 @@
-module github.com/adn/librenms-webterm/gateway
+module github.com/AdaptiveDataNetworks/librenms-webterm/gateway
 
 go 1.27.1
 

@@ -1,5 +1,5 @@
 {
-    "name": "adn/librenms-webterm",
+    "name": "adaptivedatanetworks/librenms-webterm",
     "description": "In-browser SSH terminal for LibreNMS devices, with HashiCorp Vault or encrypted database credential backends.",
     "keywords": [
         "librenms",
@@ -9,7 +9,7 @@
         "webssh",
         "vault"
     ],
-    "homepage": "https://github.com/adn/librenms-webterm",
+    "homepage": "https://github.com/AdaptiveDataNetworks/librenms-webterm",
     "type": "library",
     "license": "GPL-3.0-or-later",
     "authors": [
@@ -19,8 +19,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/adn/librenms-webterm/issues",
-        "docs": "https://adn.github.io/librenms-webterm/"
+        "issues": "https://github.com/AdaptiveDataNetworks/librenms-webterm/issues",
+        "docs": "https://adaptivedatanetworks.github.io/librenms-webterm/"
     },
     "require": {
         "php": "^8.2",
@@ -41,18 +41,18 @@
     },
     "autoload": {
         "psr-4": {
-            "Adn\\WebTerm\\": "src/"
+            "AdaptiveDataNetworks\\WebTerm\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Adn\\WebTerm\\Tests\\": "tests/"
+            "AdaptiveDataNetworks\\WebTerm\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Adn\\WebTerm\\WebTermServiceProvider"
+                "AdaptiveDataNetworks\\WebTerm\\WebTermServiceProvider"
             ]
         }
     },

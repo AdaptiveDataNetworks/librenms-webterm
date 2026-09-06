@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Librenms;
+namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
 /**
  * Marks an adapter that reaches into LibreNMS core.

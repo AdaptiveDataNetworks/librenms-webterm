@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Librenms;
+namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
-use Adn\WebTerm\Authorization\Contracts\RoleSource;
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\RoleSource;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**

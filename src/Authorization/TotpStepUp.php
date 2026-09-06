@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Authorization;
+namespace AdaptiveDataNetworks\WebTerm\Authorization;
 
-use Adn\WebTerm\Auth\Totp;
-use Adn\WebTerm\Authorization\Contracts\TwoFactorSource;
-use Adn\WebTerm\Librenms\TwoFactorReader;
-use Adn\WebTerm\Models\StepUp;
+use AdaptiveDataNetworks\WebTerm\Auth\Totp;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\TwoFactorSource;
+use AdaptiveDataNetworks\WebTerm\Librenms\TwoFactorReader;
+use AdaptiveDataNetworks\WebTerm\Models\StepUp;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 

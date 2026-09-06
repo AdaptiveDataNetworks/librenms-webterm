@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Drivers;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Drivers;
 
-use Adn\WebTerm\Credentials\Contracts\CredentialProvider;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Credentials\CredentialRequest;
-use Adn\WebTerm\Credentials\ProviderHealth;
-use Adn\WebTerm\Credentials\ResolvedCredential;
-use Adn\WebTerm\Credentials\Vault\KvV2Engine;
-use Adn\WebTerm\Credentials\Vault\SshSignerEngine;
-use Adn\WebTerm\Credentials\Vault\TokenManager;
-use Adn\WebTerm\Credentials\Vault\VaultPermissionDeniedException;
-use Adn\WebTerm\Credentials\Vault\VaultTransport;
-use Adn\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Credentials\Contracts\CredentialProvider;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialRequest;
+use AdaptiveDataNetworks\WebTerm\Credentials\ProviderHealth;
+use AdaptiveDataNetworks\WebTerm\Credentials\ResolvedCredential;
+use AdaptiveDataNetworks\WebTerm\Credentials\Vault\KvV2Engine;
+use AdaptiveDataNetworks\WebTerm\Credentials\Vault\SshSignerEngine;
+use AdaptiveDataNetworks\WebTerm\Credentials\Vault\TokenManager;
+use AdaptiveDataNetworks\WebTerm\Credentials\Vault\VaultPermissionDeniedException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Vault\VaultTransport;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
 use SensitiveParameter;
 use Throwable;
 
@@ -83,7 +83,7 @@ final class VaultCredentialProvider implements CredentialProvider
         } catch (Throwable $e) {
             return ProviderHealth::failing(
                 'Vault is not usable: '.$e->getMessage(),
-                'See the Vault troubleshooting guide: https://adn.github.io/librenms-webterm/vault/troubleshooting/'
+                'See the Vault troubleshooting guide: https://adaptivedatanetworks.github.io/librenms-webterm/vault/troubleshooting/'
             );
         }
 

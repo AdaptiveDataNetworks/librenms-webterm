@@ -1,8 +1,8 @@
 site_name: LibreNMS WebTerm
 site_description: In-browser SSH terminal for LibreNMS, with HashiCorp Vault or encrypted database credentials.
-site_url: https://adn.github.io/librenms-webterm/
-repo_url: https://github.com/adn/librenms-webterm
-repo_name: adn/librenms-webterm
+site_url: https://adaptivedatanetworks.github.io/librenms-webterm/
+repo_url: https://github.com/AdaptiveDataNetworks/librenms-webterm
+repo_name: adaptivedatanetworks/librenms-webterm
 edit_uri: edit/main/docs/
 copyright: Licensed GPL-3.0-or-later. Not affiliated with LibreNMS or HashiCorp.
 

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Http\Controllers\SessionController;
-use Adn\WebTerm\Http\Middleware\EnsureWebTermEnabled;
+use AdaptiveDataNetworks\WebTerm\Http\Controllers\SessionController;
+use AdaptiveDataNetworks\WebTerm\Http\Middleware\EnsureWebTermEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*

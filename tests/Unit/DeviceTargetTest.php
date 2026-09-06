@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
 
 /**
  * Stands in for App\Models\Device. Only the surface DeviceTarget touches is

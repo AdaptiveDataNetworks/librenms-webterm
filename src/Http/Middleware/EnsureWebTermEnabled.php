@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Http\Middleware;
+namespace AdaptiveDataNetworks\WebTerm\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

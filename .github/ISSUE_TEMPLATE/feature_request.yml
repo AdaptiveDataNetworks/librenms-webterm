@@ -8,8 +8,8 @@ body:
         Some things are deliberately out of scope for v1.0 and explained in the
         docs rather than left as gaps — session recording, RDP, break-glass
         credentials, cryptographic operator attribution. Worth a look at the
-        [FAQ](https://adn.github.io/librenms-webterm/faq/) and
-        [threat model](https://adn.github.io/librenms-webterm/security/threat-model/)
+        [FAQ](https://adaptivedatanetworks.github.io/librenms-webterm/faq/) and
+        [threat model](https://adaptivedatanetworks.github.io/librenms-webterm/security/threat-model/)
         first; if you disagree with a reason given there, say so — that is
         useful feedback.
 

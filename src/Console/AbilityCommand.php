@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Console\Concerns\ResolvesDevices;
-use Adn\WebTerm\Models\Ability;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 

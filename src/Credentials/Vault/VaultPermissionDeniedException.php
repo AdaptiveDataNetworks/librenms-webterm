@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Vault;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Vault;
 
-use Adn\WebTerm\Credentials\Exceptions\CredentialException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialException;
 
 final class VaultPermissionDeniedException extends CredentialException {}

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Auth;
+namespace AdaptiveDataNetworks\WebTerm\Auth;
 
-use Adn\WebTerm\Support\Base32;
+use AdaptiveDataNetworks\WebTerm\Support\Base32;
 use SensitiveParameter;
 
 /**

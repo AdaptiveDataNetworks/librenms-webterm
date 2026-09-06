@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Models\AuditEntry;
-use Adn\WebTerm\Tests\Support\FakeUser;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

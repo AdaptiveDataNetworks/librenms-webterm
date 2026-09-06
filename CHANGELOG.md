@@ -38,4 +38,4 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
-[Unreleased]: https://github.com/adn/librenms-webterm/compare/main...HEAD
+[Unreleased]: https://github.com/AdaptiveDataNetworks/librenms-webterm/compare/main...HEAD

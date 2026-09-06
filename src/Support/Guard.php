@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Support;
+namespace AdaptiveDataNetworks\WebTerm\Support;
 
 use Throwable;
 

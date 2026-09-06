@@ -10,10 +10,10 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
-	"github.com/adn/librenms-webterm/gateway/internal/session"
-	"github.com/adn/librenms-webterm/gateway/internal/sshx"
-	"github.com/adn/librenms-webterm/gateway/internal/wsx"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/session"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/sshx"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/wsx"
 )
 
 // runSession connects to the device and moves bytes until something stops it.

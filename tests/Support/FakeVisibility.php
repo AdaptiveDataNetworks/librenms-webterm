@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
-use Adn\WebTerm\Authorization\Contracts\VisibilityCheck;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\VisibilityCheck;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**

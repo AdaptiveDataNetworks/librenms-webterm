@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Tests\Support;
+namespace AdaptiveDataNetworks\WebTerm\Tests\Support;
 
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Gateway\GatewayUnreachableException;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayUnreachableException;
 
 /**
  * A gateway that is down, for exercising the degradation paths.

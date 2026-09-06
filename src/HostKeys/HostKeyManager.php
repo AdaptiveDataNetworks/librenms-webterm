@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\HostKeys;
+namespace AdaptiveDataNetworks\WebTerm\HostKeys;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 

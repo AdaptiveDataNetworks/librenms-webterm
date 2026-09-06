@@ -14,7 +14,7 @@ Every command block states **which host** and **which user** it runs as:
 
 ```bash
 # LibreNMS server, as the librenms user
-./lnms plugin:add adn/librenms-webterm
+./lnms plugin:add adaptivedatanetworks/librenms-webterm
 ```
 
 Never use `$` or `#` prompt prefixes — they break copy-paste. Never interleave output inside a command fence; show output in its own block.

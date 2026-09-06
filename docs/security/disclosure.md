@@ -2,7 +2,7 @@
 
 **Please do not open a public issue.**
 
-Report privately through [GitHub Security Advisories](https://github.com/adn/librenms-webterm/security/advisories/new), which lets us discuss and prepare a fix before anything becomes public.
+Report privately through [GitHub Security Advisories](https://github.com/AdaptiveDataNetworks/librenms-webterm/security/advisories/new), which lets us discuss and prepare a fix before anything becomes public.
 
 Include the plugin and gateway versions, your LibreNMS version, the credential driver in use, and enough detail to reproduce. If you have a proof of concept, say so — you do not need to attach it in the first message.
 

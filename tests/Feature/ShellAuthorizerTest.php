@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Authorization\GrantRepository;
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Authorization\ShellAuthorizer;
-use Adn\WebTerm\Librenms\DeviceTarget;
-use Adn\WebTerm\Models\Ability;
-use Adn\WebTerm\Models\Grant;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Session;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Tests\Support\FakeDevice;
-use Adn\WebTerm\Tests\Support\FakeGroups;
-use Adn\WebTerm\Tests\Support\FakeRoles;
-use Adn\WebTerm\Tests\Support\FakeStepUp;
-use Adn\WebTerm\Tests\Support\FakeUser;
-use Adn\WebTerm\Tests\Support\FakeVisibility;
+use AdaptiveDataNetworks\WebTerm\Authorization\GrantRepository;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Models\Ability;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeDevice;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeGroups;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeRoles;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeStepUp;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeVisibility;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Authorization;
+namespace AdaptiveDataNetworks\WebTerm\Authorization;
 
 /**
  * Why a shell was allowed or refused.

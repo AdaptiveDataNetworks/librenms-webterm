@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Credentials\CredentialEncrypter;
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\Models\Ability;
-use Adn\WebTerm\Models\Credential;
-use Adn\WebTerm\Models\Grant;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Tests\TestCase;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Models\Ability;
+use AdaptiveDataNetworks\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Tests\TestCase;
 
 uses(TestCase::class)->in('Feature');
 

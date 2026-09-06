@@ -4,8 +4,8 @@
 
 Credentials come from **HashiCorp Vault** (short-lived signed SSH certificates) or from **encrypted rows in the LibreNMS database**, whichever suits your shop.
 
-[![CI](https://github.com/adn/librenms-webterm/actions/workflows/ci.yml/badge.svg)](https://github.com/adn/librenms-webterm/actions/workflows/ci.yml)
-[![Packagist](https://img.shields.io/packagist/v/adn/librenms-webterm)](https://packagist.org/packages/adn/librenms-webterm)
+[![CI](https://github.com/AdaptiveDataNetworks/librenms-webterm/actions/workflows/ci.yml/badge.svg)](https://github.com/AdaptiveDataNetworks/librenms-webterm/actions/workflows/ci.yml)
+[![Packagist](https://img.shields.io/packagist/v/adaptivedatanetworks/librenms-webterm)](https://packagist.org/packages/adaptivedatanetworks/librenms-webterm)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 > **Status: pre-release, under active development.** Not yet suitable for production. See [the roadmap](#roadmap).
@@ -64,14 +64,14 @@ Install the plugin as the `librenms` user — **not as root**, which leaves a ro
 
 ```bash
 su - librenms
-./lnms plugin:add adn/librenms-webterm
+./lnms plugin:add adaptivedatanetworks/librenms-webterm
 php artisan route:clear
 ```
 
 Then enable it under **Overview → Plugins → Plugin Admin**, and install the gateway:
 
 ```bash
-curl -fsSLO https://github.com/adn/librenms-webterm/releases/latest/download/install.sh
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
 # Read it. Then:
 sh install.sh --version vX.Y.Z
 ```

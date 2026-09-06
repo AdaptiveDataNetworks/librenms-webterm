@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Librenms;
+namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
-use Adn\WebTerm\Support\Guard;
-use Adn\WebTerm\Support\IpGuard;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Support\IpGuard;
 
 /**
  * Resolves a LibreNMS device to the IP literal and port the gateway will dial.

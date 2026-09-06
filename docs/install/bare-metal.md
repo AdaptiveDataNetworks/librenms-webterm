@@ -7,7 +7,7 @@ The classic `/opt/librenms` install with nginx or Apache and php-fpm.
 ```bash
 # LibreNMS server, as the librenms user
 cd /opt/librenms
-./lnms plugin:add adn/librenms-webterm
+./lnms plugin:add adaptivedatanetworks/librenms-webterm
 php artisan route:clear
 ```
 
@@ -30,7 +30,7 @@ Prefer a distribution package:
 
     ```bash
     # as root
-    curl -fsSLO https://github.com/adn/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
     apt install ./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
     ```
 
@@ -38,7 +38,7 @@ Prefer a distribution package:
 
     ```bash
     # as root
-    curl -fsSLO https://github.com/adn/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
     dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
     ```
 
@@ -46,7 +46,7 @@ Prefer a distribution package:
 
     ```bash
     # as root
-    curl -fsSLO https://github.com/adn/librenms-webterm/releases/download/vX.Y.Z/install.sh
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/install.sh
     less install.sh                       # read it first
     sh install.sh --version vX.Y.Z
     ```

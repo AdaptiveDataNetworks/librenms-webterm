@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\HostKeys\HostKeyManager;
-use Adn\WebTerm\Librenms\DeviceTarget;
-use Adn\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\HostKeys\HostKeyManager;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
 use Illuminate\Console\Command;
 use Throwable;
 

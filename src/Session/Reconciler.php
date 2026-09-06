@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Session;
+namespace AdaptiveDataNetworks\WebTerm\Session;
 
-use Adn\WebTerm\Audit\AuditLogger;
-use Adn\WebTerm\Audit\Event;
-use Adn\WebTerm\Authorization\ShellAuthorizer;
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Gateway\GatewayException;
-use Adn\WebTerm\Models\Session as SessionModel;
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
+use AdaptiveDataNetworks\WebTerm\Models\Session as SessionModel;
 use Illuminate\Support\Carbon;
 
 /**

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Session\Reconciler;
+use AdaptiveDataNetworks\WebTerm\Session\Reconciler;
 use Illuminate\Console\Command;
 
 /**

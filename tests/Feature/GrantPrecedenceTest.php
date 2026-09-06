@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Authorization\EffectiveLimits;
-use Adn\WebTerm\Authorization\GrantRepository;
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Models\Grant;
-use Adn\WebTerm\Tests\Support\FakeDevice;
-use Adn\WebTerm\Tests\Support\FakeGroups;
-use Adn\WebTerm\Tests\Support\FakeRoles;
-use Adn\WebTerm\Tests\Support\FakeUser;
+use AdaptiveDataNetworks\WebTerm\Authorization\EffectiveLimits;
+use AdaptiveDataNetworks\WebTerm\Authorization\GrantRepository;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeDevice;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeGroups;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeRoles;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 

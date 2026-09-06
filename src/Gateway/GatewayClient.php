@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Gateway;
+namespace AdaptiveDataNetworks\WebTerm\Gateway;
 
-use Adn\WebTerm\Protocol;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Support\Facades\Cache;
 use SensitiveParameter;
 

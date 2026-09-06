@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Support\IpGuard;
+use AdaptiveDataNetworks\WebTerm\Support\IpGuard;
 
 /*
 | IpGuard decides where the gateway may connect. The gateway links no resolver,

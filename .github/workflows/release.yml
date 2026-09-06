@@ -47,7 +47,7 @@ jobs:
 
       # Attests that these artifacts were built by this workflow from this
       # commit. Consumers verify with:
-      #   gh attestation verify <file> --repo adn/librenms-webterm
+      #   gh attestation verify <file> --repo adaptivedatanetworks/librenms-webterm
       - uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1.4.4
         with:
           subject-path: gateway/dist/checksums.txt

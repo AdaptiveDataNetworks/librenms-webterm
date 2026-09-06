@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Credentials\CredentialManager;
-use Adn\WebTerm\Gateway\GatewayClient;
-use Adn\WebTerm\Models\Ability;
-use Adn\WebTerm\Models\Grant;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Protocol;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Models\Ability;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Console\Command;
 use Throwable;
 

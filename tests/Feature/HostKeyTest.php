@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Credentials\CredentialMethod;
-use Adn\WebTerm\HostKeys\HostKeyManager;
-use Adn\WebTerm\Models\AuditEntry;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Tests\Support\ScanningGateway;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\HostKeys\HostKeyManager;
+use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\ScanningGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Authorization;
+namespace AdaptiveDataNetworks\WebTerm\Authorization;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 

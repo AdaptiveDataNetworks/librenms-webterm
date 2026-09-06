@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Session;
+namespace AdaptiveDataNetworks\WebTerm\Session;
 
 /**
  * What the browser needs to open a terminal, and nothing else.

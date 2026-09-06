@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials\Vault;
+namespace AdaptiveDataNetworks\WebTerm\Credentials\Vault;
 
-use Adn\WebTerm\Credentials\Exceptions\ProviderUnavailableException;
+use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\ProviderUnavailableException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use SensitiveParameter;

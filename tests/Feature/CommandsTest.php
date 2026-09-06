@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Models\AuditEntry;
-use Adn\WebTerm\Models\Grant;
-use Adn\WebTerm\Models\Setting;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);

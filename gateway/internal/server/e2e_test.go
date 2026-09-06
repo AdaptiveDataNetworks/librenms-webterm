@@ -17,8 +17,8 @@ import (
 	"github.com/coder/websocket"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/adn/librenms-webterm/gateway/internal/config"
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/config"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
 )
 
 /*

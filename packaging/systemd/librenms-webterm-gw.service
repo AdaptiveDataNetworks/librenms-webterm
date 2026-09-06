@@ -1,6 +1,6 @@
 [Unit]
 Description=LibreNMS WebTerm SSH gateway
-Documentation=https://adn.github.io/librenms-webterm/
+Documentation=https://adaptivedatanetworks.github.io/librenms-webterm/
 After=network-online.target
 Wants=network-online.target
 

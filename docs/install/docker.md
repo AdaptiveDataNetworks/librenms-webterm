@@ -5,7 +5,7 @@ The official LibreNMS image runs nginx, php-fpm and snmpd under one supervisor. 
 ## 1. The plugin
 
 ```bash
-docker compose exec --user librenms librenms ./lnms plugin:add adn/librenms-webterm
+docker compose exec --user librenms librenms ./lnms plugin:add adaptivedatanetworks/librenms-webterm
 docker compose exec --user librenms librenms php artisan route:clear
 ```
 
@@ -18,7 +18,7 @@ Enable it under **Overview → Plugins → Plugin Admin**.
 ## 2. Generate a shared secret
 
 ```bash
-docker run --rm ghcr.io/adn/librenms-webterm-gw:X.Y.Z init --path /dev/stdout > ./webterm_gateway_secret
+docker run --rm ghcr.io/adaptivedatanetworks/librenms-webterm-gw:X.Y.Z init --path /dev/stdout > ./webterm_gateway_secret
 chmod 0640 ./webterm_gateway_secret
 ```
 
@@ -29,7 +29,7 @@ Both LibreNMS and the gateway must read this file.
 ```yaml
 services:
   webterm-gateway:
-    image: ghcr.io/adn/librenms-webterm-gw:X.Y.Z
+    image: ghcr.io/adaptivedatanetworks/librenms-webterm-gw:X.Y.Z
     restart: unless-stopped
     expose:
       - "8377"

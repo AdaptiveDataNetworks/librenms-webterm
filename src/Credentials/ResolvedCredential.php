@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Credentials;
+namespace AdaptiveDataNetworks\WebTerm\Credentials;
 
 use DateTimeImmutable;
 use JsonSerializable;

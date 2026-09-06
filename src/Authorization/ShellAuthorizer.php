@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Authorization;
+namespace AdaptiveDataNetworks\WebTerm\Authorization;
 
-use Adn\WebTerm\Authorization\Contracts\VisibilityCheck;
-use Adn\WebTerm\Librenms\DeviceTarget;
-use Adn\WebTerm\Librenms\DeviceVisibility;
-use Adn\WebTerm\Models\Ability;
-use Adn\WebTerm\Models\HostKey;
-use Adn\WebTerm\Models\Session;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\WebTermServiceProvider;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\VisibilityCheck;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceVisibility;
+use AdaptiveDataNetworks\WebTerm\Models\Ability;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Carbon;
 use LibreNMS\Interfaces\Plugins\PluginManagerInterface;

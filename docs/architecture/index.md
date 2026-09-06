@@ -65,5 +65,5 @@ The gateway also checks the `Origin` header against an allow-list and denies by 
 
 ## Further reading
 
-- [`protocol/PROTOCOL.md`](https://github.com/adn/librenms-webterm/blob/main/protocol/PROTOCOL.md) — the normative wire specification
+- [`protocol/PROTOCOL.md`](https://github.com/AdaptiveDataNetworks/librenms-webterm/blob/main/protocol/PROTOCOL.md) — the normative wire specification
 - [Should you enable this?](../security/index.md) — the risks this design does *not* eliminate

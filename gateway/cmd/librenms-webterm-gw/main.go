@@ -21,9 +21,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/adn/librenms-webterm/gateway/internal/config"
-	"github.com/adn/librenms-webterm/gateway/internal/proto"
-	"github.com/adn/librenms-webterm/gateway/internal/server"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/config"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/proto"
+	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/server"
 )
 
 // Set at build time by GoReleaser.
@@ -67,7 +67,7 @@ Usage:
   librenms-webterm-gw version       Print version and protocol information
 
 Configuration is read from the environment; see the documentation at
-https://adn.github.io/librenms-webterm/gateway/configure/
+https://adaptivedatanetworks.github.io/librenms-webterm/gateway/configure/
 `, version)
 }
 

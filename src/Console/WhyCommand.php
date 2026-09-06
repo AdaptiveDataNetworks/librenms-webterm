@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Console;
+namespace AdaptiveDataNetworks\WebTerm\Console;
 
-use Adn\WebTerm\Authorization\ShellAuthorizer;
-use Adn\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
 use Illuminate\Console\Command;
 
 /**

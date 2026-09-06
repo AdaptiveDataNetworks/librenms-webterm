@@ -47,7 +47,7 @@ nfpms:
   - id: packages
     package_name: librenms-webterm-gw
     vendor: adn
-    homepage: https://github.com/adn/librenms-webterm
+    homepage: https://github.com/AdaptiveDataNetworks/librenms-webterm
     maintainer: Lee Clements <lee.clements@adaptivedatanetworks.com>
     description: |
       SSH gateway for the LibreNMS WebTerm plugin.
@@ -72,29 +72,29 @@ nfpms:
 
 dockers:
   - image_templates:
-      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-amd64
+      - ghcr.io/adaptivedatanetworks/librenms-webterm-gw:{{ .Version }}-amd64
     dockerfile: packaging/Dockerfile
     use: buildx
     goarch: amd64
     build_flag_templates:
       - --platform=linux/amd64
-      - --label=org.opencontainers.image.source=https://github.com/adn/librenms-webterm
+      - --label=org.opencontainers.image.source=https://github.com/AdaptiveDataNetworks/librenms-webterm
       - --label=org.opencontainers.image.licenses=GPL-3.0-or-later
   - image_templates:
-      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-arm64
+      - ghcr.io/adaptivedatanetworks/librenms-webterm-gw:{{ .Version }}-arm64
     dockerfile: packaging/Dockerfile
     use: buildx
     goarch: arm64
     build_flag_templates:
       - --platform=linux/arm64
-      - --label=org.opencontainers.image.source=https://github.com/adn/librenms-webterm
+      - --label=org.opencontainers.image.source=https://github.com/AdaptiveDataNetworks/librenms-webterm
       - --label=org.opencontainers.image.licenses=GPL-3.0-or-later
 
 docker_manifests:
-  - name_template: ghcr.io/adn/librenms-webterm-gw:{{ .Version }}
+  - name_template: ghcr.io/adaptivedatanetworks/librenms-webterm-gw:{{ .Version }}
     image_templates:
-      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-amd64
-      - ghcr.io/adn/librenms-webterm-gw:{{ .Version }}-arm64
+      - ghcr.io/adaptivedatanetworks/librenms-webterm-gw:{{ .Version }}-amd64
+      - ghcr.io/adaptivedatanetworks/librenms-webterm-gw:{{ .Version }}-arm64
 
 release:
   prerelease: auto
@@ -103,11 +103,11 @@ release:
 
     Every artifact is covered by build provenance attestation:
 
-        gh attestation verify librenms-webterm-gw_..._linux_amd64.tar.gz --repo adn/librenms-webterm
+        gh attestation verify librenms-webterm-gw_..._linux_amd64.tar.gz --repo adaptivedatanetworks/librenms-webterm
 
     The plugin half is installed separately, through LibreNMS:
 
-        ./lnms plugin:add adn/librenms-webterm
+        ./lnms plugin:add adaptivedatanetworks/librenms-webterm
 
     Plugin and gateway version independently and support one protocol version
     of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.

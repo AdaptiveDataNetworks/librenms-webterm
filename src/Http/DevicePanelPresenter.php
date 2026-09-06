@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Adn\WebTerm\Http;
+namespace AdaptiveDataNetworks\WebTerm\Http;
 
-use Adn\WebTerm\Authorization\ReasonCode;
-use Adn\WebTerm\Authorization\ShellAuthorizer;
-use Adn\WebTerm\Models\Target;
-use Adn\WebTerm\Support\Guard;
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
+use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Cache;
 
