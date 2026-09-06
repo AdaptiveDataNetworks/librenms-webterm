@@ -86,6 +86,16 @@ return [
 
             'kv2' => [
                 'mount' => env('WEBTERM_VAULT_KV_MOUNT', 'secret'),
+
+                // Only {device_id}, {hostname} and {principal} are substituted,
+                // each validated and URL-encoded. A richer template language
+                // here would be a path-traversal surface into a secret store.
+                'path_template' => env('WEBTERM_VAULT_KV_PATH', 'librenms/devices/{device_id}'),
+
+                'field_map' => [
+                    'password' => env('WEBTERM_VAULT_KV_PASSWORD_FIELD', 'password'),
+                    'private_key' => env('WEBTERM_VAULT_KV_KEY_FIELD', 'private_key'),
+                ],
             ],
 
             'tls' => [

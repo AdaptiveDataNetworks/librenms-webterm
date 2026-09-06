@@ -150,7 +150,7 @@ class GatewayClient
      * @param  array<string, mixed>|null  $payload
      * @return array<string, mixed>
      */
-    private function send(string $method, string $path, ?array $payload = null, bool $retryable = true): array
+    private function send(string $method, string $path, #[SensitiveParameter] ?array $payload = null, bool $retryable = true): array
     {
         $this->assertCircuitClosed();
 

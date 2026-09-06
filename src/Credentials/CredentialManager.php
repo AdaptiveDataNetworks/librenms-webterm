@@ -6,6 +6,7 @@ namespace Adn\WebTerm\Credentials;
 
 use Adn\WebTerm\Credentials\Contracts\CredentialProvider;
 use Adn\WebTerm\Credentials\Drivers\DatabaseCredentialProvider;
+use Adn\WebTerm\Credentials\Drivers\VaultCredentialProvider;
 use Illuminate\Support\Manager;
 
 /**
@@ -27,5 +28,10 @@ final class CredentialManager extends Manager
     public function createDatabaseDriver(): CredentialProvider
     {
         return new DatabaseCredentialProvider;
+    }
+
+    public function createVaultDriver(): CredentialProvider
+    {
+        return new VaultCredentialProvider;
     }
 }
