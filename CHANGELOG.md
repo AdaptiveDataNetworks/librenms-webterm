@@ -6,6 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.3] - 2026-09-07
+
+### Fixed
+
+- **`webterm:config set` had no effect on the running application.** Settings
+  were written to `webterm_config` and applied to the CLI process, but nothing
+  ever read the table back, so the next web request fell back to the config
+  file. An administrator running `webterm:config set enabled true` would see
+  the command succeed, and every route would still return 403 with the plugin
+  reporting itself switched off. This blocked the documented setup at its first
+  step.
+
+  Runtime settings are now applied during boot, before anything consults them.
+  Loading tolerates a database that is absent, unmigrated or unreachable, since
+  it runs on every request -- including during `lnms plugin:add`, before the
+  migrations exist.
+
+- Stored settings are converted to the type the config declares. Previously a
+  value would have arrived as a string, and the string `"false"` is truthy --
+  so a kill switch set to `false` would have read as ON.
+
 ## [1.0.2] - 2026-09-07
 
 Packaging fixes. **The plugin code is unchanged** from 1.0.0.
@@ -91,6 +112,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.3]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.3
 [1.0.2]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.2
 [1.0.1]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.1
 [1.0.0]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.0

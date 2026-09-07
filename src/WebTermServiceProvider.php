@@ -19,6 +19,7 @@ use AdaptiveDataNetworks\WebTerm\Console\WhyCommand;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
 use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
+use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
 use Illuminate\Support\ServiceProvider;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;
 use LibreNMS\Interfaces\Plugins\Hooks\SettingsHook;
@@ -82,6 +83,11 @@ final class WebTermServiceProvider extends ServiceProvider
 
     private function bootPlugin(): void
     {
+        // Runtime settings override the config file, and must be applied before
+        // anything consults them -- the kill switch included. Without this,
+        // `webterm:config set` wrote a row nothing ever read.
+        RuntimeSettings::apply();
+
         // PluginManagerInterface is bound by LibreNMS core only. Under
         // orchestra/testbench -- and on any LibreNMS predating the v2 plugin
         // system -- it is absent, and resolving it would throw. Guarding here

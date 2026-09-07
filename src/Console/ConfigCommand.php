@@ -7,6 +7,8 @@ namespace AdaptiveDataNetworks\WebTerm\Console;
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
 use AdaptiveDataNetworks\WebTerm\Models\Setting;
+use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
+use AdaptiveDataNetworks\WebTerm\Support\SettingValue;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -97,7 +99,8 @@ final class ConfigCommand extends Command
             ['value' => $value, 'updated_at' => Carbon::now()]
         );
 
-        config()->set('webterm.'.$key, $this->coerce($value));
+        config()->set('webterm.'.$key, SettingValue::coerce($value, config('webterm.'.$key)));
+        RuntimeSettings::flush();
 
         $audit->log(Event::ConfigChanged, detail: ['key' => $key, 'value' => $this->display($key, $value)]);
 
@@ -110,6 +113,7 @@ final class ConfigCommand extends Command
     {
         $key = (string) $this->argument('key');
         Setting::query()->where('key', $key)->delete();
+        RuntimeSettings::flush();
 
         $audit->log(Event::ConfigChanged, detail: ['key' => $key, 'value' => '(removed)']);
         $this->info(sprintf('%s reset to its configured default.', $key));
@@ -122,15 +126,6 @@ final class ConfigCommand extends Command
         $this->error('Action must be one of: list, get, set, unset.');
 
         return self::FAILURE;
-    }
-
-    private function coerce(string $value): mixed
-    {
-        return match (strtolower($value)) {
-            'true' => true,
-            'false' => false,
-            default => is_numeric($value) ? $value + 0 : $value,
-        };
     }
 
     /**
