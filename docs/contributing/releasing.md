@@ -38,12 +38,31 @@ The release workflow builds the gateway for amd64 and arm64, publishes deb/rpm/t
 
 ## After tagging
 
-- [ ] Packagist shows the new version (the webhook is near-instant; without it, crawling takes about a week)
-- [ ] GitHub Releases lists all artifacts and `checksums.txt`
-- [ ] `gh attestation verify <artifact> --repo adaptivedatanetworks/librenms-webterm` passes
+Run the checker first — it covers most of this list and does not get the
+comparison wrong:
+
+```bash
+php tools/verify-release.php v1.2.3
+```
+
+It verifies that the git tag, Packagist's published reference, the GitHub
+release assets and the provenance attestation all point at the **same commit**.
+
+!!! warning "Why this check exists"
+
+    On 1.0.0 they did not agree. Packagist had already published the first tag
+    when a broken release workflow was corrected and the tag re-cut; stable
+    versions are immutable, so Packagist kept the original commit. The manual
+    check that should have caught it compared against `1.0.0` while Packagist
+    keys the version `v1.0.0`, and so reported success.
+
+    If this fails on a mismatch, **do not re-tag** — it cannot help. Supersede
+    with the next patch release.
+
+Then confirm what the script does not cover:
+
 - [ ] `ghcr.io/adaptivedatanetworks/librenms-webterm-gw:1.2.3` pulls
-- [ ] The docs site shows the new version, **and it appears in `versions.json`** — the workflow checks this, but confirm
-- [ ] `mike` has moved the `latest` alias
+- [ ] The docs site shows the new version and `mike` has moved the `latest` alias
 
 ## Protocol changes
 

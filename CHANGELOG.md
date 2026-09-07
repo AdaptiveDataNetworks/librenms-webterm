@@ -6,6 +6,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.1] - 2026-09-07
+
+Release engineering only. **The plugin code is byte-identical to 1.0.0** --
+`src/`, `config/`, `database/`, `routes/` and `resources/` are unchanged.
+
+### Fixed
+
+- The release workflow now builds successfully. GoReleaser ran with
+  `workdir: gateway` while every path in its config was root-relative, and the
+  build-provenance step pointed at the old `dist/` location. Neither could be
+  caught by CI, which never runs the release workflow -- it only runs on a tag.
+- Packagist's `1.0.0` records commit `46346ae`, which is not the commit the
+  `v1.0.0` tag or the release binaries were built from. Packagist had already
+  published the first tag; stable versions are immutable, so the corrected
+  re-tag could not update it. 1.0.1 makes Packagist, the git tag and the
+  attested artifacts reference one commit.
+
+### Added
+
+- `tools/verify-release.php`, which checks that git, Packagist, the GitHub
+  release and the provenance attestation all agree on the same commit. The
+  check that should have caught the above was itself wrong: it compared
+  against `1.0.0` while Packagist keys the version `v1.0.0`, so it reported
+  success on a mismatch.
+
 ## [1.0.0] - 2026-09-07
 
 ### Added
@@ -38,4 +63,5 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.1]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.1
 [1.0.0]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.0
