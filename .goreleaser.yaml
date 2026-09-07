@@ -2,12 +2,19 @@ version: 2
 
 project_name: librenms-webterm-gw
 
+# GoReleaser runs from the REPOSITORY ROOT, not from gateway/. The Go module
+# lives in gateway/, so builds.dir points the compiler there while every path
+# below stays relative to the root -- LICENSE, README.md and packaging/ are all
+# root-level, and GoReleaser refuses ".." in archive paths.
 before:
   hooks:
-    - go mod tidy
+    # -C changes directory before running; before.hooks takes plain strings,
+    # not a cmd/dir map.
+    - go -C gateway mod tidy
 
 builds:
   - id: gateway
+    dir: gateway
     main: ./cmd/librenms-webterm-gw
     binary: librenms-webterm-gw
     # Static: the binary must run on a minimal container and on distributions
@@ -28,6 +35,9 @@ builds:
 archives:
   - id: default
     formats: [tar.gz]
+    # GoReleaser runs with workdir: gateway, so these are relative to that --
+    # the repository root is one level up. Getting this wrong is invisible
+    # until a tag is pushed, because the release workflow never runs in CI.
     files:
       - LICENSE
       - README.md

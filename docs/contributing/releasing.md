@@ -6,7 +6,19 @@
 composer test
 php tools/composer-guard.php
 php tools/check-docs.php
-cd gateway && go test ./... && gofmt -l .
+cd gateway && go test ./... && gofmt -l . && cd ..
+
+# The release workflow is NOT exercised by CI -- it only runs on a tag. Prove
+# it builds before you create one:
+goreleaser check
+goreleaser release --snapshot --clean --skip=docker,sign
+```
+
+That snapshot produces the real archives, deb and rpm in `dist/`. Check that
+the tarball contains `LICENSE`, and that the binary runs:
+
+```bash
+tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz
 ```
 
 Update `CHANGELOG.md`. Confirm the compatibility matrix in `docs/reference/compatibility.md` still reflects reality.

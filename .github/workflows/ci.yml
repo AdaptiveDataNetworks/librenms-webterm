@@ -167,4 +167,3 @@ jobs:
         with:
           version: '~> v2'
           args: check
-          workdir: gateway
