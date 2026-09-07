@@ -59,11 +59,19 @@ printf("  git tag %s -> %s\n", $tag, substr($tagged, 0, 12));
 
 /* ---- what Packagist published ----------------------------------------- */
 
-$data = fetch('https://packagist.org/packages/'.PACKAGE.'.json');
+// Read repo.packagist.org/p2/, which is the metadata Composer actually
+// consumes when resolving. The packagist.org/packages/<name>.json endpoint is
+// a cached human-facing view that can lag it by a long way -- polling that one
+// reported "not published" for a release that had in fact been live for some
+// time.
+$data = fetch('https://repo.packagist.org/p2/'.PACKAGE.'.json');
 if ($data === null) {
-    $errors[] = 'Could not reach Packagist.';
+    $errors[] = 'Could not reach the Packagist metadata endpoint.';
 } else {
-    $versions = $data['package']['versions'] ?? [];
+    $versions = [];
+    foreach ($data['packages'][PACKAGE] ?? [] as $version) {
+        $versions[(string) ($version['version'] ?? '')] = $version;
+    }
 
     // Packagist keys tags WITH the v prefix. Normalise both sides -- comparing
     // raw strings is the exact bug this script exists to prevent.
