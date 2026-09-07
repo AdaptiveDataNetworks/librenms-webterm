@@ -62,7 +62,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - run: vendor/bin/pint --test
       - run: vendor/bin/phpstan analyse --ansi --no-progress
       - run: vendor/bin/pest --colors=always
@@ -104,7 +104,7 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
         with:
           working-directory: ${{ github.workspace }}
 
