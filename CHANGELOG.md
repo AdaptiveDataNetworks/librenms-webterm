@@ -6,6 +6,34 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.2] - 2026-09-07
+
+Packaging fixes. **The plugin code is unchanged** from 1.0.0.
+
+### Fixed
+
+- `install.sh` is now a release asset. The documentation tells operators to
+  download it, read it, then run it -- but it existed only inside the release
+  tarballs, so the documented `curl` 404'd. Being inside the tarball also
+  defeats the purpose: you cannot read an installer before downloading the
+  thing it installs.
+- The release tarball now contains `gateway.env.example`. It did not, and
+  `install.sh` skipped copying it silently, leaving operators with a gateway
+  that starts, refuses every browser connection because no origin is
+  allow-listed, and provides no config file to edit. `install.sh` now fails
+  loudly if the file is missing.
+
+### Added
+
+- Migrations are tested against MariaDB 10.6, MariaDB 11 and MySQL 8.0 in CI.
+  The unit suite runs on SQLite, which cannot exercise the reason the schema is
+  written as it is: on MariaDB below 10.10 the first non-nullable TIMESTAMP
+  silently acquires `ON UPDATE CURRENT_TIMESTAMP`, which would rewrite ticket
+  and audit rows. Verified that no column acquires it and that rollback is
+  clean.
+- `tools/verify-release.php` asserts every asset the documentation names is
+  actually published.
+
 ## [1.0.1] - 2026-09-07
 
 Release engineering only. **The plugin code is byte-identical to 1.0.0** --
@@ -63,5 +91,6 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.2]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.2
 [1.0.1]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.1
 [1.0.0]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.0
