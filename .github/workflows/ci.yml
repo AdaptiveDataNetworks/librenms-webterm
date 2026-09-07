@@ -167,3 +167,48 @@ jobs:
         with:
           version: '~> v2'
           args: check
+
+  migrations:
+    name: Migrations on ${{ matrix.db.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db:
+          # 10.6 matters specifically: MariaDB below 10.10 gives the first
+          # non-nullable TIMESTAMP an implicit ON UPDATE CURRENT_TIMESTAMP,
+          # which would rewrite ticket and audit rows. The unit suite runs on
+          # SQLite and cannot see that.
+          - { name: 'MariaDB 10.6', image: 'mariadb:10.6' }
+          - { name: 'MariaDB 11', image: 'mariadb:11' }
+          - { name: 'MySQL 8.0', image: 'mysql:8.0' }
+    services:
+      db:
+        image: ${{ matrix.db.image }}
+        env:
+          MARIADB_ROOT_PASSWORD: r00t
+          MARIADB_DATABASE: librenms
+          MYSQL_ROOT_PASSWORD: r00t
+          MYSQL_DATABASE: librenms
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h 127.0.0.1 -uroot -pr00t"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+      - uses: ramsey/composer-install@v3
+
+      - name: Migrate, inspect the schema, then roll back
+        env:
+          DBHOST: 127.0.0.1
+          DBPORT: 3306
+          DBUSER: root
+          DBPASS: r00t
+          DBNAME: librenms
+        run: php tools/migration-check.php "${{ matrix.db.name }}"
