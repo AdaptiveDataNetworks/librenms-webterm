@@ -1693,12 +1693,21 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>composer<span class="w"> </span><span class="nb">test</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>php<span class="w"> </span>tools/composer-guard.php
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>php<span class="w"> </span>tools/check-docs.php
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">cd</span><span class="w"> </span>gateway<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>gofmt<span class="w"> </span>-l<span class="w"> </span>.
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">cd</span><span class="w"> </span>gateway<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>gofmt<span class="w"> </span>-l<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># The release workflow is NOT exercised by CI -- it only runs on a tag. Prove</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># it builds before you create one:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>goreleaser<span class="w"> </span>check
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>goreleaser<span class="w"> </span>release<span class="w"> </span>--snapshot<span class="w"> </span>--clean<span class="w"> </span>--skip<span class="o">=</span>docker,sign
+</code></pre></div>
+<p>That snapshot produces the real archives, deb and rpm in <code>dist/</code>. Check that
+the tarball contains <code>LICENSE</code>, and that the binary runs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tar<span class="w"> </span>-tzf<span class="w"> </span>dist/librenms-webterm-gw_*_linux_amd64.tar.gz
 </code></pre></div>
 <p>Update <code>CHANGELOG.md</code>. Confirm the compatibility matrix in <code>docs/reference/compatibility.md</code> still reflects reality.</p>
 <h2 id="tagging">Tagging<a class="headerlink" href="#tagging" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Release v1.2.3"</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Release v1.2.3"</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Stable versions on Packagist are immutable</p>
