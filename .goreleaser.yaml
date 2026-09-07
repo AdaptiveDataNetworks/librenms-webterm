@@ -42,6 +42,10 @@ archives:
       - LICENSE
       - README.md
       - packaging/systemd/librenms-webterm-gw.service
+      # install.sh copies this to /etc/librenms-webterm/gateway.env. Without it
+      # the gateway starts with no allowed origins and refuses every browser
+      # connection, with no config file for the operator to edit.
+      - packaging/systemd/librenms-webterm-gw.env.example
       - packaging/install.sh
 
 checksum:
@@ -108,6 +112,13 @@ docker_manifests:
 
 release:
   prerelease: auto
+
+  # The documentation tells operators to download install.sh, read it, then run
+  # it. That only works if it is a release asset in its own right -- inside the
+  # tarball it is unreachable until after you have already downloaded and
+  # trusted the tarball.
+  extra_files:
+    - glob: packaging/install.sh
   footer: |
     ## Verifying this release
 

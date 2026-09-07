@@ -129,6 +129,25 @@ if ($release === null || ! isset($release['assets'])) {
     }
 }
 
+/* ---- assets the documentation tells people to download ----------------- */
+
+// The docs instruct operators to `curl .../releases/latest/download/install.sh`.
+// That 404'd for the whole of 1.0.0 and 1.0.1 because install.sh existed only
+// inside the tarballs. Anything the documentation names must be a release asset
+// in its own right.
+if ($release !== null && isset($release['assets'])) {
+    $names = array_map(static fn (array $a): string => (string) ($a['name'] ?? ''), $release['assets']);
+
+    foreach (['install.sh', 'checksums.txt'] as $required) {
+        if (! in_array($required, $names, true)) {
+            $errors[] = sprintf(
+                '%s is not a release asset, but the documentation tells operators to download it.',
+                $required
+            );
+        }
+    }
+}
+
 /* ---- provenance: the release notes tell people to verify it ------------ */
 
 if ($checksumsUrl === null) {

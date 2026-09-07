@@ -119,9 +119,19 @@ if [ ! -f "$CONFDIR/gateway.secret" ]; then
     echo "Generated a shared secret at $CONFDIR/gateway.secret"
 fi
 
-if [ ! -f "$CONFDIR/gateway.env" ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.env.example" ]; then
+if [ ! -f "$CONFDIR/gateway.env" ]; then
+    if [ ! -f "$TMP/packaging/systemd/librenms-webterm-gw.env.example" ]; then
+        # Do not skip silently. Without gateway.env the gateway starts with no
+        # allowed origins, refuses every browser connection, and leaves the
+        # operator with no file to edit and no clue why.
+        echo "error: the release tarball is missing packaging/systemd/librenms-webterm-gw.env.example" >&2
+        echo "This is a packaging bug; please report it at https://github.com/$REPO/issues" >&2
+        exit 1
+    fi
+
     install -m 0640 -o root -g librenms-webterm \
         "$TMP/packaging/systemd/librenms-webterm-gw.env.example" "$CONFDIR/gateway.env"
+    echo "Wrote $CONFDIR/gateway.env"
 fi
 
 if [ -d /lib/systemd/system ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.service" ]; then
