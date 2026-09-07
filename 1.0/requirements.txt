@@ -1,0 +1,5 @@
+# Pinned so a docs build is reproducible and a compromised upstream release
+# cannot silently change what we publish. Regenerate with:
+#   pip-compile --generate-hashes docs/requirements.in
+mkdocs-material==9.5.49
+mkdocs==1.6.1
