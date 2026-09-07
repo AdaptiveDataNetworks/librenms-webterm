@@ -163,7 +163,7 @@ jobs:
           cache-dependency-path: gateway/go.sum
 
       - name: GoReleaser config must be valid
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7.2.3
         with:
           version: '~> v2'
           args: check
