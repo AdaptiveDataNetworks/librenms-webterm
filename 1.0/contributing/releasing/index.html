@@ -1715,13 +1715,26 @@ the tarball contains <code>LICENSE</code>, and that the binary runs:</p>
 </div>
 <p>The release workflow builds the gateway for amd64 and arm64, publishes deb/rpm/tarball/container artifacts, attaches build provenance, and deploys the versioned documentation.</p>
 <h2 id="after-tagging">After tagging<a class="headerlink" href="#after-tagging" title="Permanent link">&para;</a></h2>
+<p>Run the checker first — it covers most of this list and does not get the
+comparison wrong:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>php<span class="w"> </span>tools/verify-release.php<span class="w"> </span>v1.2.3
+</code></pre></div>
+<p>It verifies that the git tag, Packagist's published reference, the GitHub
+release assets and the provenance attestation all point at the <strong>same commit</strong>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Why this check exists</p>
+<p>On 1.0.0 they did not agree. Packagist had already published the first tag
+when a broken release workflow was corrected and the tag re-cut; stable
+versions are immutable, so Packagist kept the original commit. The manual
+check that should have caught it compared against <code>1.0.0</code> while Packagist
+keys the version <code>v1.0.0</code>, and so reported success.</p>
+<p>If this fails on a mismatch, <strong>do not re-tag</strong> — it cannot help. Supersede
+with the next patch release.</p>
+</div>
+<p>Then confirm what the script does not cover:</p>
 <ul>
-<li>[ ] Packagist shows the new version (the webhook is near-instant; without it, crawling takes about a week)</li>
-<li>[ ] GitHub Releases lists all artifacts and <code>checksums.txt</code></li>
-<li>[ ] <code>gh attestation verify &lt;artifact&gt; --repo adaptivedatanetworks/librenms-webterm</code> passes</li>
 <li>[ ] <code>ghcr.io/adaptivedatanetworks/librenms-webterm-gw:1.2.3</code> pulls</li>
-<li>[ ] The docs site shows the new version, <strong>and it appears in <code>versions.json</code></strong> — the workflow checks this, but confirm</li>
-<li>[ ] <code>mike</code> has moved the <code>latest</code> alias</li>
+<li>[ ] The docs site shows the new version and <code>mike</code> has moved the <code>latest</code> alias</li>
 </ul>
 <h2 id="protocol-changes">Protocol changes<a class="headerlink" href="#protocol-changes" title="Permanent link">&para;</a></h2>
 <p>If <code>protocol/protocol.json</code> changed:</p>
