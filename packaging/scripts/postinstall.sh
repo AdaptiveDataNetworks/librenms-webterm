@@ -20,6 +20,20 @@ if [ ! -f /etc/librenms-webterm/gateway.secret ]; then
     echo ""
 fi
 
+# LibreNMS must be able to read the secret. Doing it here removes the most
+# common way this install stalls: the gateway runs, LibreNMS cannot read the
+# secret, and the failure is not obviously a permissions problem.
+if getent passwd librenms >/dev/null 2>&1; then
+    if ! id -nG librenms 2>/dev/null | tr ' ' '\n' | grep -qx librenms-webterm; then
+        usermod -a -G librenms-webterm librenms
+        echo "Added the librenms user to the librenms-webterm group."
+        echo "Restart php-fpm so it picks up the new group."
+    fi
+else
+    echo "No 'librenms' account found. Once you know which account LibreNMS runs as:"
+    echo "  sudo usermod -a -G librenms-webterm <that-user> && systemctl restart php-fpm"
+fi
+
 if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || true
 fi

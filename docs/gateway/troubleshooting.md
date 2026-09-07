@@ -78,6 +78,31 @@ proxy_buffering off;
     librenms-webterm-gw init --path /etc/librenms-webterm/gateway.secret
     ```
 
+## "gateway.secret exists but is not readable"
+
+The gateway installs the secret as `root:librenms-webterm` mode `0640`, so
+LibreNMS reads it via group membership. **Do not regenerate the secret** --
+the file is fine, the permissions are not.
+
+```bash
+# as root
+usermod -a -G librenms-webterm librenms
+chown root:librenms-webterm /etc/librenms-webterm/gateway.secret
+chmod 0640 /etc/librenms-webterm/gateway.secret
+systemctl restart php-fpm          # or php8.2-fpm, php-fpm74, ... on your distro
+```
+
+Then start a **fresh** shell before re-running doctor -- group membership does
+not reach processes that are already running, including your current login:
+
+```bash
+exit
+su - librenms
+cd /opt/librenms && ./lnms webterm:doctor
+```
+
+Installs from 1.0.4 onward add the LibreNMS user to that group automatically.
+
 ## "The gateway rejected our credentials"
 
 LibreNMS and the gateway are reading different secrets.

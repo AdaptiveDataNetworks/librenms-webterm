@@ -16,15 +16,18 @@ REPO="adaptivedatanetworks/librenms-webterm"
 VERSION=""
 PREFIX="/usr/bin"
 CONFDIR="/etc/librenms-webterm"
+LIBRENMS_USER="librenms"
 DRY_RUN=0
 
 usage() {
     cat <<USAGE
 Usage: sh install.sh --version vX.Y.Z [--prefix /usr/bin] [--dry-run]
 
-  --version   Required. The release to install, e.g. v1.0.0
-  --prefix    Where to install the binary (default: /usr/bin)
-  --dry-run   Print what would happen and stop
+  --version        Required. The release to install, e.g. v1.0.0
+  --prefix         Where to install the binary (default: /usr/bin)
+  --librenms-user  The account LibreNMS runs as (default: librenms). It is added
+                   to the librenms-webterm group so it can read the shared secret.
+  --dry-run        Print what would happen and stop
 
 Prefer your distribution package if there is one:
   https://github.com/$REPO/releases
@@ -35,6 +38,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --version) VERSION="${2:-}"; shift 2 ;;
         --prefix)  PREFIX="${2:-}"; shift 2 ;;
+        --librenms-user) LIBRENMS_USER="${2:-}"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage; exit 2 ;;
@@ -119,6 +123,24 @@ if [ ! -f "$CONFDIR/gateway.secret" ]; then
     echo "Generated a shared secret at $CONFDIR/gateway.secret"
 fi
 
+# LibreNMS has to read this file, and nothing else here can do that for it.
+# Leaving it to the operator was the single most common way the install stalled:
+# the gateway ran, LibreNMS could not read the secret, and doctor reported a
+# failure whose fix was not obvious.
+if getent passwd "$LIBRENMS_USER" >/dev/null 2>&1; then
+    if ! id -nG "$LIBRENMS_USER" 2>/dev/null | tr ' ' '\n' | grep -qx librenms-webterm; then
+        usermod -a -G librenms-webterm "$LIBRENMS_USER"
+        echo "Added $LIBRENMS_USER to the librenms-webterm group."
+        NEED_RELOGIN=1
+    fi
+else
+    echo ""
+    echo "warning: no '$LIBRENMS_USER' account found, so the secret was not shared."
+    echo "         Once you know which account LibreNMS runs as, run:"
+    echo "           sudo usermod -a -G librenms-webterm <that-user>"
+    echo "         and restart php-fpm."
+fi
+
 if [ ! -f "$CONFDIR/gateway.env" ]; then
     if [ ! -f "$TMP/packaging/systemd/librenms-webterm-gw.env.example" ]; then
         # Do not skip silently. Without gateway.env the gateway starts with no
@@ -150,9 +172,15 @@ Before starting it:
        WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com
      Without this every browser connection is refused.
 
-  2. Give LibreNMS read access to the secret, then point the plugin at it:
-       su - librenms
+  2. Point the plugin at the secret:
+       su - $LIBRENMS_USER
+       cd /opt/librenms
        ./lnms webterm:config set gateway.secret_file $CONFDIR/gateway.secret
+
+     $LIBRENMS_USER has been added to the librenms-webterm group so it can read
+     that file. Group membership does not reach processes that are already
+     running, so restart php-fpm and start a fresh shell:
+       systemctl restart php-fpm      # or php8.2-fpm, php-fpm74, ... on your distro
 
   3. Start it:
        systemctl enable --now librenms-webterm-gw

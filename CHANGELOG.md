@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.4] - 2026-09-07
+
+Found during a real first installation.
+
+### Fixed
+
+- **`webterm:doctor` gave dangerous advice when the shared secret existed but
+  could not be read.** It reported the same failure for a missing file and an
+  unreadable one, and suggested `librenms-webterm-gw init` -- which on a
+  working install would replace a secret the gateway is already using and break
+  every session mint. The two cases are now distinct, and the unreadable case
+  explicitly says not to regenerate, naming the actual user, path and commands.
+
+### Changed
+
+- `install.sh` and the deb/rpm postinstall now add the LibreNMS account to the
+  `librenms-webterm` group themselves, instead of telling the operator to
+  "give LibreNMS read access" without saying how. `install.sh` takes
+  `--librenms-user` for installations that run under a different account, and
+  says plainly that php-fpm must be restarted and a fresh shell started, since
+  group membership does not reach running processes.
+
 ## [1.0.3] - 2026-09-07
 
 ### Fixed
@@ -112,6 +134,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.4]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.4
 [1.0.3]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.3
 [1.0.2]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.2
 [1.0.1]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.1

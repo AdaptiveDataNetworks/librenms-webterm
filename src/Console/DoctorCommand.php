@@ -61,6 +61,44 @@ final class DoctorCommand extends Command
         return self::FAILURE;
     }
 
+    /**
+     * What to tell an operator whose secret file exists but cannot be read.
+     *
+     * Separated out so the wording is directly testable. The critical part is
+     * the warning NOT to regenerate: the file is intact, and running `init`
+     * over it would replace a secret the gateway is already using, breaking
+     * every session mint on a working install.
+     */
+    public static function unreadableSecretRemediation(string $path, string $user): string
+    {
+        return implode("\n", [
+            'the file is intact -- do NOT regenerate it. Grant read access instead:',
+            sprintf('             sudo usermod -a -G librenms-webterm %s', $user),
+            sprintf('             sudo chown root:librenms-webterm %s', $path),
+            sprintf('             sudo chmod 0640 %s', $path),
+            '             then log out and back in (group changes do not affect running',
+            '             processes) and restart php-fpm',
+        ]);
+    }
+
+    /**
+     * The account doctor is running as, so the remediation names a real user
+     * rather than saying "the web user" and leaving it to be guessed.
+     */
+    private static function currentUser(): string
+    {
+        if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+            $info = @posix_getpwuid(posix_geteuid());
+            if (is_array($info)) {
+                return (string) $info['name'];
+            }
+        }
+
+        $env = getenv('USER') ?: getenv('LOGNAME');
+
+        return is_string($env) && $env !== '' ? $env : 'the web user';
+    }
+
     private function reportOk(string $label, string $detail = ''): void
     {
         $this->line(sprintf('  <fg=green>PASS</>  %s%s', $label, $detail === '' ? '' : '  <fg=gray>'.$detail.'</>'));
@@ -94,11 +132,35 @@ final class DoctorCommand extends Command
     {
         $path = (string) config('webterm.gateway.secret_file');
 
-        if ($path === '' || ! is_readable($path)) {
+        if ($path === '') {
             $this->reportFail(
                 'Shared secret',
-                sprintf('%s is not readable by this user', $path === '' ? '(unset)' : $path),
-                'librenms-webterm-gw init  (then make it readable by the web user)'
+                'no path configured',
+                './lnms webterm:config set gateway.secret_file /etc/librenms-webterm/gateway.secret'
+            );
+
+            return;
+        }
+
+        // "Missing" and "present but unreadable" need completely different
+        // advice. Telling someone to run `init` when the file already exists
+        // invites them to regenerate a secret the gateway is already using,
+        // which breaks every session mint -- so the two cases are separated.
+        if (! file_exists($path)) {
+            $this->reportFail(
+                'Shared secret',
+                sprintf('%s does not exist', $path),
+                'librenms-webterm-gw init --path '.$path
+            );
+
+            return;
+        }
+
+        if (! is_readable($path)) {
+            $this->reportFail(
+                'Shared secret',
+                sprintf('%s exists but is not readable by %s', $path, self::currentUser()),
+                self::unreadableSecretRemediation($path, self::currentUser())
             );
 
             return;
