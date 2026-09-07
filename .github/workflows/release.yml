@@ -44,12 +44,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # GoReleaser runs from the repository root, so dist/ is at the root too.
+      # Assert it before attesting: the release notes tell users to run
+      # `gh attestation verify`, and shipping artifacts that fail that check
+      # would make the release notes a lie.
+      - name: Assert the artifacts exist before attesting
+        run: |
+          test -f dist/checksums.txt || {
+            echo "::error::dist/checksums.txt is missing -- attestation would be skipped silently"
+            ls -la dist/ || true
+            exit 1
+          }
+          cat dist/checksums.txt
+
       # Attests that these artifacts were built by this workflow from this
       # commit. Consumers verify with:
       #   gh attestation verify <file> --repo adaptivedatanetworks/librenms-webterm
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: gateway/dist/checksums.txt
+          subject-path: dist/checksums.txt
 
   docs:
     name: Publish versioned docs
