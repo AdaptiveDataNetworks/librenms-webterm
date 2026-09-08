@@ -20,6 +20,15 @@ Plugin and gateway are released together and share a version number, but they ar
   or re-running the new release's `install.sh`. Checksum and provenance
   verification included.
 
+- **`install.sh` recited a first-install checklist when upgrading.** Re-running
+  it to upgrade printed "Before starting it: 1. Set your LibreNMS origin...
+  2. Point the plugin at the secret..." -- steps the operator completed on the
+  original install -- which reads like the script has just reset the
+  configuration it in fact left alone. It now detects an existing binary and
+  says what it replaced, what it preserved, and that the running gateway is
+  still the old one until restarted. The pre-flight summary distinguishes the
+  two cases too.
+
 ## [1.0.8] - 2026-09-08
 
 Four defects that between them made a first install impossible to use. All were

@@ -71,12 +71,27 @@ esac
 TARBALL="librenms-webterm-gw_${VERSION#v}_linux_${ARCH}.tar.gz"
 BASE="https://github.com/$REPO/releases/download/$VERSION"
 
+# Captured before anything is overwritten, so the closing summary can tell an
+# operator upgrading an existing gateway what actually changed instead of
+# reciting a first-install checklist they completed months ago.
+PREVIOUS=""
+if [ -x "$PREFIX/librenms-webterm-gw" ]; then
+    PREVIOUS="$("$PREFIX/librenms-webterm-gw" version 2>/dev/null || echo "an unknown version")"
+fi
+
 echo "This will:"
 echo "  * download $BASE/$TARBALL"
 echo "  * verify it against checksums.txt from the same release"
-echo "  * install librenms-webterm-gw to $PREFIX"
-echo "  * create the librenms-webterm system user and $CONFDIR"
-echo "  * install a systemd unit (it will NOT be started)"
+if [ -n "$PREVIOUS" ]; then
+    echo "  * replace $PREFIX/librenms-webterm-gw (currently $PREVIOUS)"
+    echo "  * replace the systemd unit, then reload systemd"
+    echo "  * leave $CONFDIR/gateway.env and gateway.secret untouched"
+    echo "  * NOT restart the running gateway"
+else
+    echo "  * install librenms-webterm-gw to $PREFIX"
+    echo "  * create the librenms-webterm system user and $CONFDIR"
+    echo "  * install a systemd unit (it will NOT be started)"
+fi
 echo ""
 
 if [ "$DRY_RUN" -eq 1 ]; then
@@ -88,6 +103,7 @@ if [ "$(id -u)" -ne 0 ]; then
     echo "error: run this as root." >&2
     exit 1
 fi
+
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -162,7 +178,25 @@ if [ -d /lib/systemd/system ] && [ -f "$TMP/packaging/systemd/librenms-webterm-g
     systemctl daemon-reload || true
 fi
 
-cat <<NEXT
+if [ -n "$PREVIOUS" ]; then
+    cat <<UPGRADED
+
+Upgraded to $("$PREFIX/librenms-webterm-gw" version)
+      from $PREVIOUS
+
+Your $CONFDIR/gateway.env and gateway.secret were left as they were.
+
+The running gateway is still the old binary until you restart it:
+
+  systemctl restart librenms-webterm-gw
+  su - $LIBRENMS_USER -c 'cd /opt/librenms && ./lnms webterm:doctor'
+
+Restarting ends live sessions. Each one is told why before the socket closes.
+
+Documentation: https://adaptivedatanetworks.github.io/librenms-webterm/
+UPGRADED
+else
+    cat <<NEXT
 
 Installed $("$PREFIX/librenms-webterm-gw" version)
 
@@ -177,9 +211,8 @@ Before starting it:
        cd /opt/librenms
        ./lnms webterm:config set gateway.secret_file $CONFDIR/gateway.secret
 
-     $LIBRENMS_USER has been added to the librenms-webterm group so it can read
-     that file. Group membership does not reach processes that are already
-     running, so restart php-fpm and start a fresh shell:
+     Group membership does not reach processes that are already running, so
+     restart php-fpm and start a fresh shell:
        systemctl restart php-fpm      # or php8.2-fpm, php-fpm74, ... on your distro
 
   3. Start it:
@@ -190,3 +223,4 @@ Before starting it:
 
 Documentation: https://adaptivedatanetworks.github.io/librenms-webterm/
 NEXT
+fi
