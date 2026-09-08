@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [Unreleased]
+
+### Fixed
+
+- **The documented way to upgrade the gateway could not work.** `upgrading.md`
+  said `apt install --only-upgrade librenms-webterm-gw    # or dnf upgrade`,
+  which presupposes a package repository. There isn't one -- releases are
+  GitHub assets -- so those commands never find a newer gateway. The page now
+  says so plainly, shows how to tell a packaged install from a tarball one
+  (they do not mix; `install.sh` refuses to run over a package), and gives the
+  real commands for each: `dnf install ./<file>.rpm`, `apt install ./<file>.deb`,
+  or re-running the new release's `install.sh`. Checksum and provenance
+  verification included.
+
 ## [1.0.8] - 2026-09-08
 
 Four defects that between them made a first install impossible to use. All were
