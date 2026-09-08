@@ -38,7 +38,7 @@ jobs:
           php-version: '8.2'
           coverage: none
       # Needed so the generator can gofmt its Go output.
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: 'stable'
       - run: php tools/generate-protocol.php
@@ -77,7 +77,7 @@ jobs:
         working-directory: gateway
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: 'stable'
           cache-dependency-path: gateway/go.sum
@@ -159,7 +159,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: stable
           cache-dependency-path: gateway/go.sum
