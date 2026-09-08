@@ -114,15 +114,28 @@ final class DoctorCommand extends Command
             return '(version unknown)';
         }
 
+        $package = 'adaptivedatanetworks/librenms-webterm';
+
         try {
-            $version = InstalledVersions::getPrettyVersion(
-                'adaptivedatanetworks/librenms-webterm'
-            );
+            $version = InstalledVersions::getPrettyVersion($package);
+            $reference = InstalledVersions::getReference($package);
         } catch (Throwable) {
             return '(version unknown)';
         }
 
-        return is_string($version) ? $version : '(version unknown)';
+        if (! is_string($version)) {
+            return '(version unknown)';
+        }
+
+        // A branch constraint reports as "dev-main" and nothing else, which
+        // says nothing about what is actually deployed. Anyone tracking a
+        // branch needs the commit, and anyone on a tag already has it in the
+        // version.
+        if (str_starts_with($version, 'dev-') && is_string($reference)) {
+            return sprintf('%s (%s)', $version, substr($reference, 0, 12));
+        }
+
+        return $version;
     }
 
     private static function currentUser(): string
