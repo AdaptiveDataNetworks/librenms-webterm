@@ -1754,28 +1754,70 @@ webterm:migrate</code> does the same thing directly, and <code>./lnms webterm:do
 tell you if anything is outstanding.</p>
 <p>To pin an exact version, see <a href="../librenms-updates/#pinning-an-exact-version">LibreNMS updates</a>.</p>
 <h2 id="upgrading-the-gateway">Upgrading the gateway<a class="headerlink" href="#upgrading-the-gateway" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Package</label><label for="__tabbed_1_2">Tarball</label></div>
+<div class="admonition info">
+<p class="admonition-title">There is no APT or YUM repository</p>
+<p>Releases are published as GitHub release assets, not through a package
+repository, so <code>apt upgrade</code> and <code>dnf upgrade</code> will never find a new
+gateway. Point your package manager at the downloaded file instead.</p>
+</div>
+<p>First, check how the gateway was installed — the two paths do not mix, and
+<code>install.sh</code> refuses to run over a packaged install for exactly that reason:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>rpm<span class="w"> </span>-q<span class="w"> </span>librenms-webterm-gw<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span>dpkg<span class="w"> </span>-s<span class="w"> </span>librenms-webterm-gw<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"not from a package -- tarball install"</span>
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">RPM (RHEL, Rocky, Alma, Fedora)</label><label for="__tabbed_1_2">DEB (Debian, Ubuntu)</label><label for="__tabbed_1_3">Tarball (install.sh)</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>apt<span class="w"> </span>install<span class="w"> </span>--only-upgrade<span class="w"> </span>librenms-webterm-gw<span class="w">    </span><span class="c1"># or dnf upgrade</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>librenms-webterm-gw
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">V</span><span class="o">=</span>X.Y.Z
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>aarch64<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span>arm64<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span>amd64<span class="k">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nv">BASE</span><span class="o">=</span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/v<span class="nv">$V</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span><span class="nv">$BASE</span>/librenms-webterm-gw_<span class="si">${</span><span class="nv">V</span><span class="si">}</span>_linux_<span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span>.rpm
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span><span class="nv">$BASE</span>/checksums.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">" librenms-webterm-gw_</span><span class="si">${</span><span class="nv">V</span><span class="si">}</span><span class="s2">_linux_</span><span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span><span class="s2">.rpm</span>$<span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>-c<span class="w"> </span>-
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>dnf<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_<span class="si">${</span><span class="nv">V</span><span class="si">}</span>_linux_<span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span>.rpm
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>librenms-webterm-gw
+</code></pre></div>
+<p><code>dnf install</code> on a file whose version is newer than the installed one
+performs an upgrade; there is no separate command. Your <code>gateway.env</code> and
+<code>gateway.secret</code> are config files and are left alone.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">V</span><span class="o">=</span>X.Y.Z
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nv">ARCH</span><span class="o">=</span><span class="k">$(</span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>uname<span class="w"> </span>-m<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>aarch64<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span>arm64<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span>amd64<span class="k">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">BASE</span><span class="o">=</span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/v<span class="nv">$V</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span><span class="nv">$BASE</span>/librenms-webterm-gw_<span class="si">${</span><span class="nv">V</span><span class="si">}</span>_linux_<span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span>.deb
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span><span class="nv">$BASE</span>/checksums.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">" librenms-webterm-gw_</span><span class="si">${</span><span class="nv">V</span><span class="si">}</span><span class="s2">_linux_</span><span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span><span class="s2">.deb</span>$<span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sha256sum<span class="w"> </span>-c<span class="w"> </span>-
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>apt<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_<span class="si">${</span><span class="nv">V</span><span class="si">}</span>_linux_<span class="si">${</span><span class="nv">ARCH</span><span class="si">}</span>.deb
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>librenms-webterm-gw
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>librenms-webterm-gw
+<p>Fetch the installer belonging to the version you are moving to, then re-run
+it. It verifies the checksum itself, replaces the binary and the systemd
+unit, and leaves <code>gateway.env</code> and <code>gateway.secret</code> untouched.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/install.sh
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>librenms-webterm-gw
 </code></pre></div>
 </div>
 </div>
 </div>
+<p>If you have the GitHub CLI, every release asset carries build provenance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>gh<span class="w"> </span>attestation<span class="w"> </span>verify<span class="w"> </span>./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>--repo<span class="w"> </span>AdaptiveDataNetworks/librenms-webterm
+</code></pre></div>
 <p>Restarting ends live sessions. Each one is told what happened before the socket closes, rather than simply dropping — but pick your moment anyway.</p>
 <p>The upgrade never regenerates the shared secret. If it did, LibreNMS would keep the old one and every session mint would fail with an opaque 401.</p>
 <h2 id="order">Order<a class="headerlink" href="#order" title="Permanent link">&para;</a></h2>
 <p>Upgrade the <strong>gateway first</strong>, then the plugin. A newer gateway accepts an older plugin's protocol version; the reverse is not guaranteed.</p>
 <h2 id="after-any-upgrade">After any upgrade<a class="headerlink" href="#after-any-upgrade" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./lnms<span class="w"> </span>webterm:doctor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
 
 
