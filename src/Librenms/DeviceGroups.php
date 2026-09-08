@@ -25,6 +25,11 @@ final class DeviceGroups implements CoreDependency, GroupSource
         return [
             'App\Models\DeviceGroup',
             'App\Models\Device::groups',
+            // DeviceGroup's `type` column is depended on too, but the contract
+            // suite asserts symbols with method_exists() and has no database in
+            // the integration job, so a column cannot be declared here without
+            // failing that job. The dependency degrades safely instead: an
+            // absent `type` falls back to the rules heuristic below.
         ];
     }
 
@@ -44,13 +49,31 @@ final class DeviceGroups implements CoreDependency, GroupSource
 
                 $ids = [];
                 foreach ($device->groups()->get() as $group) {
-                    // LibreNMS marks rule-driven groups with a non-empty rules
-                    // payload; anything else is a hand-curated static group.
-                    $rules = $group->rules ?? null;
-                    $isDynamic = is_array($rules) ? $rules !== [] : ! empty($rules);
+                    // Discriminate on `type`, which is what LibreNMS itself
+                    // uses (UpdateDeviceGroupsAction and DeviceGroup::…
+                    // both test `type == 'dynamic'`).
+                    //
+                    // This previously guessed from the `rules` payload being
+                    // empty, which is wrong and silently disabled the feature:
+                    // DeviceGroup::saving() rewrites `rules` for any group whose
+                    // rules attribute is dirty, and DeviceGroupController sets
+                    // `rules` unconditionally before branching on type -- so a
+                    // STATIC group created in the web UI is stored with
+                    // rules = {"joins":[]}. Every such group was classified
+                    // dynamic and skipped, so group grants and group-scoped
+                    // credentials never matched a UI-created group at all.
+                    $type = $group->type ?? null;
 
-                    if ($isDynamic) {
-                        continue;
+                    if (is_string($type) && $type !== '') {
+                        if ($type !== 'static') {
+                            continue;
+                        }
+                    } else {
+                        // Only if a core predating the column ever turns up.
+                        $rules = $group->rules ?? null;
+                        if (is_array($rules) ? $rules !== [] : ! empty($rules)) {
+                            continue;
+                        }
                     }
 
                     $id = $group->id ?? null;
