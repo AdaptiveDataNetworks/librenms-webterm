@@ -26,10 +26,12 @@ abstract class TestCase extends Orchestra
         // suite fail for reasons a contributor cannot act on.
         error_reporting(E_ALL);
 
-        $src = realpath(__DIR__.'/../src').DIRECTORY_SEPARATOR;
+        $src = (string) realpath(__DIR__.'/../src');
+        $src = $src === '' ? '' : $src.DIRECTORY_SEPARATOR;
+
         $previous = set_error_handler(
             static function (int $severity, string $message, string $file = '', int $line = 0) use ($src) {
-                if ($severity === E_DEPRECATED && $src !== false && str_starts_with($file, $src)) {
+                if ($severity === E_DEPRECATED && $src !== '' && str_starts_with($file, $src)) {
                     throw new \RuntimeException(sprintf(
                         'Deprecation in %s:%d -- %s',
                         substr($file, strlen($src)),
