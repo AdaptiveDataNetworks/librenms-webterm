@@ -32,6 +32,12 @@ return [
         // reverse proxy, or an explicitly allow-listed origin.
         'ws_url' => env('WEBTERM_GATEWAY_WS_URL', '/webterm/ws'),
 
+        // Browser-facing path for the terminal's own assets, which the gateway
+        // embeds and serves rather than adding anything to LibreNMS's asset
+        // build. Needs its own reverse-proxy location; without one the terminal
+        // page loads and its frame 404s against LibreNMS.
+        'ui_url' => env('WEBTERM_GATEWAY_UI_URL', '/webterm/ui/'),
+
         // Path to the 32-byte shared secret. A PATH, never the secret itself --
         // config values land in `config:cache` output, crash dumps and support
         // bundles. The gateway reads the same file.
