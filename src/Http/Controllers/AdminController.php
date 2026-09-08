@@ -6,7 +6,9 @@ namespace AdaptiveDataNetworks\WebTerm\Http\Controllers;
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceNames;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
@@ -43,7 +45,7 @@ final class AdminController
 {
     private const TABS = ['targets', 'access', 'hostkeys', 'sessions', 'audit'];
 
-    public function index(Request $request): View
+    public function index(Request $request, DeviceNames $names): View
     {
         $tab = (string) $request->query('tab', 'targets');
 
@@ -51,16 +53,33 @@ final class AdminController
             $tab = 'targets';
         }
 
+        $targets = Target::query()->orderBy('device_id')->get();
+        $grants = Grant::query()->orderBy('id')->get();
+        $credentials = Credential::query()->get();
+        $hostKeys = HostKey::query()->orderBy('device_id')->get();
+        $sessions = Session::query()->orderByDesc('started_at')->limit(50)->get();
+        $audit = AuditEntry::query()->orderByDesc('id')->limit(100)->get();
+
         return view(WebTermServiceProvider::PLUGIN_NAME.'::admin', [
             'tab' => $tab,
             'tabs' => self::TABS,
-            'targets' => Target::query()->orderBy('device_id')->get(),
-            'grants' => Grant::query()->orderBy('id')->get(),
+            'targets' => $targets,
+            'grants' => $grants,
             'abilities' => Ability::query()->orderBy('user_id')->get(),
-            'credentials' => Credential::query()->get(),
-            'hostKeys' => HostKey::query()->orderBy('device_id')->get(),
-            'sessions' => Session::query()->orderByDesc('started_at')->limit(50)->get(),
-            'audit' => AuditEntry::query()->orderByDesc('id')->limit(100)->get(),
+            'credentials' => $credentials,
+            'hostKeys' => $hostKeys,
+            'sessions' => $sessions,
+            'audit' => $audit,
+            // Resolved once for the whole page rather than per row: an id per
+            // table cell would be an N+1 across six tables.
+            'deviceNames' => $names->namesFor(array_merge(
+                $targets->pluck('device_id')->all(),
+                $hostKeys->pluck('device_id')->all(),
+                $sessions->pluck('device_id')->all(),
+                $audit->pluck('device_id')->filter()->all(),
+                $credentials->where('scope_type', CredentialScope::Device)->pluck('scope_ref')->all(),
+                $grants->where('object_type', Grant::OBJECT_DEVICE)->pluck('object_id')->all(),
+            )),
         ]);
     }
 

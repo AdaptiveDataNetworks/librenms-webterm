@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use AdaptiveDataNetworks\WebTerm\Audit\Severity;
 use AdaptiveDataNetworks\WebTerm\Librenms\CoreDependency;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceNames;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceVisibility;
 use AdaptiveDataNetworks\WebTerm\Librenms\EventlogWriter;
@@ -25,6 +27,8 @@ use App\Models\Device;
 $adapters = [
     DeviceVisibility::class,
     DeviceTarget::class,
+    DeviceGroups::class,
+    DeviceNames::class,
     EventlogWriter::class,
     TwoFactorReader::class,
     RoleReader::class,

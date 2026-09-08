@@ -10,6 +10,29 @@
      host key blob. --}}
 @extendsFirst(['layouts.librenmsv1', 'WebTerm::layouts.standalone'])
 
+@php
+    /**
+     * Device ids mean nothing to an operator. Resolved once in the controller
+     * and rendered here as a link to the device page. A credential or grant can
+     * outlive its device, so a missing name degrades to the id rather than a
+     * blank cell -- that row is exactly the one somebody is looking for.
+     */
+    $deviceLabel = function ($id) use ($deviceNames) {
+        $id = (int) $id;
+
+        if ($id <= 0) {
+            return '-';
+        }
+
+        $name = $deviceNames[$id] ?? null;
+        $url = e(url('device/'.$id));
+
+        return $name === null
+            ? '<a href="'.$url.'">#'.e((string) $id).'</a> <span class="text-muted"><small>(removed)</small></span>'
+            : '<a href="'.$url.'">'.e($name).'</a>';
+    };
+@endphp
+
 @section('title', __('WebTerm administration'))
 
 @section('content')
@@ -46,7 +69,7 @@
             <tr><th>Device</th><th>Principal</th><th>Flow</th><th>Host key policy</th><th>Enabled</th><th></th></tr>
             @forelse ($targets as $target)
                 <tr>
-                    <td>{{ $target->device_id }}</td>
+                    <td>{!! $deviceLabel($target->device_id) !!}</td>
                     <td>{{ $target->principal }}</td>
                     <td>{{ $target->flow }}</td>
                     <td>{{ $target->host_key_policy }}</td>
@@ -75,7 +98,9 @@
             <tr><th>Applies to</th><th>Method</th><th>Stored as</th></tr>
             @forelse ($credentials as $credential)
                 <tr>
-                    <td>{{ $credential->scope_type->label($credential->scope_ref) }}</td>
+                    <td>{!! $credential->scope_type->value === 'device'
+                        ? $deviceLabel($credential->scope_ref)
+                        : e($credential->scope_type->label($credential->scope_ref)) !!}</td>
                     <td>{{ $credential->method }}</td>
                     <td>{{ $credential->username }}</td>
                 </tr>
@@ -92,7 +117,8 @@
             @forelse ($grants as $grant)
                 <tr>
                     <td>{{ $grant->subject_type }} {{ $grant->subject_ref }}</td>
-                    <td>{{ $grant->object_type }} {{ $grant->object_id }}</td>
+                    <td>{{ $grant->object_type }}
+                        {!! $grant->object_type === 'device' ? $deviceLabel($grant->object_id) : e((string) $grant->object_id) !!}</td>
                     <td>{{ $grant->effect }}</td>
                     <td>
                         <form method="POST" action="{{ url('plugin/webterm/admin/grants/delete') }}">
@@ -120,17 +146,53 @@
                 <option value="role">role</option>
             </select>
             <input name="subject_ref" class="form-control input-sm" placeholder="{{ __('user id or role name') }}" required>
-            <select name="object_type" class="form-control input-sm">
+            <select name="object_type" id="webterm-object-type" class="form-control input-sm">
                 <option value="device">device</option>
                 <option value="group">group</option>
             </select>
-            <input name="object_id" type="number" min="1" class="form-control input-sm" placeholder="{{ __('numeric id') }}" required>
+            {{-- Driven by core's own /ajax/select endpoints via init_select2,
+                 which layouts.librenmsv1 already loads along with jQuery and
+                 select2. No asset of ours, and the endpoint filters by the
+                 requesting user's device visibility, so the picker cannot list
+                 a device the operator could not already see. --}}
+            <select name="object_id" id="webterm-object-id" class="form-control input-sm" required
+                    style="min-width: 260px;"></select>
             <select name="effect" class="form-control input-sm">
                 <option value="allow">allow</option>
                 <option value="deny">deny</option>
             </select>
             <button class="btn btn-sm btn-primary" type="submit">{{ __('Add grant') }}</button>
         </form>
+        <noscript>
+            <p class="text-muted"><small>
+                {{ __('The device picker needs JavaScript. Without it, use the command line:') }}
+                <code>./lnms webterm:grant --user=&lt;user&gt; --device=&lt;hostname&gt;</code>
+            </small></p>
+        </noscript>
+
+        <script>
+            (function () {
+                // init_select2 is defined by LibreNMS's own html/js/librenms.js,
+                // loaded as a blocking script by layouts.librenmsv1. Guarded so
+                // that a core change degrades to an inert field rather than a
+                // console error on an admin page.
+                if (typeof init_select2 !== 'function') { return; }
+
+                var type = document.getElementById('webterm-object-type');
+                var target = '#webterm-object-id';
+
+                function bind() {
+                    if (window.jQuery && jQuery(target).data('select2')) {
+                        jQuery(target).select2('destroy').empty();
+                    }
+                    // Core exposes 'device' and 'device-group' select types.
+                    init_select2(target, type.value === 'group' ? 'device-group' : 'device', {});
+                }
+
+                type.addEventListener('change', bind);
+                bind();
+            })();
+        </script>
 
         <h4 style="margin-top: 18px;">{{ __('Abilities') }}</h4>
         <table class="table table-condensed table-striped">
@@ -172,7 +234,7 @@
             <tr><th>Device</th><th>Algorithm</th><th>Fingerprint</th><th>Status</th></tr>
             @forelse ($hostKeys as $key)
                 <tr>
-                    <td>{{ $key->device_id }}</td>
+                    <td>{!! $deviceLabel($key->device_id) !!}</td>
                     <td>{{ $key->algorithm }}</td>
                     <td><code>{{ $key->fingerprint }}</code></td>
                     <td>{{ $key->status }}</td>
@@ -189,7 +251,7 @@
                 <tr>
                     <td><code>{{ $session->session_id }}</code></td>
                     <td>{{ $session->user_id }}</td>
-                    <td>{{ $session->device_id }}</td>
+                    <td>{!! $deviceLabel($session->device_id) !!}</td>
                     <td>{{ $session->state }}</td>
                     <td>{{ $session->started_at }}</td>
                     <td>
@@ -216,7 +278,7 @@
                     <td>{{ $entry->occurred_at }}</td>
                     <td>{{ $entry->event }}</td>
                     <td>{{ $entry->username }}</td>
-                    <td>{{ $entry->device_id }}</td>
+                    <td>{!! $entry->device_id ? $deviceLabel($entry->device_id) : '-' !!}</td>
                     <td>{{ $entry->reason_code }}</td>
                 </tr>
             @empty

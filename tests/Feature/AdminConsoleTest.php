@@ -16,6 +16,7 @@ use AdaptiveDataNetworks\WebTerm\Tests\Fakes\FakePluginManager;
 use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\ViewErrorBag;
 use LibreNMS\Interfaces\Plugins\PluginManagerInterface;
 
 uses(RefreshDatabase::class);
@@ -257,3 +258,47 @@ it('renders every tab, with data in every table', function (string $tab): void {
         ->assertOk()
         ->assertDontSee('Whoops');
 })->with(['targets', 'access', 'hostkeys', 'sessions', 'audit']);
+
+it('shows linked device names, not raw ids', function (): void {
+    // "Nobody knows what an ID is." The console showed device_id everywhere.
+    bootConsole();
+
+    Target::create([
+        'device_id' => 42, 'protocol' => 'ssh', 'enabled' => true, 'flow' => 'database',
+        'host_key_policy' => Target::POLICY_PIN, 'principal' => 'netops',
+    ]);
+
+    $this->actingAs(admin())
+        ->get('plugin/webterm/admin?tab=targets')
+        ->assertOk()
+        // Standalone there is no LibreNMS Device model, so the name cannot
+        // resolve -- but the link must still be there, and the row must still
+        // identify itself rather than rendering blank.
+        ->assertSee(url('device/42'))
+        ->assertSee('#42');
+});
+
+it('escapes a device name rather than trusting it', function (): void {
+    // A hostname is operator- and SNMP-influenced data, and the cell is now
+    // rendered with {!! !!} so the link markup survives -- which means the NAME
+    // has to be escaped by hand inside the helper.
+    bootConsole();
+
+    $html = view('WebTerm::admin', [
+        'tab' => 'targets',
+        'tabs' => ['targets'],
+        'targets' => collect([(object) [
+            'device_id' => 42, 'principal' => 'netops', 'flow' => 'database',
+            'host_key_policy' => 'pin', 'enabled' => true,
+        ]]),
+        'grants' => collect(), 'abilities' => collect(), 'credentials' => collect(),
+        'hostKeys' => collect(), 'sessions' => collect(), 'audit' => collect(),
+        'deviceNames' => [42 => '<script>alert(1)</script>'],
+        // Normally shared by ShareErrorsFromSession; absent when rendering the
+        // view directly.
+        'errors' => new ViewErrorBag,
+    ])->render();
+
+    expect($html)->not->toContain('<script>alert(1)</script>')
+        ->and($html)->toContain('&lt;script&gt;');
+});
