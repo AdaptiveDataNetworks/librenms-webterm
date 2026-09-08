@@ -50,7 +50,7 @@
                     <td>{{ $target->principal }}</td>
                     <td>{{ $target->flow }}</td>
                     <td>{{ $target->host_key_policy }}</td>
-                    <td>{{ $target->enabled ? __('yes') : __('no') }}</td>
+                    <td>{{ $target->enabled ? __('Yes') : __('No') }}</td>
                     <td>
                         <form method="POST" action="{{ url('plugin/webterm/admin/targets') }}">
                             @csrf
@@ -109,19 +109,25 @@
 
         <form method="POST" action="{{ url('plugin/webterm/admin/grants') }}" class="form-inline">
             @csrf
+            {{-- These labels are NOT translated. They are the stored values an
+                 operator matches against webterm:grant output and the database,
+                 so translating them would misdescribe what is written. It also
+                 avoids a real trap: __('device') collides with LibreNMS's
+                 lang/en/device.php and returns that whole file as an array,
+                 which is fatal inside {{ }}. --}}
             <select name="subject_type" class="form-control input-sm">
-                <option value="user">{{ __('user') }}</option>
-                <option value="role">{{ __('role') }}</option>
+                <option value="user">user</option>
+                <option value="role">role</option>
             </select>
-            <input name="subject_ref" class="form-control input-sm" placeholder="{{ __('user id or role') }}" required>
+            <input name="subject_ref" class="form-control input-sm" placeholder="{{ __('user id or role name') }}" required>
             <select name="object_type" class="form-control input-sm">
-                <option value="device">{{ __('device') }}</option>
-                <option value="group">{{ __('group') }}</option>
+                <option value="device">device</option>
+                <option value="group">group</option>
             </select>
-            <input name="object_id" type="number" min="1" class="form-control input-sm" placeholder="{{ __('id') }}" required>
+            <input name="object_id" type="number" min="1" class="form-control input-sm" placeholder="{{ __('numeric id') }}" required>
             <select name="effect" class="form-control input-sm">
-                <option value="allow">{{ __('allow') }}</option>
-                <option value="deny">{{ __('deny') }}</option>
+                <option value="allow">allow</option>
+                <option value="deny">deny</option>
             </select>
             <button class="btn btn-sm btn-primary" type="submit">{{ __('Add grant') }}</button>
         </form>

@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use AdaptiveDataNetworks\WebTerm\Models\Grant;
+use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Tests\Fakes\FakePluginManager;
 use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
@@ -212,3 +217,43 @@ it('tells the operator when the console is unreachable by everyone', function ()
     $this->artisan('webterm:doctor')
         ->expectsOutputToContain('1 user(s) may open it');
 });
+
+/**
+ * Every tab, with a row in every table.
+ *
+ * The console shipped with a fatal in the Access tab -- `__('device')` collides
+ * with LibreNMS's lang/en/device.php and returns that whole file as an array,
+ * which htmlspecialchars() rejects. Nothing caught it because every test until
+ * now rendered only the default tab, on empty tables.
+ */
+it('renders every tab, with data in every table', function (string $tab): void {
+    bootConsole();
+
+    Target::create([
+        'device_id' => 42, 'protocol' => 'ssh', 'enabled' => true, 'flow' => 'database',
+        'host_key_policy' => Target::POLICY_PIN, 'principal' => 'netops',
+    ]);
+    Grant::create([
+        'subject_type' => 'user', 'subject_ref' => '7',
+        'object_type' => 'device', 'object_id' => 42, 'effect' => 'allow',
+    ]);
+    HostKey::create([
+        'device_id' => 42, 'algorithm' => 'ssh-ed25519', 'public_key' => 'AAAAC3',
+        'fingerprint' => 'SHA256:test', 'status' => HostKey::PINNED,
+    ]);
+    Credential::create([
+        'scope_type' => 'global', 'scope_ref' => 0, 'protocol' => 'ssh', 'method' => 'password',
+        'username' => 'fleet', 'payload' => 'x', 'cipher' => 'aes-256-gcm', 'key_id' => 'k',
+    ]);
+    Session::create([
+        'session_id' => '01JQWERTYUIOPASDFGHJKLZXCV', 'user_id' => 7, 'device_id' => 42,
+        'state' => 'active', 'method' => 'password',
+    ]);
+    app(AuditLogger::class)
+        ->log(Event::SessionStarted, null, 42, '01JQWERTYUIOPASDFGHJKLZXCV');
+
+    $this->actingAs(admin())
+        ->get('plugin/webterm/admin?tab='.$tab)
+        ->assertOk()
+        ->assertDontSee('Whoops');
+})->with(['targets', 'access', 'hostkeys', 'sessions', 'audit']);
