@@ -11,6 +11,7 @@ use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use AdaptiveDataNetworks\WebTerm\Models\HostKey;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Protocol;
+use Composer\InstalledVersions;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -32,7 +33,11 @@ final class DoctorCommand extends Command
     public function handle(): int
     {
         $this->line('');
-        $this->line('  <options=bold>LibreNMS WebTerm</>');
+        $this->line(sprintf(
+            '  <options=bold>LibreNMS WebTerm</> %s   <fg=gray>PHP %s</>',
+            self::pluginVersion(),
+            PHP_VERSION
+        ));
         $this->line('');
 
         $this->checkKillSwitch();
@@ -85,6 +90,30 @@ final class DoctorCommand extends Command
      * The account doctor is running as, so the remediation names a real user
      * rather than saying "the web user" and leaving it to be guessed.
      */
+    /**
+     * The installed plugin version.
+     *
+     * Printed because a support exchange stalled on not knowing it: a setting
+     * that silently did nothing in 1.0.2 looked identical to one that had not
+     * been run.
+     */
+    private static function pluginVersion(): string
+    {
+        if (! class_exists(InstalledVersions::class)) {
+            return '(version unknown)';
+        }
+
+        try {
+            $version = InstalledVersions::getPrettyVersion(
+                'adaptivedatanetworks/librenms-webterm'
+            );
+        } catch (Throwable) {
+            return '(version unknown)';
+        }
+
+        return is_string($version) ? $version : '(version unknown)';
+    }
+
     private static function currentUser(): string
     {
         if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {

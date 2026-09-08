@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.5] - 2026-09-07
+
+Found during a real installation on PHP 8.5.
+
+### Fixed
+
+- Removed a `curl_close()` call. It has done nothing since PHP 8.0 and is
+  deprecated from 8.5, so it printed a deprecation notice into command output
+  and error logs on a current LibreNMS.
+
+### Changed
+
+- The test suite now fails on deprecations raised by this package. Two layers
+  were hiding them: Testbench lowers `error_reporting` to mask `E_DEPRECATED`,
+  and Laravel's exception handler routes deprecations to a log channel rather
+  than raising them, so `failOnDeprecation` never saw one. A scoped handler
+  now raises deprecations originating in `src/`, and vendor deprecations are
+  deliberately left alone.
+- CI tests PHP 8.5 in addition to 8.2-8.4. The deprecation above reached a user
+  because the matrix stopped at 8.4 while LibreNMS runs on 8.5.
+- `webterm:doctor` prints the plugin and PHP versions in its header.
+
 ## [1.0.4] - 2026-09-07
 
 Found during a real first installation.
@@ -134,6 +156,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.5]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.5
 [1.0.4]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.4
 [1.0.3]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.3
 [1.0.2]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.2

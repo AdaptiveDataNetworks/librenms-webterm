@@ -5,7 +5,14 @@
          colors="true"
          cacheDirectory=".phpunit.cache"
          failOnWarning="true"
-         failOnRisky="true">
+         failOnRisky="true"
+         failOnDeprecation="true"
+         failOnPhpunitDeprecation="true">
+    <!--
+        failOnDeprecation exists because a PHP 8.5 deprecation
+        (curl_close, removed in 1.0.5) reached a user's console: the suite
+        ignored deprecations entirely, so nothing flagged it.
+    -->
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>

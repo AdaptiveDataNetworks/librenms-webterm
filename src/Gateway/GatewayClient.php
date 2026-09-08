@@ -194,7 +194,10 @@ class GatewayClient
         $response = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $error = curl_error($ch);
-        curl_close($ch);
+        // No curl_close(): it has done nothing since PHP 8.0 and is deprecated
+        // from 8.5, which emits a notice into command output and error logs.
+        // The handle is released when it goes out of scope.
+        unset($ch);
 
         if ($response === false) {
             $this->recordFailure();
