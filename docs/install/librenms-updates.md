@@ -51,10 +51,17 @@ head of `main` — unreleased work included. There is no separate branch to set 
 ```bash
 # LibreNMS server, as the librenms user
 ./lnms plugin:add adaptivedatanetworks/librenms-webterm dev-main
-php artisan route:clear
-./lnms migrate
+./lnms route:clear
+./lnms webterm:migrate
 ./lnms webterm:doctor
 ```
+
+!!! note "`webterm:migrate`, not `migrate`"
+
+    LibreNMS resolves to Laravel's `production` environment, so `./lnms migrate`
+    asks "Application In Production" and waits — which stalls any scripted or
+    non-interactive run, and also applies core's migrations, not just this
+    plugin's. `webterm:migrate` applies only ours and does not prompt.
 
 This works even though LibreNMS sets `"minimum-stability": "stable"`: an
 explicit dev constraint carries its own per-package stability flag, so nothing
