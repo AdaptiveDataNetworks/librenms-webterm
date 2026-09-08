@@ -7,29 +7,42 @@ namespace AdaptiveDataNetworks\WebTerm\Hooks;
 use AdaptiveDataNetworks\WebTerm\Http\DevicePanelPresenter;
 use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use App\Models\Device;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;
 
 /**
  * "Open Terminal" panel in the left column of the device overview tab.
  *
- * Implemented directly against the marker interface rather than extending
- * LibreNMS's App\Plugins\Hooks\DeviceOverviewHook abstract, so that this class
- * loads without LibreNMS core present (standalone tests) and so we are not
- * exposed to changes in the abstract's final handle().
+ * RETURN TYPE IS PART OF THE CONTRACT, AND EACH HOOK'S DIFFERS
+ * -----------------------------------------------------------
+ * LibreNMS renders this one with `{{ $pluginView }}` in
+ * resources/views/device/tabs/overview.blade.php, so the return value must be
+ * something `e()` accepts -- a View or another Htmlable. Core's own abstract
+ * declares `: \Illuminate\Contracts\View\View`.
  *
- * NOTE: PluginManager instantiates hooks with `new $class` and no arguments.
- * A required constructor parameter is a fatal error at class load and would
- * 500 every device page in LibreNMS. This class must never gain a constructor
- * with required arguments; resolve collaborators inside the method bodies.
+ * Returning an array here (the shape MenuEntryHook uses) throws
+ * "htmlspecialchars(): Argument #1 must be of type string, array given" inside
+ * core's own template, which 500s EVERY DEVICE PAGE -- not just this panel, and
+ * whether or not WebTerm is configured. Guard cannot catch it, because the
+ * failure happens in LibreNMS's view after our hook has returned.
+ *
+ * For reference, the contracts differ per hook:
+ *   DeviceOverviewHook -> View       PortTabHook   -> View
+ *   MenuEntryHook      -> array      SinglePageHook -> array
+ *   SettingsHook       -> array
+ *
+ * NOTE: PluginManager instantiates hooks with `new $class` and no arguments. A
+ * required constructor parameter is a fatal error at class load and would 500
+ * every device page just as surely.
  */
 final class DeviceOverview implements DeviceOverviewHook
 {
     /**
      * Deliberately takes no injected $user. LibreNMS binds
      * Illuminate\Contracts\Auth\Authenticatable, but NOT App\Models\User -- a
-     * User type-hint silently yields a fresh, empty model. Reading the user
-     * from the facade sidesteps the whole class of mistake.
+     * User type-hint silently yields a fresh, empty model.
      */
     public function authorize(): bool
     {
@@ -42,32 +55,36 @@ final class DeviceOverview implements DeviceOverviewHook
 
     /**
      * Must stay cheap: this runs on every device overview page load. No
-     * synchronous network call to the gateway is permitted -- reachability is
-     * read from a short-lived cache populated out of band.
+     * synchronous network call is permitted -- reachability comes from a
+     * short-lived cache populated out of band.
      *
      * @param  array<string, mixed>  $settings
      * @param  Device  $device
-     * @return array{0: string, 1: array<string, mixed>}|array{}
      */
-    public function handle(string $pluginName, array $settings, $device): array
+    public function handle(string $pluginName, array $settings, $device): Htmlable
     {
         return Guard::safely(
-            static function () use ($pluginName, $device): array {
-                $panel = (new DevicePanelPresenter)->present(Auth::user(), $device);
+            static function () use ($pluginName, $device): Htmlable {
+                // Resolved from the container rather than constructed here:
+                // PluginManager forbids constructor arguments, but the
+                // container still allows the presenter to be substituted in
+                // tests and by anyone extending this.
+                $panel = app(DevicePanelPresenter::class)->present(Auth::user(), $device);
 
-                // Nothing to say about this device: render no panel at all
+                // Nothing to say about this device: render nothing at all
                 // rather than a permanent "not configured" box on every device
-                // in the estate.
+                // in the estate. An empty Htmlable is still safe for `{{ }}`.
                 if ($panel['state'] === 'hidden') {
-                    return [];
+                    return new HtmlString('');
                 }
 
-                return [
-                    $pluginName.'::device-overview',
-                    ['device' => $device, 'pluginName' => $pluginName, 'panel' => $panel],
-                ];
+                return view($pluginName.'::device-overview', [
+                    'device' => $device,
+                    'pluginName' => $pluginName,
+                    'panel' => $panel,
+                ]);
             },
-            [],
+            new HtmlString(''),
             'DeviceOverview::handle'
         );
     }

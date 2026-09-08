@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Cache;
  * band, because a device page that hangs for two seconds because a terminal
  * gateway is down is a worse outcome than no terminal button.
  */
-final class DevicePanelPresenter
+class DevicePanelPresenter
 {
     private const CACHE_TTL = 30;
 
