@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
+use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -82,4 +83,51 @@ it('drops shared credentials on rollback rather than mis-assigning them', functi
     scopeMigration()->down();
 
     expect(DB::table('webterm_credentials')->count())->toBe(0);
+});
+
+it('rolls back only the newest migration, leaving the rest applied', function (): void {
+    // The way back from a development build. Without it, downgrading is a
+    // one-way door: released code that predates a migration queries columns the
+    // migration has already changed, and the full rollback takes the audit
+    // trail with it.
+    $runner = app(MigrationRunner::class);
+
+    expect(Schema::hasColumn('webterm_credentials', 'scope_type'))->toBeTrue();
+
+    $rolled = $runner->rollbackSteps(1);
+
+    expect($rolled)->toHaveCount(1)
+        // The scope migration is undone...
+        ->and(Schema::hasColumn('webterm_credentials', 'scope_type'))->toBeFalse()
+        ->and(Schema::hasColumn('webterm_credentials', 'device_id'))->toBeTrue()
+        // ...and everything else still stands, audit trail included.
+        ->and(Schema::hasTable('webterm_audit'))->toBeTrue()
+        ->and(Schema::hasTable('webterm_grants'))->toBeTrue()
+        // The repository must survive, or the next migrate re-runs everything.
+        ->and(Schema::hasTable(MigrationRunner::TABLE))->toBeTrue();
+
+    // And it is re-appliable, which is what returning to the dev build needs.
+    $runner->migrate();
+    expect(Schema::hasColumn('webterm_credentials', 'scope_type'))->toBeTrue();
+});
+
+it('detects a schema newer than the code, which otherwise fails silently', function (): void {
+    // Downgrading past a migration leaves the columns changed and nothing
+    // pending, so every check that looks for pending work reports green while
+    // credential resolution dies on a missing column.
+    $runner = app(MigrationRunner::class);
+
+    expect($runner->appliedWithoutFiles())->toBe([]);
+
+    DB::table(MigrationRunner::TABLE)->insert([
+        'migration' => '2027_01_01_000001_create_webterm_something_newer',
+        'batch' => 99,
+    ]);
+
+    expect($runner->appliedWithoutFiles())->toBe(['2027_01_01_000001_create_webterm_something_newer'])
+        ->and($runner->pending())->toBe([]);
+
+    $this->artisan('webterm:doctor')
+        ->expectsOutputToContain('newer than the code')
+        ->assertFailed();
 });

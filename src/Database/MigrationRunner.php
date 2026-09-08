@@ -84,6 +84,36 @@ final class MigrationRunner
     }
 
     /**
+     * Roll back only the most recent migrations, leaving the rest applied.
+     *
+     * This is the path back from a development build. Downgrading the plugin
+     * without it is a one-way door: a released version whose code predates a
+     * migration will query columns that migration has already changed, and the
+     * only other rollback here removes every table including the audit trail.
+     *
+     * @return string[] the migrations rolled back, most recent first
+     */
+    public function rollbackSteps(int $steps, ?OutputStyle $output = null, bool $pretend = false): array
+    {
+        if ($steps < 1) {
+            return [];
+        }
+
+        $migrator = $this->migrator($output);
+
+        if (! $migrator->repositoryExists()) {
+            return [];
+        }
+
+        $this->adoptLegacyRows();
+
+        // Deliberately does NOT drop the repository table: some of our
+        // migrations remain applied, and losing the record of which ones would
+        // make the next migrate re-run them.
+        return $this->names($migrator->rollback([$this->path()], ['step' => $steps, 'pretend' => $pretend]));
+    }
+
+    /**
      * Roll every one of our migrations back and drop the repository table.
      *
      * @return string[] the migrations rolled back, in order
@@ -141,6 +171,30 @@ final class MigrationRunner
             : [];
 
         return array_values(array_unique([...$ours, ...$this->legacyRows()]));
+    }
+
+    /**
+     * Migrations the database has applied that this build does not ship.
+     *
+     * The signature of running older code against a newer schema -- which is
+     * what a downgrade from a development build produces, and which otherwise
+     * fails silently: the columns a released build queries are gone, every
+     * session dies at credential resolution, and nothing that looks at pending
+     * migrations notices, because there are none.
+     *
+     * @return string[]
+     */
+    public function appliedWithoutFiles(): array
+    {
+        $files = array_map(
+            static fn (string $file): string => basename($file, '.php'),
+            $this->files->glob($this->path().'/*_*.php') ?: []
+        );
+
+        $orphans = array_values(array_diff($this->ran(), $files));
+        sort($orphans);
+
+        return $orphans;
     }
 
     /**

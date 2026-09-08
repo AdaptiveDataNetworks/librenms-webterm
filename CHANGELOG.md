@@ -110,6 +110,25 @@ login the device actually uses.
   as `--device=`. Exactly one is required — there is no default, because
   defaulting either way silently does the wrong thing.
 
+- **`webterm:migrate --rollback --step=N`** undoes only the most recent
+  migrations instead of every one. Without it, downgrading past a migration was
+  a one-way door: the only rollback dropped every `webterm_*` table, audit
+  history included.
+
+- **`webterm:doctor` detects a schema newer than the code.** Downgrading past a
+  migration leaves the columns changed and nothing pending, so every check that
+  looks for outstanding work reports green while credential resolution dies on a
+  missing column. Reproduced on MariaDB 11: `ERROR 1054 Unknown column
+  'device_id'` on every credential path, with a clean bill of health from
+  doctor. It now fails, and names the rollback command.
+
+### Fixed
+
+- `docs/contributing/development.md` told developers to install with
+  `plugin:add ... @dev`, which resolves to the newest *release*, not the branch.
+  Anyone following it silently got a released version. The constraint is
+  `dev-main`.
+
 ### Notes
 
 - The global scope stores `scope_ref = 0` rather than NULL. A unique index

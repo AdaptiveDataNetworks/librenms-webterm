@@ -21,6 +21,7 @@ final class MigrateCommand extends Command
     protected $signature = 'webterm:migrate
         {--status : Show which migrations have run without applying anything}
         {--rollback : Roll every WebTerm migration back and drop its tables}
+        {--step= : With --rollback, undo only the last N migrations instead of all of them}
         {--pretend : Print the SQL instead of running it}
         {--force : Skip the confirmation prompt when rolling back}';
 
@@ -61,6 +62,12 @@ final class MigrateCommand extends Command
 
     private function rollback(MigrationRunner $runner): int
     {
+        $steps = $this->option('step');
+
+        if ($steps !== null && $steps !== '') {
+            return $this->rollbackSteps($runner, (int) $steps);
+        }
+
         // Every table this plugin owns goes, grants and audit history included.
         // There is no undo, so the prompt is not a formality.
         if (! $this->option('force') && ! $this->confirm(
@@ -75,6 +82,52 @@ final class MigrateCommand extends Command
         $rolled = $runner->rollback($this->output, (bool) $this->option('pretend'));
 
         $this->info(sprintf('Rolled back %d migration(s).', count($rolled)));
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Undo the last N migrations only -- the way back from a development build.
+     *
+     * Downgrading the plugin without this is a one-way door: released code that
+     * predates a migration queries columns that migration has already changed,
+     * and the full rollback above would take the audit trail with it.
+     */
+    private function rollbackSteps(MigrationRunner $runner, int $steps): int
+    {
+        if ($steps < 1) {
+            $this->error('--step must be 1 or more.');
+
+            return self::FAILURE;
+        }
+
+        $applied = $runner->ran();
+        sort($applied);
+        $doomed = array_slice($applied, -$steps);
+
+        if ($doomed === []) {
+            $this->info('Nothing to roll back.');
+
+            return self::SUCCESS;
+        }
+
+        $this->line('  Will undo, most recent first:');
+        foreach (array_reverse($doomed) as $migration) {
+            $this->line('    '.$migration);
+        }
+
+        if (! $this->option('force') && ! $this->confirm(
+            'Undo these? Any data held only in the columns they added is lost.',
+            false
+        )) {
+            $this->warn('Aborted.');
+
+            return self::FAILURE;
+        }
+
+        $rolled = $runner->rollbackSteps($steps, $this->output, (bool) $this->option('pretend'));
+
+        $this->info(sprintf('Rolled back %d migration(s). The rest remain applied.', count($rolled)));
 
         return self::SUCCESS;
     }

@@ -173,8 +173,23 @@ final class DoctorCommand extends Command
             $runner = app(MigrationRunner::class);
             $pending = $runner->pending();
             $legacy = $runner->legacyRows();
+            $ahead = $runner->appliedWithoutFiles();
         } catch (Throwable $e) {
             $this->reportFail('Database schema', 'cannot be read: '.$e->getMessage(), 'check the database connection, then ./lnms webterm:migrate');
+
+            return;
+        }
+
+        // Checked before pending migrations, because this is the failure that
+        // otherwise reports green: a downgrade leaves the schema ahead of the
+        // code, nothing is pending, and every session dies at credential
+        // resolution with an unknown-column error nobody sees.
+        if ($ahead !== []) {
+            $this->reportFail(
+                'Database schema',
+                sprintf('the database has %d migration(s) this build does not ship -- the schema is newer than the code', count($ahead)),
+                'upgrade the plugin again, or undo them before downgrading: ./lnms webterm:migrate --rollback --step='.count($ahead)
+            );
 
             return;
         }

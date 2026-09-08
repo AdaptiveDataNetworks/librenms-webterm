@@ -43,6 +43,62 @@ Verify what is registered:
 cat /opt/librenms/composer.plugins.json
 ```
 
+## Tracking a development build
+
+Packagist exposes every branch as a dev version, so `dev-main` is the current
+head of `main` — unreleased work included. There is no separate branch to set up.
+
+```bash
+# LibreNMS server, as the librenms user
+./lnms plugin:add adaptivedatanetworks/librenms-webterm dev-main
+php artisan route:clear
+./lnms migrate
+./lnms webterm:doctor
+```
+
+This works even though LibreNMS sets `"minimum-stability": "stable"`: an
+explicit dev constraint carries its own per-package stability flag, so nothing
+in LibreNMS's own `composer.json` has to change. Switching between constraints
+replaces the entry cleanly — there is no need to `plugin:remove` first.
+
+!!! warning "Your install then follows `main` on every update"
+
+    `daily.sh` discards `composer.json` and `composer.lock` on every update and
+    re-resolves from `composer.plugins.json`, which now records `dev-main`. So
+    the install picks up whatever has since been committed, without review. Use
+    this on a test box, not on anything you depend on.
+
+### Going back to a release
+
+**Roll back any migrations the development build added _before_ downgrading the
+package.** Laravel will not roll back a migration whose file is no longer on
+disk, so once Composer has removed the newer code the schema cannot be reversed
+with the shipped tooling.
+
+```bash
+# LibreNMS server, as the librenms user
+
+# 1. what does the database have that a release does not?
+./lnms webterm:migrate --status
+
+# 2. undo them -- N is how many the dev build added
+./lnms webterm:migrate --rollback --step=N
+
+# 3. only now change the constraint back
+./lnms plugin:add adaptivedatanetworks/librenms-webterm ^1.0
+php artisan route:clear
+./lnms webterm:doctor
+```
+
+Rolling a migration back is lossy by design: anything held only in the columns
+it added is gone. Take a database dump first.
+
+If you downgrade without step 2, nothing announces it. The released code queries
+columns the newer schema has changed and every session dies at credential
+resolution with an unknown-column error, while checks that look for *pending*
+migrations see none. `webterm:doctor` detects this case specifically and reports
+the schema as newer than the code — it is the one thing that will tell you.
+
 ## Version skew
 
 The plugin auto-updates with LibreNMS; the gateway does not. This means **mismatched versions are the normal state**, not an edge case.

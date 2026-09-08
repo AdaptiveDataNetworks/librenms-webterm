@@ -23,7 +23,7 @@ go build ./cmd/librenms-webterm-gw
 # in your LibreNMS directory, as the librenms user
 composer config repositories.webterm \
   '{"type":"path","url":"/path/to/librenms-webterm","options":{"symlink":true}}'
-./lnms plugin:add adaptivedatanetworks/librenms-webterm @dev
+./lnms plugin:add adaptivedatanetworks/librenms-webterm dev-main
 ```
 
 With `symlink: true`, edits are live.
