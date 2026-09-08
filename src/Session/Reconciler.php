@@ -10,6 +10,7 @@ use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
 use AdaptiveDataNetworks\WebTerm\Models\Session as SessionModel;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Support\Carbon;
 
 /**
@@ -50,7 +51,11 @@ final class Reconciler
             // transient network blip, so we do nothing and try again.
             $this->audit->log(Event::GatewayUnreachable, detail: ['error' => $e->getMessage()]);
 
-            return ['live' => 0, 'reaped' => 0, 'revoked' => 0];
+            // Every other release path needs the gateway, so without this an
+            // unreachable gateway means no slot is ever returned. Rows that are
+            // dead on the clock alone can still be closed: a pending ticket
+            // past its TTL can no longer be redeemed by anyone.
+            return ['live' => 0, 'reaped' => $this->expireOnTime(), 'revoked' => 0];
         }
 
         $instanceId = (string) ($report['instance_id'] ?? '');
@@ -61,7 +66,9 @@ final class Reconciler
             }
         }
 
-        $reaped = $this->reap($liveIds, $instanceId);
+        $this->markActive($liveIds);
+
+        $reaped = $this->reap($liveIds, $instanceId) + $this->expireOnTime();
         $revoked = $this->revoke($gateway);
 
         return ['live' => count($liveIds), 'reaped' => $reaped, 'revoked' => $revoked];
@@ -70,6 +77,64 @@ final class Reconciler
     /**
      * @param  list<string>  $liveIds
      */
+    /**
+     * Record that the gateway is still holding these sessions.
+     *
+     * Nothing ever wrote ACTIVE, despite this class's own docblock promising
+     * it. A running terminal therefore read as "pending" forever in
+     * webterm:sessions and the admin console -- which is what "sessions seem to
+     * just hang" looks like from the outside -- and last_seen_at was written
+     * once at mint and never again, leaving its index serving a query nobody
+     * ran.
+     *
+     * @param  list<string>  $liveIds
+     */
+    private function markActive(array $liveIds): void
+    {
+        if ($liveIds === []) {
+            return;
+        }
+
+        SessionModel::query()
+            ->whereIn('session_id', $liveIds)
+            ->where('state', '!=', SessionModel::CLOSED)
+            ->update([
+                'state' => SessionModel::ACTIVE,
+                'last_seen_at' => Carbon::now(),
+            ]);
+    }
+
+    /**
+     * Close rows that are dead on the clock, whatever the gateway says.
+     *
+     * A pending row past the ticket TTL can never become a session: the ticket
+     * is single-use and expired, so nobody can redeem it. An active row whose
+     * last_seen_at has not moved for well over a reconcile interval is one the
+     * gateway has stopped reporting.
+     *
+     * This is the only release path that does not require reaching the gateway,
+     * which matters because the gateway being down is precisely when sessions
+     * pile up.
+     */
+    private function expireOnTime(): int
+    {
+        $stale = SessionModel::query()
+            ->where('state', SessionModel::PENDING)
+            ->where('started_at', '<=', Carbon::now()->subSeconds(Protocol::TICKET_TTL_SECONDS))
+            ->get();
+
+        foreach ($stale as $session) {
+            $session->state = SessionModel::CLOSED;
+            $session->ended_at = Carbon::now();
+            $session->close_reason = 'expired: ticket was never redeemed';
+            $session->save();
+
+            $this->audit->log(Event::SessionEnded, null, $session->device_id, $session->session_id);
+        }
+
+        return $stale->count();
+    }
+
     private function reap(array $liveIds, string $instanceId): int
     {
         $query = SessionModel::query()->live();
@@ -89,11 +154,13 @@ final class Reconciler
         $stale = $query->get();
 
         foreach ($stale as $session) {
-            // A pending session that has not yet been redeemed is not stale --
-            // it may simply not have been connected to yet.
+            // A pending session may simply not have been connected to yet --
+            // but only until its ticket expires. Past the TTL it is provably
+            // dead, so the old 60-second grace was twice as long as it could
+            // ever need to be, and doubled how long a leaked slot lingered.
             if ($session->state === SessionModel::PENDING
                 && $session->started_at !== null
-                && $session->started_at->diffInSeconds(Carbon::now()) < 60) {
+                && $session->started_at->diffInSeconds(Carbon::now()) < Protocol::TICKET_TTL_SECONDS) {
                 continue;
             }
 

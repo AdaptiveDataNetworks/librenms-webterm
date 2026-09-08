@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Models;
 
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -59,5 +60,35 @@ final class Session extends Model
     public function scopeLive(Builder $query): void
     {
         $query->whereIn('state', [self::PENDING, self::ACTIVE]);
+    }
+
+    /**
+     * Sessions that should count against a user's concurrency limit.
+     *
+     * Narrower than scopeLive() on purpose. A row is written before the SSH
+     * dial is attempted, so a dial that fails leaves it PENDING; nothing in the
+     * request path closes it, and the reconciler needs the gateway plus a
+     * scheduler tick to notice. Counting those meant three failed connection
+     * attempts locked an operator out at the default limit of three, with no
+     * terminal open anywhere.
+     *
+     * A pending row older than the ticket TTL is provably dead: its ticket can
+     * no longer be redeemed by anyone, so it can never become a session. It
+     * stops occupying a slot immediately -- no scheduler, no gateway, no
+     * waiting. The reconciler still closes the row for tidiness and audit.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeOccupying(Builder $query): void
+    {
+        $deadline = Carbon::now()->subSeconds(Protocol::TICKET_TTL_SECONDS);
+
+        $query->where(function (Builder $q) use ($deadline): void {
+            $q->where('state', self::ACTIVE)
+                ->orWhere(function (Builder $p) use ($deadline): void {
+                    $p->where('state', self::PENDING)
+                        ->where('started_at', '>', $deadline);
+                });
+        });
     }
 }

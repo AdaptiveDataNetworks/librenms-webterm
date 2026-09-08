@@ -204,7 +204,7 @@ final class ShellAuthorizer
     {
         return Session::query()
             ->where('user_id', $user->getAuthIdentifier())
-            ->live()
+            ->occupying()
             ->count();
     }
 
