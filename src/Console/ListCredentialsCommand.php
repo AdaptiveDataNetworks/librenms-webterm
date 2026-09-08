@@ -6,6 +6,7 @@ namespace AdaptiveDataNetworks\WebTerm\Console;
 
 use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
 use Illuminate\Console\Command;
@@ -14,43 +15,31 @@ use Illuminate\Console\Command;
  * Show what is stored, without showing any of it.
  *
  * There was no way to see this at all: an operator could write a credential and
- * then had no means of asking what was recorded, for which device, under which
- * login, or whether it still decrypts with the current key. "Set it again and
- * hope" was the only recourse, which is precisely the opacity that makes a
- * CLI-only surface feel unusable.
+ * then had no means of asking what was recorded, under which login, or whether
+ * it still decrypts with the current key.
  *
- * No secret, and no fragment of one, is printed here. The fingerprint column is
- * a public key fingerprint, which is not sensitive; the payload is never read.
+ * No secret, and no fragment of one, is printed. The fingerprint of a key pair
+ * is public information; the payload is never read.
  */
 final class ListCredentialsCommand extends Command
 {
     use ResolvesDevices;
 
-    protected $signature = 'webterm:credentials:list
-        {--device= : Limit to one device, by hostname or id}';
+    protected $signature = 'webterm:credentials:list';
 
-    protected $description = 'List stored SSH credentials, and what they will be used for';
+    protected $description = 'List stored SSH credentials and what each one applies to';
 
     public function handle(): int
     {
-        $query = Credential::query()->orderBy('device_id');
-
-        if ((string) $this->option('device') !== '') {
-            $device = $this->findDevice((string) $this->option('device'));
-            if ($device === null) {
-                $this->error(sprintf('No such device: %s', $this->option('device')));
-
-                return self::FAILURE;
-            }
-
-            $query->where('device_id', (int) $device->device_id);
-        }
-
-        $rows = $query->get();
+        $rows = Credential::query()
+            ->orderByRaw("case scope_type when 'device' then 0 when 'group' then 1 else 2 end")
+            ->orderBy('scope_ref')
+            ->get();
 
         if ($rows->isEmpty()) {
             $this->info('No credentials stored.');
-            $this->line('  Add one with: ./lnms webterm:credentials:set --device=<device> --username=<login>');
+            $this->line('  Add one with:  ./lnms webterm:credentials:set --device=<device> --username=<login>');
+            $this->line('  Or fleet-wide: ./lnms webterm:credentials:set --global --username=<login>');
 
             return self::SUCCESS;
         }
@@ -58,10 +47,11 @@ final class ListCredentialsCommand extends Command
         $currentKey = (new CredentialEncrypter)->keyId();
 
         // The SSH login actually used is the target's principal, not the
-        // credential's username -- nothing has ever validated that the two
-        // agree, so a mismatch is silent until a device rejects the login.
+        // credential's username -- nothing validates that the two agree, so a
+        // mismatch is silent until a device rejects the login. Only checkable
+        // for device-scoped rows; for shared rows use credentials:explain.
         $principals = Target::query()
-            ->whereIn('device_id', $rows->pluck('device_id')->all())
+            ->whereIn('device_id', $rows->where('scope_type', CredentialScope::Device)->pluck('scope_ref')->all())
             ->pluck('principal', 'device_id');
 
         $mismatched = 0;
@@ -69,7 +59,8 @@ final class ListCredentialsCommand extends Command
         $table = [];
 
         foreach ($rows as $row) {
-            $principal = $principals[$row->device_id] ?? null;
+            $isDevice = $row->scope_type === CredentialScope::Device;
+            $principal = $isDevice ? ($principals[$row->scope_ref] ?? null) : null;
             $agrees = $principal === null || $principal === $row->username;
             $current = $row->key_id === $currentKey;
 
@@ -77,20 +68,24 @@ final class ListCredentialsCommand extends Command
             $stale += $current ? 0 : 1;
 
             $table[] = [
-                $this->deviceLabel((int) $row->device_id),
+                $this->scopeLabel($row->scope_type, $row->scope_ref),
                 $row->method,
                 $row->username,
-                $principal ?? '<no target>',
-                $agrees ? 'yes' : 'NO',
+                $isDevice ? ($principal ?? '<no target>') : '-',
+                $isDevice ? ($agrees ? 'yes' : 'NO') : '-',
                 $current ? 'current' : 'OLD KEY',
                 $row->updated_at?->toDateTimeString() ?? '-',
             ];
         }
 
         $this->table(
-            ['Device', 'Method', 'Stored as', 'Target principal', 'Agree?', 'Key', 'Updated'],
+            ['Applies to', 'Method', 'Stored as', 'Target principal', 'Agree?', 'Key', 'Updated'],
             $table
         );
+
+        $this->line('  Most specific wins: device, then group, then global.');
+        $this->line('  What a given device will actually use:');
+        $this->line('    ./lnms webterm:credentials:explain --device=<device>');
 
         if ($mismatched > 0) {
             $this->warn(sprintf(
@@ -110,9 +105,13 @@ final class ListCredentialsCommand extends Command
         return self::SUCCESS;
     }
 
-    private function deviceLabel(int $deviceId): string
+    private function scopeLabel(CredentialScope $scope, ?int $ref): string
     {
-        $device = $this->findDevice((string) $deviceId);
+        if ($scope !== CredentialScope::Device) {
+            return $scope->label($ref);
+        }
+
+        $device = $ref === null ? null : $this->findDevice((string) $ref);
         $hostname = $device === null ? null : ($device->hostname ?? null);
 
         // Falls back to the id rather than blank: a credential can outlive the
@@ -120,6 +119,6 @@ final class ListCredentialsCommand extends Command
         // looking for when they run this.
         return is_string($hostname) && $hostname !== ''
             ? $hostname
-            : sprintf('#%d', $deviceId);
+            : sprintf('device %s', $ref ?? '?');
     }
 }

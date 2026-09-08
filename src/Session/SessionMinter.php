@@ -6,6 +6,7 @@ namespace AdaptiveDataNetworks\WebTerm\Session;
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
 use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
 use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
@@ -15,6 +16,7 @@ use AdaptiveDataNetworks\WebTerm\Credentials\Exceptions\CredentialException;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
 use AdaptiveDataNetworks\WebTerm\HostKeys\HostKeyManager;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTarget;
 use AdaptiveDataNetworks\WebTerm\Models\HostKey;
 use AdaptiveDataNetworks\WebTerm\Models\Session as SessionModel;
@@ -49,6 +51,7 @@ final class SessionMinter
         private readonly ?CredentialManager $credentials = null,
         private readonly AuditLogger $audit = new AuditLogger,
         private readonly ?HostKeyManager $hostKeys = null,
+        private readonly GroupSource $groups = new DeviceGroups,
     ) {}
 
     /**
@@ -128,6 +131,10 @@ final class SessionMinter
                     (string) $target->principal,
                     $user,
                     $created['public_key'] ?? null,
+                    'ssh',
+                    // Group membership is resolved here, where the Device model
+                    // is in hand, so that a group-scoped credential can apply.
+                    $this->groups->staticGroupIdsFor($device),
                 ));
 
             $gateway->supplyCredential($sessionId, array_merge(

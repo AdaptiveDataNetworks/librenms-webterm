@@ -79,14 +79,38 @@ Changes are audited. Secrets cannot be set here, and anything whose key looks se
 ## Credentials
 
 ```bash
-./lnms webterm:credentials:list                    # what is stored, and for what
-./lnms webterm:credentials:list --device=core-sw-01
-./lnms webterm:credentials:set --device=core-sw-01 --username=netops
+./lnms webterm:credentials:list                     # everything stored, and what it applies to
+./lnms webterm:credentials:explain --device=core-sw-01   # what THIS device will use, and why
+
+./lnms webterm:credentials:set --global --username=netops                 # fleet-wide default
+./lnms webterm:credentials:set --group=7 --username=netops                # one device group
+./lnms webterm:credentials:set --device=core-sw-01 --username=netops      # one device
 ./lnms webterm:credentials:set --device=core-sw-01 --username=netops --key-file=/path/to/key
+
 ./lnms webterm:credentials:forget --device=core-sw-01
+./lnms webterm:credentials:forget --group=7
+./lnms webterm:credentials:forget --global
+
 ./lnms webterm:credentials:rekey --dry-run
 ./lnms webterm:credentials:rekey --from="<old key>"
 ```
+
+### Scope
+
+A credential applies to one device, one LibreNMS **static** device group, or the
+whole fleet. **Most specific wins: device, then group, then global.** A device in
+several groups resolves to the credential on the lowest-numbered group, so the
+answer never depends on row order.
+
+That order is fixed and not configurable. Configurable precedence produces an
+operator who cannot predict which secret a device will use, which is why
+`credentials:explain` ships alongside it — it prints every candidate, marks the
+winner, and names what it overrode.
+
+`--device`, `--group` and `--global` are mutually exclusive and one is required.
+There is no default: silently defaulting to `--global` would write a fleet-wide
+secret when one device was meant, and silently defaulting to a device would make
+`--global` look ignored.
 
 Secrets are always prompted for, never passed as arguments, and never printed
 back — `list` shows the login and the encryption key generation, never the

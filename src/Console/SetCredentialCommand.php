@@ -6,9 +6,10 @@ namespace AdaptiveDataNetworks\WebTerm\Console;
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
-use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesCredentialScope;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Support\SshKey;
@@ -22,10 +23,12 @@ use Illuminate\Console\Command;
  */
 final class SetCredentialCommand extends Command
 {
-    use ResolvesDevices;
+    use ResolvesCredentialScope;
 
     protected $signature = 'webterm:credentials:set
         {--device= : Hostname or id}
+        {--group= : LibreNMS device group id, for a credential shared by that group}
+        {--global : Store the fleet-wide default credential}
         {--username= : SSH username}
         {--key-file= : Path to a private key file, instead of a password}';
 
@@ -33,12 +36,12 @@ final class SetCredentialCommand extends Command
 
     public function handle(AuditLogger $audit): int
     {
-        $device = $this->findDevice((string) $this->option('device'));
-        if ($device === null) {
-            $this->error(sprintf('No such device: %s', $this->option('device')));
-
+        $scope = $this->credentialScope();
+        if ($scope === null) {
             return self::FAILURE;
         }
+
+        [$scopeType, $scopeRef, $scopeLabel] = $scope;
 
         $username = (string) ($this->option('username') ?: $this->ask('SSH username'));
         if ($username === '') {
@@ -82,18 +85,17 @@ final class SetCredentialCommand extends Command
 
         $encrypter = new CredentialEncrypter;
 
-        $deviceId = (int) $device->device_id;
-
         // The login the device actually sees is the target's principal. Nothing
         // has ever checked that the two agree, so a typo here surfaced only as
-        // an authentication failure against real equipment.
-        $principal = Target::query()
-            ->where('device_id', $deviceId)
-            ->where('protocol', 'ssh')
-            ->value('principal');
+        // an authentication failure against real equipment. Only meaningful for
+        // a device-scoped credential -- a shared one deliberately spans devices
+        // whose principals may differ, which webterm:credentials:explain shows.
+        $principal = $scopeType === CredentialScope::Device
+            ? Target::query()->where('device_id', $scopeRef)->where('protocol', 'ssh')->value('principal')
+            : null;
 
         Credential::query()->updateOrCreate(
-            ['device_id' => $deviceId, 'protocol' => 'ssh'],
+            ['scope_type' => $scopeType->value, 'scope_ref' => $scopeRef, 'protocol' => 'ssh'],
             [
                 'method' => $method->value,
                 'username' => $username,
@@ -104,12 +106,13 @@ final class SetCredentialCommand extends Command
             ]
         );
 
-        $audit->log(Event::CredentialStored, deviceId: $deviceId, detail: [
-            'method' => $method->value,
-            'username' => $username,
-        ]);
+        $audit->log(
+            Event::CredentialStored,
+            deviceId: $scopeType === CredentialScope::Device ? $scopeRef : null,
+            detail: ['scope' => $scopeType->value, 'scope_ref' => $scopeRef, 'method' => $method->value, 'username' => $username]
+        );
 
-        $this->info(sprintf('Stored an encrypted %s credential for %s.', $method->value, $device->hostname ?? $deviceId));
+        $this->info(sprintf('Stored an encrypted %s credential for %s.', $method->value, $scopeLabel));
 
         if ($principal !== null && $principal !== $username) {
             $this->line('');
@@ -119,8 +122,15 @@ final class SetCredentialCommand extends Command
                 $username
             ));
             $this->line('  Fix whichever is wrong:');
-            $this->line(sprintf('    ./lnms webterm:target:enable --device=%s --principal=%s', $device->hostname ?? $deviceId, $username));
-            $this->line(sprintf('    ./lnms webterm:credentials:set --device=%s --username=%s', $device->hostname ?? $deviceId, $principal));
+            $this->line(sprintf('    ./lnms webterm:target:enable --device=%s --principal=%s', $scopeRef, $username));
+            $this->line(sprintf('    ./lnms webterm:credentials:set --device=%s --username=%s', $scopeRef, $principal));
+        }
+
+        if ($scopeType !== CredentialScope::Device) {
+            $this->line('');
+            $this->line(sprintf('  This applies to %s, and is overridden by any device-scoped credential.', $scopeLabel));
+            $this->line('  Check what a given device will use:');
+            $this->line('    ./lnms webterm:credentials:explain --device=<device>');
         }
 
         $this->line('');

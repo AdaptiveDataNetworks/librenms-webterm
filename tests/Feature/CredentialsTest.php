@@ -21,7 +21,7 @@ function storeCredential(string $password = 'hunter2', ?CredentialEncrypter $wit
     $enc = $with ?? new CredentialEncrypter;
 
     return Credential::create([
-        'device_id' => 42,
+        'scope_type' => 'device', 'scope_ref' => 42,
         'protocol' => 'ssh',
         'method' => CredentialMethod::Password->value,
         'username' => 'netops',
@@ -116,7 +116,7 @@ it('does not abort the whole rekey because one row is unreadable', function () {
     // before the old key is discarded.
     storeCredential('good', new CredentialEncrypter('old-key-material'));
     Credential::create([
-        'device_id' => 43, 'protocol' => 'ssh',
+        'scope_type' => 'device', 'scope_ref' => 43, 'protocol' => 'ssh',
         'method' => CredentialMethod::Password->value, 'username' => 'netops',
         'payload' => 'not-decryptable-by-anything',
         'cipher' => CredentialEncrypter::CIPHER, 'key_id' => 'lostkey123456789',
@@ -126,7 +126,7 @@ it('does not abort the whole rekey because one row is unreadable', function () {
         ->assertExitCode(1);
 
     $current = new CredentialEncrypter;
-    expect(Credential::query()->where('device_id', 42)->firstOrFail()->key_id)
+    expect(Credential::query()->where('scope_ref', 42)->firstOrFail()->key_id)
         ->toBe($current->keyId());
 });
 

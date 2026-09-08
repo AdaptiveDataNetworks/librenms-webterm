@@ -49,6 +49,44 @@ login the device actually uses.
 
 ## [Unreleased]
 
+### Added
+
+- **Credentials have a scope: global, device group, or device.** One secret can
+  now serve a fleet. Previously the schema was strictly per-device
+  (`device_id` NOT NULL, `unique(device_id, protocol)`), so an estate on one
+  service account needed a row -- and a command -- per device.
+
+  Most specific wins: device, then group, then global. A device in several
+  groups resolves to the lowest-numbered group's credential, so the result never
+  depends on row order. The order is fixed, not configurable: configurable
+  precedence produces an operator who cannot predict which secret a device uses.
+
+- **`webterm:credentials:explain --device=`** ships with it rather than after
+  it. Scope buys one command instead of two hundred and costs the ability to
+  know what any given device will do; that trade is only acceptable if the
+  answer is one command away. It prints every candidate in precedence order,
+  marks the winner, and names what it overrode.
+
+### Changed
+
+- `webterm:credentials:set` and `:forget` take `--global` and `--group=` as well
+  as `--device=`. Exactly one is required — there is no default, because
+  defaulting either way silently does the wrong thing.
+
+### Notes
+
+- The global scope stores `scope_ref = 0` rather than NULL. A unique index
+  treats NULLs as distinct on MySQL, MariaDB and SQLite alike, so a nullable
+  reference would have accepted two global credentials and left resolution to
+  insertion order. A test pins this.
+
+- The migration is idempotent by necessity, not habit. It is the first here to
+  alter an existing table, and Laravel wraps a migration in a transaction only
+  where the grammar supports schema transactions — true for PostgreSQL and SQL
+  Server, false for every database this plugin supports. An interrupted run is
+  never recorded, so the next run restarts from the top and must not fail on
+  work it already did.
+
 ### Fixed
 
 - **The documented way to upgrade the gateway could not work.** `upgrading.md`

@@ -44,15 +44,15 @@ final class DatabaseCredentialProvider implements CredentialProvider
 
     public function resolve(CredentialRequest $request): ResolvedCredential
     {
-        $row = Credential::query()
-            ->where('device_id', $request->deviceId)
-            ->where('protocol', $request->protocol)
-            ->first();
+        // Most specific wins: device, then group, then the global default.
+        $row = Credential::candidatesFor($request->deviceId, $request->groupIds, $request->protocol)->first();
 
         if ($row === null) {
             throw new NoCredentialConfiguredException(
-                'No stored credential for this device. '
-                .'Add one with: ./lnms webterm:credentials:set --device=<device> --username=<login>'
+                'No stored credential applies to this device. '
+                .'Add one with: ./lnms webterm:credentials:set --device=<device> --username=<login>, '
+                .'or a fleet-wide default with --global. '
+                .'./lnms webterm:credentials:explain --device=<device> shows what is considered.'
             );
         }
 

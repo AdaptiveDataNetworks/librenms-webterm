@@ -147,6 +147,52 @@ echo count($pendingAfter) === 0
     ? "  nothing pending afterwards\n"
     : '  FAILED: '.count($pendingAfter)." migration(s) still look pending\n";
 
+// The scope migration is the only one here that alters an existing table, and
+// it does so in several statements on databases that have no DDL transactions.
+// Prove an encrypted payload survives a full down+up on the real engine --
+// SQLite in the unit suite cannot stand in for MySQL's ALTER semantics.
+echo "\n== encrypted payload survives the scope migration (down, then up) ==\n";
+$payload = base64_encode(random_bytes(64));
+$connection->table('webterm_credentials')->insert([
+    'scope_type' => 'device',
+    'scope_ref' => 4242,
+    'protocol' => 'ssh',
+    'method' => 'password',
+    'username' => 'netops',
+    'payload' => $payload,
+    'cipher' => 'aes-256-gcm',
+    'key_id' => 'checkkey00000000',
+]);
+
+$scopeMigration = 'AddScopeToWebtermCredentials';
+$before = (string) $connection->table('webterm_credentials')->where('scope_ref', 4242)->value('payload');
+
+// Roll the scope migration back, then forward again.
+require_once __DIR__.'/../database/migrations/2026_09_08_000001_add_scope_to_webterm_credentials.php';
+$scope = require __DIR__.'/../database/migrations/2026_09_08_000001_add_scope_to_webterm_credentials.php';
+$scope->down();
+$hasDeviceId = $capsule->getConnection()->getSchemaBuilder()->hasColumn('webterm_credentials', 'device_id');
+$scope->up();
+
+$after = (string) $connection->table('webterm_credentials')->where('scope_ref', 4242)->value('payload');
+$survived = $before !== '' && $before === $after;
+echo $survived
+    ? "  payload byte-identical after down+up\n"
+    : "  FAILED: payload changed or row lost\n";
+echo $hasDeviceId
+    ? "  down() restored the pre-scope shape (device_id present)\n"
+    : "  FAILED: down() did not restore device_id\n";
+
+// And up() must be re-runnable, because none of this is transactional.
+$scope->up();
+$again = (string) $connection->table('webterm_credentials')->where('scope_ref', 4242)->value('payload');
+$reRunnable = $again === $before;
+echo $reRunnable
+    ? "  up() is idempotent -- a re-run after a partial failure completes\n"
+    : "  FAILED: re-running up() changed or lost the row\n";
+
+$connection->table('webterm_credentials')->where('scope_ref', 4242)->delete();
+
 echo "\n== rollback ==\n";
 $runner->rollback();
 $remaining = [];
@@ -160,4 +206,5 @@ echo $remaining === []
     ? "  clean: all webterm tables dropped, including the migration repository\n"
     : '  left behind: '.implode(', ', $remaining)."\n";
 
-exit($bad === 0 && $remaining === [] && $leakedIntoCore === 0 && $adopted && $pendingAfter === [] ? 0 : 1);
+exit($bad === 0 && $remaining === [] && $leakedIntoCore === 0 && $adopted && $pendingAfter === []
+    && $survived && $hasDeviceId && $reRunnable ? 0 : 1);

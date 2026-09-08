@@ -20,7 +20,7 @@ function storeCredentialFor(int $deviceId, string $username = 'netops'): Credent
     $encrypter = new CredentialEncrypter;
 
     return Credential::create([
-        'device_id' => $deviceId,
+        'scope_type' => 'device', 'scope_ref' => $deviceId,
         'protocol' => 'ssh',
         'method' => 'password',
         'username' => $username,
@@ -82,7 +82,7 @@ it('will not delete without confirmation', function (): void {
 
     $this->artisan('webterm:credentials:forget --device=42')
         ->expectsConfirmation(
-            'Delete the stored password credential for 42 (login "netops")? Sessions will fail until one is set again.',
+            'Delete the stored password credential for device 42 (login "netops")? Sessions will fail until one is set again.',
             'no'
         )
         ->assertFailed();

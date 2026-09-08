@@ -21,5 +21,14 @@ final class CredentialRequest
         public readonly Authenticatable $user,
         public readonly ?string $clientPublicKey = null,
         public readonly string $protocol = 'ssh',
+        /**
+         * Static device-group ids this device belongs to, resolved by the
+         * caller. Passed in rather than looked up here because resolving them
+         * needs a LibreNMS Device model, and the credential layer is kept free
+         * of core classes so it stays unit-testable.
+         *
+         * @var list<int>
+         */
+        public readonly array $groupIds = [],
     ) {}
 }

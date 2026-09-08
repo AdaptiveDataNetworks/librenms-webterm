@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm;
 
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
 use AdaptiveDataNetworks\WebTerm\Authorization\StepUpGate;
 use AdaptiveDataNetworks\WebTerm\Authorization\TotpStepUp;
 use AdaptiveDataNetworks\WebTerm\Console\AbilityCommand;
 use AdaptiveDataNetworks\WebTerm\Console\ConfigCommand;
 use AdaptiveDataNetworks\WebTerm\Console\DoctorCommand;
+use AdaptiveDataNetworks\WebTerm\Console\ExplainCredentialCommand;
 use AdaptiveDataNetworks\WebTerm\Console\ForgetCredentialCommand;
 use AdaptiveDataNetworks\WebTerm\Console\GrantCommand;
 use AdaptiveDataNetworks\WebTerm\Console\HostKeyResetCommand;
@@ -25,6 +27,7 @@ use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
 use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
 use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Events\NoPendingMigrations;
@@ -62,6 +65,7 @@ final class WebTermServiceProvider extends ServiceProvider
         // every session mint denied with StepUpRequired and no operator could
         // ever open a terminal.
         $this->app->bind(StepUpGate::class, TotpStepUp::class);
+        $this->app->bind(GroupSource::class, DeviceGroups::class);
 
         $this->app->singleton(MigrationRunner::class, static fn ($app): MigrationRunner => new MigrationRunner(
             $app['db'],
@@ -76,6 +80,7 @@ final class WebTermServiceProvider extends ServiceProvider
                 AbilityCommand::class,
                 ConfigCommand::class,
                 DoctorCommand::class,
+                ExplainCredentialCommand::class,
                 ForgetCredentialCommand::class,
                 GrantCommand::class,
                 HostKeyResetCommand::class,

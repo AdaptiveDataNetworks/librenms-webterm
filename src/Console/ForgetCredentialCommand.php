@@ -6,7 +6,8 @@ namespace AdaptiveDataNetworks\WebTerm\Console;
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
-use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
+use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesCredentialScope;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use Illuminate\Console\Command;
 
@@ -20,56 +21,49 @@ use Illuminate\Console\Command;
  */
 final class ForgetCredentialCommand extends Command
 {
-    use ResolvesDevices;
+    use ResolvesCredentialScope;
 
     protected $signature = 'webterm:credentials:forget
         {--device= : Hostname or id}
+        {--group= : LibreNMS device group id}
+        {--global : The fleet-wide default credential}
         {--force : Skip the confirmation prompt}';
 
     protected $description = 'Delete the stored SSH credential for a device';
 
     public function handle(AuditLogger $audit): int
     {
-        $reference = (string) $this->option('device');
-        $device = $this->findDevice($reference);
-
-        // A credential outlives its device: nothing links webterm_credentials
-        // to LibreNMS's devices table (deliberately -- no foreign keys into
-        // core), so deleting a device in LibreNMS leaves the stored secret
-        // behind. Refusing to act without a device record made those rows
-        // impossible to remove with this tool, which is the wrong answer for a
-        // command whose entire job is getting rid of a credential.
-        $deviceId = $device !== null ? (int) $device->device_id : null;
-
-        if ($deviceId === null && ctype_digit($reference)) {
-            $deviceId = (int) $reference;
-        }
-
-        if ($deviceId === null) {
-            $this->error(sprintf('No such device: %s', $reference));
-            $this->line('  If the device has been removed from LibreNMS, pass its numeric id.');
-
+        $scope = $this->credentialScope();
+        if ($scope === null) {
             return self::FAILURE;
         }
 
-        $orphaned = $device === null;
-        $credential = Credential::query()->where('device_id', $deviceId)->where('protocol', 'ssh')->first();
+        [$scopeType, $scopeRef, $scopeLabel] = $scope;
+
+        $credential = Credential::query()
+            ->where('scope_type', $scopeType->value)
+            ->where('scope_ref', $scopeRef)
+            ->where('protocol', 'ssh')
+            ->first();
 
         if ($credential === null) {
-            $this->info(sprintf('No credential stored for %s.', $device->hostname ?? $deviceId));
+            $this->info(sprintf('No credential stored for %s.', $scopeLabel));
 
             return self::SUCCESS;
         }
 
-        if ($orphaned) {
-            $this->warn(sprintf('Device %d no longer exists in LibreNMS; removing its orphaned credential.', $deviceId));
+        // A credential outlives its device: nothing links webterm_credentials
+        // to LibreNMS's devices table (deliberately -- no foreign keys into
+        // core), so deleting a device leaves the stored secret behind.
+        if ($scopeType === CredentialScope::Device && $this->findDevice((string) $scopeRef) === null) {
+            $this->warn(sprintf('Device %d no longer exists in LibreNMS; removing its orphaned credential.', $scopeRef));
         }
 
         if (! $this->option('force') && ! $this->confirm(
             sprintf(
                 'Delete the stored %s credential for %s (login "%s")? Sessions will fail until one is set again.',
                 $credential->method,
-                $device->hostname ?? $deviceId,
+                $scopeLabel,
                 $credential->username
             ),
             false
@@ -86,12 +80,13 @@ final class ForgetCredentialCommand extends Command
 
         // Recorded before we report success, and flagged security-relevant so
         // it leaves the host before it can be edited out of the local table.
-        $audit->log(Event::CredentialRemoved, deviceId: $deviceId, detail: [
-            'method' => $method,
-            'username' => $username,
-        ]);
+        $audit->log(
+            Event::CredentialRemoved,
+            deviceId: $scopeType === CredentialScope::Device ? $scopeRef : null,
+            detail: ['scope' => $scopeType->value, 'scope_ref' => $scopeRef, 'method' => $method, 'username' => $username]
+        );
 
-        $this->info(sprintf('Removed the stored credential for %s.', $device->hostname ?? $deviceId));
+        $this->info(sprintf('Removed the stored credential for %s.', $scopeLabel));
 
         return self::SUCCESS;
     }

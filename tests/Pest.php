@@ -42,7 +42,7 @@ function seedMintable(): void
 
     $enc = new CredentialEncrypter;
     Credential::create([
-        'device_id' => 42, 'protocol' => 'ssh',
+        'scope_type' => 'device', 'scope_ref' => 42, 'protocol' => 'ssh',
         'method' => CredentialMethod::Password->value, 'username' => 'netops',
         'payload' => $enc->encrypt(['password' => 'CANARY-mint-secret']),
         'cipher' => $enc->cipher(), 'key_id' => $enc->keyId(),
