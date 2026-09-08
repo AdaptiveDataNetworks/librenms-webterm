@@ -156,3 +156,33 @@ The reconciler is not running.
 ```
 
 If that fixes it, Laravel's scheduler is not firing. Check your LibreNMS cron.
+
+## "The device could not be reached" / "The device refused the SSH session"
+
+These are different failures and the terminal now says which.
+
+**Could not be reached** (close code 4503) means no TCP connection to port 22 —
+routing, a firewall, or nothing listening. The device was never spoken to.
+
+**Refused the SSH session** (close code 4502) means the connection succeeded and
+the SSH layer said no. The message names which: a rejected credential, no common
+algorithm, or a refused PTY.
+
+Either way the gateway logs the underlying error, which is more specific than
+anything the browser is told:
+
+```bash
+# LibreNMS server, as root
+journalctl -u librenms-webterm-gw -n 50 --no-pager | grep 'ssh dial failed'
+```
+
+That line carries the session id, the target IP the gateway actually dialled,
+and the real error string.
+
+| What the log says | What to do |
+|---|---|
+| `connection refused` | Nothing is listening on 22 at that address. Check the IP with `webterm:credentials:explain --device=<device>` and the device's own SSH service. |
+| `i/o timeout` | A firewall is dropping it, or the address is wrong. The gateway dials from the LibreNMS host, so test from there: `nc -vz <ip> 22`. |
+| `unable to authenticate` | The stored credential was rejected. The login used is the target's **principal**, not the credential's username — `webterm:credentials:explain --device=<device>` shows both. |
+| `no common algorithm` | Older equipment. `webterm:target:enable --device=<device> --profile=legacy`. |
+| `pty-req failed` | The login worked but the device would not allocate a terminal — common on appliances with a restricted shell. |

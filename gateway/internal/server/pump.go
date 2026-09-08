@@ -14,6 +14,8 @@ import (
 	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/session"
 	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/sshx"
 	"github.com/AdaptiveDataNetworks/librenms-webterm/gateway/internal/wsx"
+	"net"
+	"strings"
 )
 
 // runSession connects to the device and moves bytes until something stops it.
@@ -181,6 +183,17 @@ func (s *Server) runSession(ctx context.Context, conn *websocket.Conn, p *sessio
 	}
 }
 
+// classifyDialError turns a dial failure into a close code and a message an
+// operator can act on.
+//
+// The distinction that matters is whether we reached the device at all.
+// "Could not be reached" sent for a rejected password puts an operator into
+// firewall rules and routing tables for a credential problem, which is the
+// most expensive wrong answer this code can give.
+//
+// Nothing here echoes the credential. x/crypto/ssh's auth error names the
+// methods attempted, never the secret, and the messages below are fixed
+// strings.
 func classifyDialError(err error) (int, string) {
 	switch {
 	case errors.Is(err, sshx.ErrHostKeyMismatch):
@@ -190,9 +203,35 @@ func classifyDialError(err error) (int, string) {
 		return 4403, "No pinned SSH host key for this device, and its policy forbids trust-on-first-use."
 	case errors.Is(err, sshx.ErrNotAnIPLiteral):
 		return 4400, "The target address is not an IP literal."
-	default:
-		return 4503, "Could not establish an SSH session with the device."
 	}
+
+	// Never got a socket: genuinely unreachable.
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return 4503, "Timed out opening a TCP connection to the device on port 22."
+	}
+
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return 4503, "Could not open a TCP connection to the device on port 22."
+	}
+
+	// Got a socket; the SSH layer refused. x/crypto/ssh returns plain errors
+	// for these, so there is nothing typed to match on.
+	text := err.Error()
+
+	switch {
+	case strings.Contains(text, "unable to authenticate"):
+		return 4502, "The device rejected the stored credential. Check the target's principal " +
+			"and the credential with: webterm:credentials:explain --device=<device>"
+	case strings.Contains(text, "no common algorithm"):
+		return 4502, "No SSH algorithm in common with the device. Older equipment may need: " +
+			"webterm:target:enable --device=<device> --profile=legacy"
+	case strings.Contains(text, "requesting pty"):
+		return 4502, "The device accepted the login but refused to allocate a terminal."
+	}
+
+	return 4502, "Reached the device, but could not establish an SSH session."
 }
 
 func orDefault(v, fallback int) int {

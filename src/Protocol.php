@@ -70,6 +70,7 @@ final class Protocol
         4413 => 'output_buffer_overrun',
         4429 => 'concurrency_limit',
         4500 => 'gateway_internal_error',
+        4502 => 'upstream_rejected',
         4503 => 'upstream_unreachable',
     ];
 }

@@ -84,6 +84,7 @@
         4408: 'Disconnected after a period of inactivity.',
         4413: 'Disconnected: too much output too quickly.',
         4429: 'You already have the maximum number of sessions open.',
+        4502: 'The device refused the SSH session.',
         4503: 'The device could not be reached.'
       };
       status(reasons[ev.code] || ('Disconnected (' + ev.code + ') ' + (ev.reason || '')), true);

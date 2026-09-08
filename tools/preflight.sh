@@ -19,8 +19,17 @@ echo "== static analysis"          && vendor/bin/phpstan analyse --no-progress
 echo "== tests"                    && vendor/bin/pest
 
 echo "== protocol codegen"
+# Compares the generated files against a fresh generation, NOT against git.
+# `git diff --exit-code` conflates "the generated output is stale" with "you
+# have not committed yet", which made preflight unusable in the middle of a
+# protocol change -- exactly when it is most worth running.
+codegen_before="$(sha256sum src/Protocol.php gateway/internal/proto/proto.go)"
 php tools/generate-protocol.php >/dev/null
-git diff --exit-code -- src/Protocol.php gateway/internal/proto/proto.go
+codegen_after="$(sha256sum src/Protocol.php gateway/internal/proto/proto.go)"
+if [ "$codegen_before" != "$codegen_after" ]; then
+    echo "protocol codegen was stale; it has been regenerated -- review and commit"
+    exit 1
+fi
 
 echo "== gateway"
 cd gateway
