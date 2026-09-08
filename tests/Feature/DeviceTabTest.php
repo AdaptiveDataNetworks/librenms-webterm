@@ -130,8 +130,13 @@ it('renders the ready state when core nests the data as it really does', functio
 
     $html = renderTabLikeCore(['webtermState' => 'ready', 'webtermDeviceId' => 42]);
 
-    expect($html)->toContain('Open terminal')
-        ->and($html)->toContain('plugin/WebTerm?device=42')
+    // The terminal must be IN the tab. A link out to the full-page view loses
+    // the device header and any way back, which is the whole reason the tab
+    // exists -- so assert the iframe is here, not a button that leaves.
+    expect($html)->toContain('webterm-frame')
+        ->and($html)->toContain('webterm-status')
+        // The device comes from the tab, not from a query string.
+        ->and($html)->toContain('42')
         ->and($html)->not->toContain('unavailable');
 });
 

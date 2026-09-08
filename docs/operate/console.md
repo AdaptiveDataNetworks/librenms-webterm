@@ -39,6 +39,26 @@ trust-on-first-connect are each defensible on their own, and together they amoun
 to turning off SSH host key verification for a device from a browser. Both stay
 on the CLI: `webterm:hostkey-scan` and `webterm:hostkey-reset`.
 
+## Sessions stay "pending" and are never reaped
+
+WebTerm registers `webterm:reconcile` on Laravel's scheduler, but **nothing runs
+the scheduler unless you installed it**. LibreNMS ships it separately as
+`dist/librenms-scheduler.cron` (or `librenms-scheduler.timer`), and an install
+without it will show sessions stuck at `pending` forever — including ones you
+closed.
+
+`webterm:doctor` detects this: a pending session past its ticket expiry can
+never be redeemed, so its presence proves nothing is reaping.
+
+```bash
+# clear the backlog now
+./lnms webterm:reconcile
+```
+
+Failed connection attempts no longer cost you a concurrency slot regardless —
+a pending session stops counting once its ticket expires — but without the
+scheduler the rows linger and running terminals are never marked active.
+
 ## Enabling a device group
 
 Enabling a group writes **one target row per member device**, tagged with the

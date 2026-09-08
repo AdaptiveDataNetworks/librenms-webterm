@@ -10,10 +10,12 @@ use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use AdaptiveDataNetworks\WebTerm\Models\HostKey;
+use AdaptiveDataNetworks\WebTerm\Models\Session;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Protocol;
 use Composer\InstalledVersions;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Throwable;
 
 /**
@@ -56,6 +58,7 @@ final class DoctorCommand extends Command
         $this->checkOrigins();
         $this->checkStepUp();
         $this->checkConsole();
+        $this->checkReconciler();
         $this->checkCredentials();
         $this->checkTargets();
 
@@ -420,6 +423,42 @@ final class DoctorCommand extends Command
         }
 
         $this->reportOk('Admin console', sprintf('%d user(s) may open it', $holders));
+    }
+
+    /**
+     * Whether anything is actually reaping sessions.
+     *
+     * Derived rather than recorded: a pending session older than the ticket TTL
+     * can never be redeemed, so if one is still sitting in the table the
+     * reconciler has not run since it was created. That needs no new state and
+     * detects exactly the condition an operator hits -- sessions stuck at
+     * "pending" and, before the concurrency fix, a lockout with nothing open.
+     *
+     * The usual cause is that LibreNMS's scheduler was never installed. The
+     * plugin registers webterm:reconcile on it, but nothing runs the scheduler
+     * unless dist/librenms-scheduler.cron (or the systemd timer) is in place.
+     */
+    private function checkReconciler(): void
+    {
+        $deadline = Carbon::now()->subSeconds(Protocol::TICKET_TTL_SECONDS);
+
+        $stale = Session::query()
+            ->where('state', Session::PENDING)
+            ->where('started_at', '<=', $deadline)
+            ->count();
+
+        if ($stale === 0) {
+            $this->reportOk('Session reaping', 'nothing stale');
+
+            return;
+        }
+
+        $this->reportWarn(
+            'Session reaping',
+            sprintf('%d session(s) are past their ticket expiry but still recorded as pending, so the reconciler is not running', $stale),
+            'install LibreNMS\'s scheduler (dist/librenms-scheduler.cron or librenms-scheduler.timer), '
+                .'then clear the backlog with: ./lnms webterm:reconcile'
+        );
     }
 
     private function checkCredentials(): void

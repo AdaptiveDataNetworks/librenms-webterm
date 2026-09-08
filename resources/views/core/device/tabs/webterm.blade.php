@@ -26,12 +26,12 @@
                 <pre style="margin-bottom: 0;">{{ $data['webtermFix'] }}</pre>
             @endif
         @else
-            {{-- Nothing is minted until this is clicked: opening a device page
-                 must stay free of consequence. --}}
-            <p class="text-muted">{{ __('Opens an SSH session to this device from the LibreNMS server.') }}</p>
-            <a class="btn btn-primary" href="{{ url('plugin/WebTerm?device='.$data['webtermDeviceId']) }}">
-                <i class="fa fa-terminal" aria-hidden="true"></i> {{ __('Open terminal') }}
-            </a>
+            {{-- The terminal itself, in the page. Navigating to this tab is
+                 the deliberate act that opens a session -- the same weight as
+                 clicking a button -- so it connects on arrival rather than
+                 making the operator click twice. The device overview panel is
+                 still a link, so merely browsing devices mints nothing. --}}
+            @include('WebTerm::partials.terminal', ['webtermDeviceId' => $data['webtermDeviceId']])
         @endif
     </div>
 </div>

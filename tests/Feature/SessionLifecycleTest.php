@@ -91,3 +91,28 @@ it('still releases slots when the gateway cannot be reached at all', function ()
     expect($result['reaped'])->toBe(1)
         ->and(Session::query()->find('01GGGGGGGGGGGGGGGGGGGGGGGG')->state)->toBe(Session::CLOSED);
 });
+
+it('warns that nothing is reaping when a dead session is still pending', function (): void {
+    // A pending row past the ticket TTL can never be redeemed, so its presence
+    // proves the reconciler has not run. The usual cause is that LibreNMS's
+    // scheduler was never installed -- the plugin registers the command on it,
+    // but nothing runs the scheduler by itself.
+    sessionRow('01HHHHHHHHHHHHHHHHHHHHHHHH', Session::PENDING, 3 * 3600);
+
+    $this->artisan('webterm:doctor')
+        ->expectsOutputToContain('reconciler is not running');
+});
+
+it('says nothing about reaping when the table is clean', function (): void {
+    sessionRow('01IIIIIIIIIIIIIIIIIIIIIIII', Session::ACTIVE, 60);
+
+    $this->artisan('webterm:doctor')
+        ->expectsOutputToContain('nothing stale');
+});
+
+it('does not describe a dead session as merely pending', function (): void {
+    sessionRow('01JJJJJJJJJJJJJJJJJJJJJJJJ', Session::PENDING, 3 * 3600);
+
+    $this->artisan('webterm:sessions')
+        ->expectsOutputToContain('pending (expired)');
+});

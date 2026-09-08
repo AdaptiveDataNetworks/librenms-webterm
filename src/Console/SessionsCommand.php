@@ -8,6 +8,7 @@ use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Throwable;
@@ -43,7 +44,7 @@ final class SessionsCommand extends Command
                     $s->session_id,
                     $s->user_id,
                     $s->device_id,
-                    $s->state,
+                    $this->stateLabel($s),
                     $s->started_at?->diffForHumans() ?? '',
                     $s->target ?? '',
                 ])->all()
@@ -67,6 +68,24 @@ final class SessionsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A pending row past the ticket TTL is dead, not waiting.
+     *
+     * Showing it as plain "pending" reads as "about to connect" when it can
+     * never connect -- its ticket is single-use and expired.
+     */
+    private function stateLabel(Session $session): string
+    {
+        if ($session->state !== Session::PENDING) {
+            return (string) $session->state;
+        }
+
+        $expired = $session->started_at !== null
+            && $session->started_at->diffInSeconds(Carbon::now()) >= Protocol::TICKET_TTL_SECONDS;
+
+        return $expired ? 'pending (expired)' : 'pending';
     }
 
     private function kill(string $sessionId, string $reason, AuditLogger $audit): int
