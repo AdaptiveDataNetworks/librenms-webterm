@@ -267,7 +267,12 @@ final class WebTermServiceProvider extends ServiceProvider
             $this->app->make(Schedule::class)
                 ->command('webterm:reconcile')
                 ->everyMinute()
-                ->withoutOverlapping()
+                // Bounded deliberately. withoutOverlapping() defaults to a
+                // 1440-minute lock, so a single run killed mid-flight -- a
+                // deploy, an OOM, a restart -- would silently stop the
+                // reconciler for a DAY. A pass takes seconds; five minutes is
+                // generous and self-heals.
+                ->withoutOverlapping(5)
                 ->runInBackground();
         });
     }
