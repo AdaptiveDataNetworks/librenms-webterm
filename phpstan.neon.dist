@@ -37,4 +37,6 @@ parameters:
         # view name fails the suite.
         -
             message: '#expects view-string\|null, string given#'
-            path: src/Http/Controllers/*
+            paths:
+                - src/Http/Controllers/*
+                - tests/*
