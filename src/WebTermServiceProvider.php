@@ -29,6 +29,7 @@ use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
 use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Events\NoPendingMigrations;
 use Illuminate\Support\ServiceProvider;
@@ -144,6 +145,7 @@ final class WebTermServiceProvider extends ServiceProvider
         // for a while does not silently fall behind on schema, and then fail
         // the moment it is switched back on.
         $this->followCoreMigrations($plugins);
+        $this->scheduleReconciler();
 
         if (! $plugins->pluginEnabled(self::PLUGIN_NAME)) {
             return;
@@ -156,6 +158,35 @@ final class WebTermServiceProvider extends ServiceProvider
             __DIR__.'/../config/webterm.php' => config_path('webterm.php'),
         ], 'webterm-config');
 
+    }
+
+    /**
+     * Run the reconciler from LibreNMS's scheduler.
+     *
+     * Nothing did. The reconciler is what returns a session's concurrency slot
+     * once the gateway no longer holds it -- including a pending session whose
+     * SSH dial failed, which otherwise counts against the operator's limit
+     * forever. Every failed connection attempt permanently consumed a slot, and
+     * the only recovery was running the command by hand.
+     *
+     * LibreNMS ships dist/librenms-scheduler.cron, which runs
+     * `artisan schedule:run` every minute, so this needs no cron of its own on
+     * a standard install. withoutOverlapping matters because the pass talks to
+     * the gateway over HTTP and a slow gateway must not stack up runs.
+     */
+    private function scheduleReconciler(): void
+    {
+        $this->app->booted(function (): void {
+            if (! $this->app->bound(Schedule::class)) {
+                return;
+            }
+
+            $this->app->make(Schedule::class)
+                ->command('webterm:reconcile')
+                ->everyMinute()
+                ->withoutOverlapping()
+                ->runInBackground();
+        });
     }
 
     /**

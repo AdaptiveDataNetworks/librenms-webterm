@@ -5,6 +5,7 @@ declare(strict_types=1);
 use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\Tests\Fakes\FakePluginManager;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Events\NoPendingMigrations;
 use Illuminate\Support\Facades\Schema;
@@ -109,4 +110,17 @@ it('does not write to core\'s migrations table', function (): void {
 
     expect(DB::table('migrations')->count())->toBe(0)
         ->and(DB::table(MigrationRunner::TABLE)->count())->toBeGreaterThan(0);
+});
+
+it('registers the reconciler on the scheduler', function (): void {
+    // Nothing scheduled it, so the only thing that returns a session's
+    // concurrency slot never ran. A failed dial leaves a pending session, and a
+    // pending session counts as live -- so every failed attempt permanently
+    // consumed one of the operator's slots.
+    bootProviderWith(new FakePluginManager(enabled: true));
+
+    $events = app(Schedule::class)->events();
+    $commands = array_map(static fn ($e) => $e->command ?? '', $events);
+
+    expect(implode(' ', $commands))->toContain('webterm:reconcile');
 });

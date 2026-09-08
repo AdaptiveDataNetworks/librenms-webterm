@@ -78,7 +78,7 @@ Dynamic groups are rule-driven, which means a device can join one — and acquir
 
 ## Revocation is immediate-ish
 
-Every 15 seconds the reconciler re-checks live sessions. Removing a grant ends the running terminal, not merely the next one.
+Once a minute the reconciler re-checks live sessions, from LibreNMS's own scheduler (`dist/librenms-scheduler.cron`, which runs `artisan schedule:run`). Removing a grant ends the running terminal, not merely the next one.
 
 ```bash
 ./lnms webterm:sessions
