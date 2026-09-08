@@ -17,7 +17,7 @@ jobs:
     name: Dependency guard
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -32,7 +32,7 @@ jobs:
     name: Protocol codegen is current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -59,7 +59,7 @@ jobs:
         # PHP 8.5 deprecation reached a user's console.
         php: ['8.2', '8.3', '8.4', '8.5']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -76,7 +76,7 @@ jobs:
       run:
         working-directory: gateway
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
           go-version: 'stable'
@@ -126,7 +126,7 @@ jobs:
     name: Packaging
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # A malformed unit fails at `systemctl start`, on the user's machine,
       # after they have already installed it.
@@ -198,7 +198,7 @@ jobs:
           --health-cmd="healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h 127.0.0.1 -uroot -pr00t"
           --health-interval=5s --health-timeout=5s --health-retries=20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'

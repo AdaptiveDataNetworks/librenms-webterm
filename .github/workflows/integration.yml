@@ -21,13 +21,18 @@ jobs:
   install:
     name: LibreNMS ${{ matrix.ref }}
     runs-on: ubuntu-latest
+    # LibreNMS refuses to run artisan as anyone but its configured user, and
+    # `composer install` invokes artisan through post-autoload-dump. On a runner
+    # that user is `runner`, not `librenms`.
+    env:
+      LIBRENMS_USER: runner
     strategy:
       fail-fast: false
       matrix:
         # master plus the two most recent stable tags, resolved at run time.
         ref: ['master']
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           path: plugin
 
