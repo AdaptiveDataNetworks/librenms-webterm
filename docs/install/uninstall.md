@@ -31,8 +31,17 @@ The plugin's tables are not dropped on removal, so a reinstall keeps your grants
 
 ```bash
 # as the librenms user, BEFORE removing the plugin
-./lnms migrate:rollback --path=vendor/adaptivedatanetworks/librenms-webterm/database/migrations
+./lnms webterm:migrate --rollback
 ```
+
+This drops every `webterm_*` table, including the plugin's own migration
+repository, so nothing of ours is left in the database.
+
+!!! note "Not `./lnms migrate:rollback`"
+
+    The plugin keeps its migrations in its own repository table rather than in
+    core's, so core's rollback command does not know about them. See
+    [validate.php warnings](validate-warnings.md#extra-migrations) for why.
 
 !!! warning "This destroys the audit trail"
 

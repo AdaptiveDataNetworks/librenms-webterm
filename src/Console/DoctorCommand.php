@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AdaptiveDataNetworks\WebTerm\Console;
 
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
+use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\Grant;
@@ -40,6 +41,7 @@ final class DoctorCommand extends Command
         ));
         $this->line('');
 
+        $this->checkSchema();
         $this->checkKillSwitch();
         $this->checkSecret();
         $this->checkGateway();
@@ -144,6 +146,51 @@ final class DoctorCommand extends Command
         $this->problems++;
         $this->line(sprintf('  <fg=red>FAIL</>  %s  <fg=gray>%s</>', $label, $detail));
         $this->line(sprintf('        <fg=gray>fix:</> %s', $fix));
+    }
+
+    /**
+     * Schema state, and whether core's validate.php will complain about it.
+     *
+     * Two distinct problems share this check. Pending migrations are a real
+     * fault -- the plugin will throw on a missing table. Rows left in core's
+     * migrations table are only cosmetic, but they make `./validate.php` report
+     * "extra migrations", which sits in the same list as genuine schema
+     * corruption and is indistinguishable from it to anyone who has not read
+     * the source.
+     */
+    private function checkSchema(): void
+    {
+        try {
+            $runner = app(MigrationRunner::class);
+            $pending = $runner->pending();
+            $legacy = $runner->legacyRows();
+        } catch (Throwable $e) {
+            $this->reportFail('Database schema', 'cannot be read: '.$e->getMessage(), 'check the database connection, then ./lnms webterm:migrate');
+
+            return;
+        }
+
+        if ($pending !== []) {
+            $this->reportFail(
+                'Database schema',
+                sprintf('%d migration(s) have not been applied', count($pending)),
+                './lnms webterm:migrate'
+            );
+
+            return;
+        }
+
+        if ($legacy !== []) {
+            $this->reportWarn(
+                'Database schema',
+                sprintf('%d migration(s) are recorded in core\'s table, so ./validate.php reports them as extra', count($legacy)),
+                './lnms webterm:migrate  (moves them, changes no schema)'
+            );
+
+            return;
+        }
+
+        $this->reportOk('Database schema', 'up to date');
     }
 
     private function checkKillSwitch(): void

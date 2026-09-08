@@ -80,6 +80,28 @@ if ($providers === []) {
         .'never registers the plugin and NOTHING loads.';
 }
 
+// A provider naming a class that does not exist auto-discovers into a fatal on
+// the user's install, and nothing in the unit suite would notice: Testbench
+// registers the provider by its real class name, not through the manifest. The
+// vendor namespace has been renamed once already.
+$psr4 = $manifest['autoload']['psr-4'] ?? [];
+foreach ($providers as $provider) {
+    $file = null;
+    foreach ($psr4 as $prefix => $dir) {
+        if (str_starts_with($provider, $prefix)) {
+            $file = __DIR__.'/../'.rtrim($dir, '/').'/'
+                .str_replace('\\', '/', substr($provider, strlen($prefix))).'.php';
+            break;
+        }
+    }
+
+    if ($file === null) {
+        $errors[] = "extra.laravel.providers lists {$provider}, which matches no autoload.psr-4 prefix.";
+    } elseif (! is_file($file)) {
+        $errors[] = "extra.laravel.providers lists {$provider}, but {$file} does not exist.";
+    }
+}
+
 if ($errors !== []) {
     fwrite(STDERR, "composer-guard FAILED\n\n");
     foreach ($errors as $e) {

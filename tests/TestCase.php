@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Tests;
 
+use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -76,11 +77,15 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * Migrations are loaded by the provider only when the plugin is enabled in
-     * LibreNMS, which never happens under Testbench -- so load them directly.
+     * Migrate through the runner the plugin actually uses in production.
+     *
+     * Not Testbench's loadMigrationsFrom(): that records migrations in core's
+     * `migrations` table, which is precisely the thing we no longer do -- see
+     * {@see MigrationRunner}. Driving
+     * the real runner here means every test in the suite exercises it.
      */
     protected function defineDatabaseMigrations(): void
     {
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->app->make(MigrationRunner::class)->migrate();
     }
 }

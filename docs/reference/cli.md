@@ -17,6 +17,25 @@ cd /opt/librenms
 
 `webterm:why` runs the real authorization path and prints the command that fixes the failing step. It is the right first response to "why can't I open a terminal".
 
+## Database
+
+```bash
+./lnms webterm:migrate                # apply pending plugin migrations
+./lnms webterm:migrate --status       # what has run, and where it is recorded
+./lnms webterm:migrate --pretend      # print the SQL without running it
+./lnms webterm:migrate --rollback     # drop every webterm table (destructive)
+```
+
+The plugin records its migrations in `webterm_migrations` rather than in
+LibreNMS's `migrations` table, so that `./validate.php` does not report them as
+[extra migrations](../install/validate-warnings.md#extra-migrations). You do not
+normally need to run this: the plugin applies its own migrations whenever a core
+migration run finishes, which is what makes `./lnms migrate` — and therefore
+`daily.sh` — keep the plugin current.
+
+Run it by hand when upgrading from 1.0.6 or earlier, which moves the old rows
+out of core's table, and when uninstalling.
+
 ## Configuration
 
 ```bash

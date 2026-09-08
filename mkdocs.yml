@@ -65,6 +65,7 @@ nav:
       - Docker: install/docker.md
       - LibreNMS updates: install/librenms-updates.md
       - Upgrading: install/upgrading.md
+      - validate.php warnings: install/validate-warnings.md
       - Uninstalling: install/uninstall.md
   - The gateway:
       - Configure: gateway/configure.md

@@ -25,8 +25,14 @@ Check both halves at any time:
 # as the librenms user
 ./lnms plugin:add adaptivedatanetworks/librenms-webterm     # re-resolves to the newest matching release
 php artisan route:clear
-./lnms migrate                              # if the release adds migrations
+./lnms migrate                              # applies plugin migrations too
 ```
+
+`./lnms migrate` is enough: the plugin watches for the end of a core migration
+run and applies its own migrations then, which is also how LibreNMS's `daily.sh`
+keeps the plugin's schema current without anyone doing anything. `./lnms
+webterm:migrate` does the same thing directly, and `./lnms webterm:doctor` will
+tell you if anything is outstanding.
 
 To pin an exact version, see [LibreNMS updates](librenms-updates.md#pinning-an-exact-version).
 

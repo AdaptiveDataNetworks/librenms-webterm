@@ -24,6 +24,8 @@ The practical consequences:
 - **Never hand-edit `composer.json` to add WebTerm.** Your edit will be erased on the next update. Always use `lnms plugin:add`.
 - Every LibreNMS update **re-resolves** WebTerm's version constraint. If you tracked `^1.0`, an update can move you to a newer 1.x.
 - Your gateway binary is **not** touched by this. Plugin and gateway drift apart over time — see [version skew](#version-skew) below.
+- `daily.sh` also runs `./lnms migrate`. WebTerm applies its own migrations when that finishes, so plugin schema stays current on every update without any manual step — see [validate.php warnings](validate-warnings.md#extra-migrations) for why it does not simply share core's migration table.
+- After the update, the LibreNMS working tree legitimately has `composer.json` and `composer.lock` modified. The web UI reports that as a warning even though core meant to suppress it; that is an upstream bug, and it is [explained here](validate-warnings.md#modified-files-composerjson-and-composerlock).
 
 ## Pinning an exact version
 

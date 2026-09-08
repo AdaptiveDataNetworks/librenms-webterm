@@ -6,6 +6,49 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [Unreleased]
+
+### Fixed
+
+- **`./validate.php` reported WebTerm's migrations as "extra migrations".**
+  LibreNMS validates its schema by diffing the `migrations` table against the
+  files in `database/migrations/` and nothing else, with no allow-list and no
+  plugin awareness, so every row a plugin records there is flagged forever. The
+  warning was cosmetic, but it sits in the same list as genuine schema
+  corruption and an operator cannot tell the two apart.
+
+  WebTerm now keeps its migrations in its own repository table,
+  `webterm_migrations`, and writes nothing to core's. Because `./lnms migrate`
+  can no longer discover them -- and LibreNMS's `daily.sh` runs exactly that on
+  every update -- the plugin listens for the end of a core migration run and
+  applies its own immediately afterwards. Both `MigrationsEnded` and
+  `NoPendingMigrations` are handled: Laravel fires only the latter when core has
+  nothing to migrate, which is the common case on a routine update.
+
+  **Upgrading from 1.0.6 or earlier:** run `./lnms webterm:migrate` once to move
+  the existing rows out of core's table. It moves bookkeeping only -- no
+  migration is re-run and no schema changes. It also happens automatically the
+  next time `./lnms migrate` runs.
+
+- The nightly LibreNMS integration job had started failing before it installed
+  anything: core now refuses to run `artisan` as any user but its configured
+  one, and `composer install` reaches `artisan` through `post-autoload-dump`.
+
+### Added
+
+- `webterm:migrate`, with `--status`, `--pretend` and `--rollback`. Uninstall
+  now uses `./lnms webterm:migrate --rollback`, which drops every `webterm_*`
+  table including the migration repository, instead of core's
+  `migrate:rollback --path=...`.
+- `webterm:doctor` checks schema state, separating migrations that have not run
+  -- a real fault -- from rows left in core's table, which is only cosmetic.
+- A [validate.php warnings](https://adaptivedatanetworks.github.io/librenms-webterm/install/validate-warnings/)
+  page documenting both warnings a Composer plugin can produce. The second one,
+  `composer.json` and `composer.lock` showing as modified, is an upstream bug:
+  core deliberately exempts exactly that case, but reads `composer.plugins.json`
+  by a relative path, so the exemption only applies when the working directory
+  is the LibreNMS root -- true for the CLI, false under php-fpm.
+
 ## [1.0.6] - 2026-09-07
 
 ### Fixed

@@ -63,11 +63,33 @@ jobs:
         env:
           FORCE: 1
 
+      # The FQCN is read from our own composer.json rather than written out
+      # here: this check silently went stale once when the vendor namespace was
+      # renamed, and a grep for a class that no longer exists fails for the
+      # wrong reason.
       - name: Assert the provider is discovered
-        working-directory: librenms
         run: |
-          grep -q 'Adn\\\\WebTerm\\\\WebTermServiceProvider' vendor/composer/installed.json \
-            || (echo "::error::Provider missing from installed.json — auto-discovery will not fire"; exit 1)
+          php -r '
+            $manifest = json_decode(file_get_contents("plugin/composer.json"), true);
+            $expected = $manifest["extra"]["laravel"]["providers"] ?? [];
+            $installed = json_decode(file_get_contents("librenms/vendor/composer/installed.json"), true);
+
+            $found = [];
+            foreach ($installed["packages"] ?? [] as $package) {
+                if (($package["name"] ?? "") === $manifest["name"]) {
+                    $found = $package["extra"]["laravel"]["providers"] ?? [];
+                }
+            }
+
+            $missing = array_diff($expected, $found);
+            if ($expected === [] || $missing !== []) {
+                fwrite(STDERR, "::error::Provider(s) missing from installed.json, so auto-discovery will not fire: "
+                    . implode(", ", $missing ?: ["<none declared>"]) . "\n");
+                exit(1);
+            }
+
+            echo "auto-discovery will register: " . implode(", ", $found) . "\n";
+          '
 
       # A closure in our routes, or a non-serialisable config value, would break
       # these for the whole LibreNMS application — not just for our plugin.
