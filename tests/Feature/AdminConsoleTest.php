@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
@@ -181,4 +182,19 @@ it('never exposes a credential payload or secret in the console', function (): v
         ->assertOk()
         ->assertSee('fleet-account')
         ->assertDontSee('SUPER-SECRET-PAYLOAD');
+});
+
+it('offers the console link only to someone who can actually open it', function (): void {
+    // The console answers 404 without WebTerm's own admin ability, which is
+    // separate from the LibreNMS admin role. Linking to it unconditionally
+    // hands a LibreNMS admin who lacks that ability a button to a dead end.
+    bootConsole();
+
+    $hook = new Settings;
+
+    $this->actingAs(new FakeUser(7));
+    expect($hook->handle('WebTerm', [])['webtermConsole'])->toBeFalse();
+
+    $this->actingAs(admin(7));
+    expect($hook->handle('WebTerm', [])['webtermConsole'])->toBeTrue();
 });

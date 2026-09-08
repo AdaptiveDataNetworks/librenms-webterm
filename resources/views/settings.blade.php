@@ -10,10 +10,17 @@
         <p>
             {{ __('This page cannot configure WebTerm: LibreNMS stores plugin settings as plaintext JSON, so nothing sensitive may be kept here.') }}
         </p>
-        <p>
-            <a class="btn btn-primary btn-sm" href="{{ url('plugin/webterm/admin') }}">{{ __('Open the WebTerm console') }}</a>
-            <span class="text-muted"><small>{{ __('targets, access, host keys, sessions and audit') }}</small></span>
-        </p>
+        @if (! empty($webtermConsole))
+            <p>
+                <a class="btn btn-primary btn-sm" href="{{ url('plugin/webterm/admin') }}">{{ __('Open the WebTerm console') }}</a>
+                <span class="text-muted"><small>{{ __('targets, access, host keys, sessions and audit') }}</small></span>
+            </p>
+        @else
+            <p class="text-muted">
+                {{ __('The WebTerm console needs WebTerm\'s own admin ability, which is separate from being a LibreNMS administrator. Grant it from the command line:') }}
+            </p>
+            <pre style="margin-bottom: 12px;">./lnms webterm:ability grant --user=&lt;you&gt; --ability=admin</pre>
+        @endif
         <p class="text-muted">
             {{ __('Credentials are deliberately not settable from a browser: obtaining one should require shell access to this host.') }}
         </p>
