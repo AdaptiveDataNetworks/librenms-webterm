@@ -98,3 +98,55 @@ it('denies in data() rather than trusting visible()', function (): void {
     expect($data['webtermState'])->toBe('denied')
         ->and($data)->not->toHaveKey('webtermDeviceId');
 });
+
+/**
+ * Renders the tab view the way DeviceController actually does.
+ *
+ * It does NOT spread a tab's data() return into the view. It nests it:
+ *
+ *     $data = $tab_controller->data($device, $request);
+ *     $data_array = ['title' =>, 'device' =>, 'device_id' =>, 'data' => $data, ...];
+ *     return view('device.tabs.'.$current_tab, $data_array);
+ *
+ * so a view reading $webtermState finds nothing and silently shows its fallback
+ * text -- which is exactly what shipped. Core's own tabs read $data[...]; see
+ * resources/views/device/tabs/config.blade.php.
+ */
+function renderTabLikeCore(array $data): string
+{
+    return view('device.tabs.webterm', [
+        'title' => 'Terminal',
+        'device' => null,
+        'device_id' => 42,
+        'data' => $data,
+        'vars' => [],
+        'current_tab' => 'webterm',
+        'request' => request(),
+    ])->render();
+}
+
+it('renders the ready state when core nests the data as it really does', function (): void {
+    bootWithTab();
+
+    $html = renderTabLikeCore(['webtermState' => 'ready', 'webtermDeviceId' => 42]);
+
+    expect($html)->toContain('Open terminal')
+        ->and($html)->toContain('plugin/WebTerm?device=42')
+        ->and($html)->not->toContain('unavailable');
+});
+
+it('shows the real denial reason, not a generic fallback', function (): void {
+    // The generic text is the view's last resort. Seeing it means the data
+    // never arrived, which is a wiring bug rather than a denial.
+    bootWithTab();
+
+    $html = renderTabLikeCore([
+        'webtermState' => 'denied',
+        'webtermReason' => 'A deny rule blocks your access to this device.',
+        'webtermFix' => './lnms webterm:grant --user=x --device=y --deny --remove',
+    ]);
+
+    expect($html)->toContain('A deny rule blocks your access')
+        ->and($html)->toContain('webterm:grant')
+        ->and($html)->not->toContain('The terminal is unavailable for this device.');
+});
