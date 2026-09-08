@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://adaptivedatanetworks.github.io/librenms-webterm/1.0/install/uninstall/">
       
       
-        <link rel="prev" href="../upgrading/">
+        <link rel="prev" href="../validate-warnings/">
       
       
         <link rel="next" href="../../gateway/configure/">
@@ -468,6 +468,27 @@
   
   <span class="md-ellipsis">
     Upgrading
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../validate-warnings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    validate.php warnings
   </span>
   
 
@@ -1691,8 +1712,16 @@
 <h2 id="data-left-in-librenms">Data left in LibreNMS<a class="headerlink" href="#data-left-in-librenms" title="Permanent link">&para;</a></h2>
 <p>The plugin's tables are not dropped on removal, so a reinstall keeps your grants, host key pins and audit history. To remove them:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># as the librenms user, BEFORE removing the plugin</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lnms<span class="w"> </span>migrate:rollback<span class="w"> </span>--path<span class="o">=</span>vendor/adaptivedatanetworks/librenms-webterm/database/migrations
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lnms<span class="w"> </span>webterm:migrate<span class="w"> </span>--rollback
 </code></pre></div>
+<p>This drops every <code>webterm_*</code> table, including the plugin's own migration
+repository, so nothing of ours is left in the database.</p>
+<div class="admonition note">
+<p class="admonition-title">Not <code>./lnms migrate:rollback</code></p>
+<p>The plugin keeps its migrations in its own repository table rather than in
+core's, so core's rollback command does not know about them. See
+<a href="../validate-warnings/#extra-migrations">validate.php warnings</a> for why.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">This destroys the audit trail</p>
 <p><code>webterm_audit</code> records who opened a shell on what. Export it before rolling back if you are subject to any retention obligation — and note that the off-box syslog copy, if you configured one, is unaffected and may be the record that actually matters.</p>

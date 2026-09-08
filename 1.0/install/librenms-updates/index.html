@@ -569,6 +569,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../validate-warnings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    validate.php warnings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../uninstall/" class="md-nav__link">
         
   
@@ -1706,6 +1727,8 @@
 <li><strong>Never hand-edit <code>composer.json</code> to add WebTerm.</strong> Your edit will be erased on the next update. Always use <code>lnms plugin:add</code>.</li>
 <li>Every LibreNMS update <strong>re-resolves</strong> WebTerm's version constraint. If you tracked <code>^1.0</code>, an update can move you to a newer 1.x.</li>
 <li>Your gateway binary is <strong>not</strong> touched by this. Plugin and gateway drift apart over time — see <a href="#version-skew">version skew</a> below.</li>
+<li><code>daily.sh</code> also runs <code>./lnms migrate</code>. WebTerm applies its own migrations when that finishes, so plugin schema stays current on every update without any manual step — see <a href="../validate-warnings/#extra-migrations">validate.php warnings</a> for why it does not simply share core's migration table.</li>
+<li>After the update, the LibreNMS working tree legitimately has <code>composer.json</code> and <code>composer.lock</code> modified. The web UI reports that as a warning even though core meant to suppress it; that is an upstream bug, and it is <a href="../validate-warnings/#modified-files-composerjson-and-composerlock">explained here</a>.</li>
 </ul>
 <h2 id="pinning-an-exact-version">Pinning an exact version<a class="headerlink" href="#pinning-an-exact-version" title="Permanent link">&para;</a></h2>
 <p>If you need reproducible upgrades, register an exact version:</p>
