@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
-## [Unreleased]
+## [1.0.7] - 2026-09-08
 
 ### Fixed
 
@@ -217,6 +217,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.7]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.7
 [1.0.6]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.6
 [1.0.5]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.5
 [1.0.4]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.4

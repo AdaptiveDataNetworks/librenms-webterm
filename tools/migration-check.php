@@ -6,6 +6,11 @@ declare(strict_types=1);
  * Run the migrations against a real MySQL or MariaDB.
  *
  *   DBHOST=127.0.0.1 DBPORT=3306 php tools/migration-check.php mariadb-10.6
+ *   php tools/migration-check.php mariadb-10.6 --port=33306
+ *
+ * Connection settings come from the environment (which is how CI passes them)
+ * or from --host/--port/--database/--username/--password flags, which is how
+ * you point it at a throwaway container on a machine whose 3306 is taken.
  *
  * The unit suite runs on SQLite, which cannot exercise the reason these
  * migrations are written the way they are: on MariaDB below 10.10 the first
@@ -30,14 +35,28 @@ use Illuminate\Support\Facades\Facade;
 
 $driverName = $argv[1] ?? 'database';
 
+$flags = [];
+foreach (array_slice($argv, 1) as $arg) {
+    if (preg_match('/^--([a-z]+)=(.*)$/', $arg, $m) === 1) {
+        $flags[$m[1]] = $m[2];
+    }
+}
+
+/**
+ * Flag, then environment, then default.
+ */
+$setting = static function (string $flag, string $env, string $default) use ($flags): string {
+    return $flags[$flag] ?? (getenv($env) === false ? $default : (string) getenv($env));
+};
+
 $capsule = new Capsule;
 $capsule->addConnection([
     'driver' => 'mysql',
-    'host' => getenv('DBHOST') ?: '127.0.0.1',
-    'port' => (int) (getenv('DBPORT') ?: 3306),
-    'database' => getenv('DBNAME') ?: 'librenms',
-    'username' => getenv('DBUSER') ?: 'root',
-    'password' => getenv('DBPASS') ?: 'r00t',
+    'host' => $setting('host', 'DBHOST', '127.0.0.1'),
+    'port' => (int) $setting('port', 'DBPORT', '3306'),
+    'database' => $setting('database', 'DBNAME', 'librenms'),
+    'username' => $setting('username', 'DBUSER', 'root'),
+    'password' => $setting('password', 'DBPASS', 'r00t'),
     'charset' => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix' => '',
