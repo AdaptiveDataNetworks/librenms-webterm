@@ -8,7 +8,14 @@
     </div>
     <div class="panel-body">
         <p>
-            {{ __('WebTerm is configured from the command line, not from this page.') }}
+            {{ __('This page cannot configure WebTerm: LibreNMS stores plugin settings as plaintext JSON, so nothing sensitive may be kept here.') }}
+        </p>
+        <p>
+            <a class="btn btn-primary btn-sm" href="{{ url('plugin/webterm/admin') }}">{{ __('Open the WebTerm console') }}</a>
+            <span class="text-muted"><small>{{ __('targets, access, host keys, sessions and audit') }}</small></span>
+        </p>
+        <p class="text-muted">
+            {{ __('Credentials are deliberately not settable from a browser: obtaining one should require shell access to this host.') }}
         </p>
         <pre style="margin-bottom: 12px;">./lnms webterm:doctor</pre>
         <p class="text-muted" style="margin-bottom: 0;">

@@ -23,9 +23,13 @@ Read [Should you enable this?](index.md) first — this page assumes you have de
 
 **Residual:** step-up has a grace window, so a cookie stolen during that window is sufficient. Shorten `step_up_grace_seconds` if that trade does not suit you.
 
+**If the operator holds the `admin` ability, this is worse.** The admin console is reachable with the cookie alone — it is not behind step-up, because step-up gates opening a terminal, not administering the plugin. An attacker with an admin's cookie can therefore write themselves a grant, grant themselves the `use` ability, and enable a target. They still cannot read a stored credential (the console never renders one) and they still face step-up before a terminal opens, but they can arrange for their *own* account to be permitted afterwards. Every one of those writes is audited and classed security-relevant, so it reaches an off-box stream before the local table.
+
+Grant the `admin` ability to as few accounts as you would trust with `sudo` on the LibreNMS host, and read `webterm:doctor` and the audit tab as the detection surface. If that trade is not acceptable, revoke the ability entirely and administer the plugin from the CLI, which is the only path that requires shell access.
+
 ### XSS in LibreNMS
 
-**Impact:** script in the operator's session can drive the UI, including minting a session.
+**Impact:** script in the operator's session can drive the UI, including minting a session — and, if that operator holds the `admin` ability, driving the admin console. The worst case is therefore not one session: it is a persistent self-grant that outlives the script. CSRF tokens do not help here, because script running in the page can read them. The controls are the same as for a stolen cookie above: the `admin` ability on as few accounts as possible, and the audit trail as detection.
 
 **Controls:** the ticket is single-use with a 30-second TTL; the terminal runs in a sandboxed iframe from a distinct path; credentials never reach the browser at all.
 

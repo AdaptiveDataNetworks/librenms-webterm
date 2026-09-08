@@ -67,7 +67,44 @@ login the device actually uses.
   answer is one command away. It prints every candidate in precedence order,
   marks the winner, and names what it overrode.
 
+- **An admin console in LibreNMS**, at `/plugin/webterm/admin`, covering targets,
+  access (grants and abilities), host keys, sessions and audit.
+
+  It deliberately does not set credentials. Storing a device secret requires
+  shell access to the LibreNMS host and will continue to: LibreNMS is a
+  public-facing PHP application whose compromise is the largest residual risk in
+  this design, so the bar for writing a reusable device credential stays higher
+  than an admin session in a browser. The console shows which credentials exist
+  and what they apply to, which is not a secret.
+
+  It also does not change host key pins or policy. Resetting a pin and switching
+  a target to trust-on-first-connect are each defensible alone and together
+  amount to turning off SSH host key verification from a browser.
+
+  Access is WebTerm's own `admin` ability, never a core Gate ability — LibreNMS
+  registers a `Gate::before` returning true for every ability when the user has
+  the admin role, which would hand the console to every LibreNMS admin.
+  Unauthorised requests get 404 rather than 403, so the console's existence is
+  not confirmed to an account that may not use it.
+
+  Authorization is re-checked on every request rather than inferred from route
+  registration. `lnms plugin:enable` runs `route:cache`; `lnms plugin:disable`
+  updates a column and nothing else, so a cached route table keeps serving these
+  paths after a disable — including the automatic disable LibreNMS performs when
+  a hook throws. An operator disabling the plugin to contain an incident must
+  not be left with a live grant-writing surface.
+
 ### Changed
+
+- `docs/security/threat-model.md` now states what the console costs. The
+  "stolen session cookie" and "XSS in LibreNMS" sections previously rested on
+  step-up bounding the damage; step-up gates opening a terminal, not
+  administering the plugin, so for an account holding `admin` the worst case is
+  now a persistent self-grant rather than one session.
+
+- The plugin settings page no longer claims WebTerm cannot be configured from a
+  page. It links to the console, and explains why credentials are still not
+  settable there.
 
 - `webterm:credentials:set` and `:forget` take `--global` and `--group=` as well
   as `--device=`. Exactly one is required — there is no default, because

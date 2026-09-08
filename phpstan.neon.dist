@@ -29,3 +29,12 @@ parameters:
         -
             message: '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$app#'
             path: tests/*
+        # The plugin's view namespace is registered at runtime by
+        # loadViewsFrom(), so larastan's view finder cannot resolve
+        # "WebTerm::admin" while analysing. This records an analysis blind spot
+        # rather than suppressing a defect: AdminConsoleTest renders the view
+        # for real and asserts on what it does and does not contain, so a broken
+        # view name fails the suite.
+        -
+            message: '#expects view-string\|null, string given#'
+            path: src/Http/Controllers/*

@@ -86,6 +86,7 @@ nav:
       - Reference: vault/reference.md
   - Operating:
       - Who may open a shell: operate/rbac.md
+      - Admin console: operate/console.md
       - Reverse proxy: operate/reverse-proxy.md
       - Audit: operate/audit.md
   - Security:
