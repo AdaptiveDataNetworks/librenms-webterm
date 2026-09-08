@@ -86,9 +86,10 @@ final class ShellAuthorizer
             return Decision::deny(ReasonCode::ConcurrencyLimit);
         }
 
-        $stepUp = $this->stepUp ?? new AlwaysChallengeStepUp(
-            (bool) config('webterm.security.step_up', true)
-        );
+        // Resolved rather than constructed: the service provider binds the
+        // TOTP gate. Constructing a placeholder here is what previously made
+        // step-up unsatisfiable on every real install.
+        $stepUp = $this->stepUp ?? app(StepUpGate::class);
 
         if ($stepUp->isRequired() && ! $stepUp->isSatisfied($user)) {
             return Decision::deny(ReasonCode::StepUpRequired);

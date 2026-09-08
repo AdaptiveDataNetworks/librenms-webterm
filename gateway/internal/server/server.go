@@ -112,6 +112,16 @@ type helloResponse struct {
 	Capabilities []string `json:"capabilities"`
 	Insecure     bool     `json:"insecure_control_plane"`
 	MaxSessions  int      `json:"max_sessions"`
+
+	// How many browser origins this gateway will accept. Reported as a count
+	// rather than a list: the plugin only needs to know whether the allow-list
+	// is empty, and the values themselves are the operator's business.
+	//
+	// The origin allow-list lives here, not in the plugin's configuration, so
+	// webterm:doctor has no way to check it without asking. Before this field
+	// existed doctor read a plugin setting that nothing consumed, passed, and
+	// left the operator with a gateway that refused every connection with 403.
+	AllowedOrigins int `json:"allowed_origins"`
 }
 
 func (s *Server) handleHello(w http.ResponseWriter, r *http.Request, _ []byte) {
@@ -126,8 +136,9 @@ func (s *Server) handleHello(w http.ResponseWriter, r *http.Request, _ []byte) {
 		},
 		// Reported so that webterm:doctor can flag a gateway that was started
 		// with the loopback guard disabled.
-		Insecure:    s.cfg.AllowInsecureControlPlane,
-		MaxSessions: s.cfg.MaxSessions,
+		Insecure:       s.cfg.AllowInsecureControlPlane,
+		MaxSessions:    s.cfg.MaxSessions,
+		AllowedOrigins: len(s.cfg.AllowedOrigins),
 	})
 }
 

@@ -31,6 +31,14 @@ final class DoctorCommand extends Command
 
     private int $problems = 0;
 
+    /**
+     * The gateway's /api/v1/hello response, so later checks can ask the
+     * gateway about its own configuration rather than guessing from ours.
+     *
+     * @var array<string, mixed>
+     */
+    private array $gatewayHello = [];
+
     public function handle(): int
     {
         $this->line('');
@@ -46,6 +54,7 @@ final class DoctorCommand extends Command
         $this->checkSecret();
         $this->checkGateway();
         $this->checkOrigins();
+        $this->checkStepUp();
         $this->checkCredentials();
         $this->checkTargets();
 
@@ -263,7 +272,7 @@ final class DoctorCommand extends Command
     private function checkGateway(): void
     {
         try {
-            $hello = (new GatewayClient)->hello();
+            $hello = $this->gatewayHello = (new GatewayClient)->hello();
         } catch (Throwable $e) {
             $this->reportFail('Gateway', $e->getMessage(), 'systemctl status librenms-webterm-gw');
 
@@ -292,21 +301,70 @@ final class DoctorCommand extends Command
         }
     }
 
+    /**
+     * The origin allow-list is the GATEWAY's setting, not the plugin's.
+     *
+     * This check used to read config('webterm.security.allowed_origins') and,
+     * when it was empty, tell the operator to run
+     * `webterm:config set security.allowed_origins ...`. Nothing reads that
+     * key -- the gateway takes WEBTERM_ALLOWED_ORIGINS from its own
+     * environment file -- so the remediation could not work, and following it
+     * left the operator with a doctor that passed and a gateway that refused
+     * every browser connection with 403.
+     *
+     * The gateway is asked directly. An older gateway does not report the
+     * count, in which case we say where to look rather than guess.
+     */
     private function checkOrigins(): void
     {
-        $origins = (array) config('webterm.security.allowed_origins', []);
+        $count = $this->gatewayHello['allowed_origins'] ?? null;
 
-        if ($origins === []) {
-            $this->reportFail(
+        if ($count === null) {
+            $this->reportWarn(
                 'Allowed origins',
-                'none configured, so every browser connection is refused',
-                './lnms webterm:config set security.allowed_origins https://librenms.example.com'
+                'this gateway does not report them; they are set on the gateway, not here',
+                'check WEBTERM_ALLOWED_ORIGINS in /etc/librenms-webterm/gateway.env'
             );
 
             return;
         }
 
-        $this->reportOk('Allowed origins', implode(', ', array_map('strval', $origins)));
+        if ((int) $count === 0) {
+            $this->reportFail(
+                'Allowed origins',
+                'the gateway has none, so it refuses every browser connection with 403',
+                'set WEBTERM_ALLOWED_ORIGINS in /etc/librenms-webterm/gateway.env to your '
+                    .'LibreNMS URL, then: systemctl restart librenms-webterm-gw'
+            );
+
+            return;
+        }
+
+        $this->reportOk('Allowed origins', sprintf('%d configured on the gateway', (int) $count));
+    }
+
+    /**
+     * Step-up is on by default and is satisfied only by LibreNMS two-factor.
+     *
+     * Worth its own line because the failure is invisible otherwise: the
+     * terminal button appears, the click is authorized all the way to the last
+     * gate, and the denial reads StepUpRequired with nothing to say that the
+     * operator simply has no TOTP enrolled.
+     */
+    private function checkStepUp(): void
+    {
+        if (! (bool) config('webterm.security.step_up', true)) {
+            $this->reportOk('Step-up', 'not required');
+
+            return;
+        }
+
+        $this->reportWarn(
+            'Step-up',
+            'required, so an operator must have LibreNMS two-factor enrolled to open a terminal',
+            'enrol TOTP in LibreNMS (Preferences -> Two-Factor Auth), or turn it off with: '
+                .'./lnms webterm:config set security.step_up false'
+        );
     }
 
     private function checkCredentials(): void

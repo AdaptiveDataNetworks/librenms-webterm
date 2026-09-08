@@ -16,7 +16,10 @@ server {
     # ... your existing LibreNMS configuration ...
 
     location ^~ /webterm/ws {
-        proxy_pass http://127.0.0.1:8377;
+        # The trailing /ws is load-bearing. Without a URI component nginx
+        # forwards the original path, and the gateway -- which serves /ws, not
+        # /webterm/ws -- answers 404.
+        proxy_pass http://127.0.0.1:8377/ws;
 
         # HTTP/1.0 has no Upgrade semantics, and nginx talks 1.0 upstream by
         # default. Without this the handshake simply never completes.

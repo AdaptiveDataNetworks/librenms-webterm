@@ -6,6 +6,55 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.8] - 2026-09-08
+
+Four defects that between them made a first install impossible to use. All were
+found by auditing the paths a new operator walks, not by a bug report.
+
+### Fixed
+
+- **Nobody could open a terminal, on any install.** `ShellAuthorizer` fell back
+  to `AlwaysChallengeStepUp` -- a placeholder whose `isSatisfied()` returns
+  `false` unconditionally -- because nothing ever bound `StepUpGate`. Step-up
+  is required by default, so every session mint denied with `StepUpRequired`
+  and no amount of correct configuration helped. `TotpStepUp`, the real
+  implementation, had been written but never wired in. The provider now binds
+  it.
+
+  Every existing step-up test injected a gate explicitly, so the gate you get
+  when you inject nothing -- the one every real install uses -- was the single
+  untested path. There is now a test for it.
+
+- **The documented nginx config sent the WebSocket to a 404.** Both the
+  quickstart and the reverse-proxy page used
+  `proxy_pass http://127.0.0.1:8377;` with no URI component, which makes nginx
+  forward the original `/webterm/ws`; the gateway serves `/ws`. The Apache
+  block in the same page had it right, as did the nginx block for `/ui/`.
+
+- **The quickstart never proxied the terminal's assets at all.** It documented
+  only `/webterm/ws`, with no `/webterm/ui/` location, so the terminal page
+  loaded and then rendered LibreNMS's 404 page where the terminal should be.
+
+- **`webterm:doctor` gave a remediation that could not work.** The origin
+  allow-list belongs to the gateway (`WEBTERM_ALLOWED_ORIGINS` in its
+  environment file), but doctor read `webterm.security.allowed_origins` from
+  the plugin's config -- a key nothing else consumes -- and told operators to
+  set it with `webterm:config`. Following that advice produced a doctor that
+  passed and a gateway that refused every browser connection with 403. Doctor
+  now asks the gateway, which reports the count in `/api/v1/hello`.
+
+### Added
+
+- `webterm:doctor` reports step-up state, because the failure is otherwise
+  invisible: the button appears, the click authorizes all the way to the last
+  gate, and the denial says nothing about TOTP enrolment.
+
+### Compatibility
+
+The gateway gained one field in its `hello` response. A 1.0.7 gateway works
+with a 1.0.8 plugin -- doctor says it cannot read the origin count and points
+at the environment file instead. Upgrade both to get the check.
+
 ## [1.0.7] - 2026-09-08
 
 ### Fixed
@@ -217,6 +266,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.8]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.8
 [1.0.7]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.7
 [1.0.6]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.6
 [1.0.5]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.5

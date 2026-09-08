@@ -58,7 +58,10 @@ The gateway needs one WebSocket path proxied through your existing LibreNMS vhos
 
 ```nginx
 location ^~ /webterm/ws {
-    proxy_pass http://127.0.0.1:8377;
+    # The trailing /ws is load-bearing. Without a URI component nginx forwards
+    # the original path, and the gateway -- which serves /ws, not /webterm/ws --
+    # answers 404.
+    proxy_pass http://127.0.0.1:8377/ws;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -66,9 +69,19 @@ location ^~ /webterm/ws {
     proxy_buffering off;
     proxy_read_timeout 3600s;
 }
+
+location ^~ /webterm/ui/ {
+    proxy_pass http://127.0.0.1:8377/ui/;
+    proxy_set_header Host $host;
+}
 ```
 
-Three of those lines are load-bearing and are the cause of almost every "it connects then hangs" report: `proxy_http_version 1.1` (HTTP/1.0 has no `Upgrade`), `proxy_buffering off` (or output arrives in chunks and feels broken), and `proxy_read_timeout` (nginx's 60-second default kills idle terminals).
+Both blocks are required. The first carries the terminal session; the second
+serves the terminal's own assets, which the gateway embeds rather than adding
+anything to LibreNMS's asset build. Without it the terminal page loads and then
+shows LibreNMS's 404 page where the terminal should be.
+
+Three of the `/webterm/ws` lines are load-bearing and are the cause of almost every "it connects then hangs" report: `proxy_http_version 1.1` (HTTP/1.0 has no `Upgrade`), `proxy_buffering off` (or output arrives in chunks and feels broken), and `proxy_read_timeout` (nginx's 60-second default kills idle terminals).
 
 Reload nginx:
 
@@ -127,6 +140,22 @@ Shell access is deliberately separate from — and narrower than — being able 
 ## 7. Open a terminal
 
 Go to the device page for `core-sw-01`. The **Terminal** panel appears in the overview column. Click **Open terminal**, complete the TOTP step-up prompt, and you should land at a shell.
+
+!!! warning "Step-up needs LibreNMS two-factor enrolled"
+
+    Step-up is required by default, and it is satisfied only by LibreNMS's own
+    TOTP. If your account has no two-factor enrolled you will be denied with
+    `step_up_required` no matter what else is configured.
+
+    Enrol TOTP in LibreNMS under **Preferences → Two-Factor Auth**, or, if you
+    have decided this control is not for you, turn it off:
+
+    ```bash
+    # as the librenms user
+    ./lnms webterm:config set security.step_up false
+    ```
+
+    `./lnms webterm:doctor` reports which of the two you are in.
 
 ## When it does not work
 

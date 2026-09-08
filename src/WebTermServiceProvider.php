@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm;
 
+use AdaptiveDataNetworks\WebTerm\Authorization\StepUpGate;
+use AdaptiveDataNetworks\WebTerm\Authorization\TotpStepUp;
 use AdaptiveDataNetworks\WebTerm\Console\AbilityCommand;
 use AdaptiveDataNetworks\WebTerm\Console\ConfigCommand;
 use AdaptiveDataNetworks\WebTerm\Console\DoctorCommand;
@@ -51,6 +53,13 @@ final class WebTermServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/webterm.php', 'webterm');
 
         $this->app->singleton(CredentialManager::class);
+
+        // The TOTP gate is the real implementation of step-up. Until this
+        // binding existed, ShellAuthorizer fell back to AlwaysChallengeStepUp,
+        // which is satisfied by nothing -- so with step_up on (the default)
+        // every session mint denied with StepUpRequired and no operator could
+        // ever open a terminal.
+        $this->app->bind(StepUpGate::class, TotpStepUp::class);
 
         $this->app->singleton(MigrationRunner::class, static fn ($app): MigrationRunner => new MigrationRunner(
             $app['db'],
