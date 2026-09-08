@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupMembers;
 use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
 use AdaptiveDataNetworks\WebTerm\Support\Guard;
 
@@ -18,7 +19,7 @@ use AdaptiveDataNetworks\WebTerm\Support\Guard;
  * change when a human changes an access rule, not as a side effect of
  * discovery. Dynamic groups are ignored, and the admin UI says so.
  */
-final class DeviceGroups implements CoreDependency, GroupSource
+final class DeviceGroups implements CoreDependency, GroupMembers, GroupSource
 {
     public static function coreSymbols(): array
     {
@@ -31,6 +32,58 @@ final class DeviceGroups implements CoreDependency, GroupSource
             // failing that job. The dependency degrades safely instead: an
             // absent `type` falls back to the rules heuristic below.
         ];
+    }
+
+    /**
+     * Device ids in a STATIC group.
+     *
+     * Dynamic groups are refused outright rather than returned empty, because
+     * the caller materialises access from this and a silent empty result would
+     * read as "that group has no devices" instead of "that group is not
+     * something you may enable". LibreNMS recomputes dynamic membership on
+     * every poll (DevicePolled -> UpdateDeviceGroups -> sync), so honouring one
+     * would let a device gain shell reachability because discovery re-detected
+     * its OS.
+     *
+     * @return list<int>|null null when the group is missing or dynamic
+     */
+    public function staticMembersOf(int $groupId): ?array
+    {
+        return Guard::safely(
+            static function () use ($groupId): ?array {
+                $model = 'App\Models\DeviceGroup';
+
+                if (! class_exists($model)) {
+                    return null;
+                }
+
+                $group = $model::query()->find($groupId);
+
+                if ($group === null) {
+                    return null;
+                }
+
+                $type = $group->type ?? null;
+
+                if (! is_string($type) || $type !== 'static') {
+                    return null;
+                }
+
+                $ids = [];
+
+                foreach ($group->devices()->get() as $device) {
+                    $id = (int) ($device->device_id ?? 0);
+
+                    if ($id > 0) {
+                        $ids[] = $id;
+                    }
+                }
+
+                return array_values(array_unique($ids));
+            },
+            null,
+            'DeviceGroups::staticMembersOf'
+        );
     }
 
     /**

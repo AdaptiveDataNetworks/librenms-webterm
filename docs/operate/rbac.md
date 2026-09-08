@@ -84,3 +84,10 @@ Once a minute the reconciler re-checks live sessions, from LibreNMS's own schedu
 ./lnms webterm:sessions
 ./lnms webterm:sessions --kill=01J9Z8... --reason="access review"
 ```
+
+## Why group enablement writes rows
+
+Enabling a device group materialises a target per member rather than resolving
+membership when access is checked. LibreNMS recomputes dynamic group membership
+on every poll, so a resolved default would let a device become shell-reachable
+without any human decision. See [the console](console.md#enabling-a-device-group).

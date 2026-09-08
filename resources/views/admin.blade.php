@@ -66,13 +66,20 @@
             {{ __('Which devices may be reached, and how. Credentials are set from the command line only.') }}
         </p>
         <table class="table table-condensed table-striped">
-            <tr><th>Device</th><th>Principal</th><th>Flow</th><th>Host key policy</th><th>Enabled</th><th></th></tr>
+            <tr><th>Device</th><th>Principal</th><th>Flow</th><th>Host key policy</th><th>Why</th><th>Enabled</th><th></th></tr>
             @forelse ($targets as $target)
                 <tr>
                     <td>{!! $deviceLabel($target->device_id) !!}</td>
                     <td>{{ $target->principal }}</td>
                     <td>{{ $target->flow }}</td>
                     <td>{{ $target->host_key_policy }}</td>
+                    <td>
+                        @if ($target->source === 'group')
+                            <span class="text-muted">{{ __('From device group') }} {{ $target->source_ref }}</span>
+                        @else
+                            <span class="text-muted">{{ __('Chosen individually') }}</span>
+                        @endif
+                    </td>
                     <td>{{ $target->enabled ? __('Yes') : __('No') }}</td>
                     <td>
                         <form method="POST" action="{{ url('plugin/webterm/admin/targets') }}">
@@ -86,7 +93,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-muted">{{ __('No targets. Create one with webterm:target:enable.') }}</td></tr>
+                <tr><td colspan="7" class="text-muted">{{ __('No devices enabled yet. Use the form below.') }}</td></tr>
             @endforelse
         </table>
 
@@ -112,6 +119,34 @@
         </form>
         <script>
             if (typeof init_select2 === 'function') { init_select2('#webterm-target-device', 'device', {}); }
+        </script>
+
+        <h4>{{ __('Enable a whole device group') }}</h4>
+        <p class="text-muted"><small>
+            {{ __('Writes one target per member device, recorded as coming from the group. Devices you configured by hand are left alone. Only static groups: LibreNMS recomputes dynamic group membership on every poll, so a device could gain terminal access with nobody deciding it should.') }}
+        </small></p>
+        <form method="POST" action="{{ url('plugin/webterm/admin/targets/group') }}" class="form-inline" style="margin-bottom: 18px;">
+            @csrf
+            <select name="group_id" id="webterm-group" class="form-control input-sm" required style="min-width: 260px;"></select>
+            <input name="principal" class="form-control input-sm" placeholder="{{ __('SSH login (principal)') }}" required>
+            <select name="flow" class="form-control input-sm">
+                <option value="database">database</option>
+                <option value="ssh_signer">ssh_signer</option>
+                <option value="kv2">kv2</option>
+                <option value="private_key">private_key</option>
+            </select>
+            <select name="host_key_policy" class="form-control input-sm">
+                <option value="pin">pin</option>
+                <option value="tofu_first_connect">tofu_first_connect</option>
+            </select>
+            <select name="algorithm_profile" class="form-control input-sm">
+                <option value="modern">modern</option>
+                <option value="legacy">legacy</option>
+            </select>
+            <button class="btn btn-sm btn-primary" type="submit">{{ __('Enable group') }}</button>
+        </form>
+        <script>
+            if (typeof init_select2 === 'function') { init_select2('#webterm-group', 'device-group', {}); }
         </script>
 
         <h4>{{ __('Stored credentials') }}</h4>

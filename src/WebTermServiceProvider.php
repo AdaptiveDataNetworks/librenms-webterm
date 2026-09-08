@@ -29,10 +29,12 @@ use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
 use AdaptiveDataNetworks\WebTerm\Hooks\MenuEntry;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
+use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTab;
 use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Events\NoPendingMigrations;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;
 use LibreNMS\Interfaces\Plugins\Hooks\MenuEntryHook;
@@ -156,11 +158,89 @@ final class WebTermServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', self::PLUGIN_NAME);
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        $this->registerDeviceTab();
 
         $this->publishes([
             __DIR__.'/../config/webterm.php' => config_path('webterm.php'),
         ], 'webterm-config');
 
+    }
+
+    /**
+     * Put the terminal on the device page as a tab.
+     *
+     * Core offers no hook for this -- the plugin interfaces cover device
+     * overview, port tabs, settings, menu entries and single pages, but not
+     * device tabs -- so this appends to App\View\Components\Device\PageTabs::$tabsClasses,
+     * which is a public static array. That is not a supported extension point,
+     * so every step is guarded and any failure leaves LibreNMS exactly as it
+     * was, minus a tab.
+     *
+     * The load-bearing guard is the view check. DeviceController resolves a
+     * tab's view as `device.tabs.{slug}` and, when that view does not exist,
+     * falls through to renderLegacyTab() which `include`s
+     * includes/html/pages/device/{slug}.inc.php with no file_exists guard. For
+     * a slug of ours that file never exists, so a registered tab whose view
+     * fails to resolve is not a blank panel -- it is a 500 on the device page,
+     * after loading the entire legacy bootstrap to get there. So the slug is
+     * registered only once the view is known to resolve.
+     */
+    private function registerDeviceTab(): void
+    {
+        try {
+            // Makes resources/views/core/device/tabs/webterm.blade.php resolve
+            // as 'device.tabs.webterm'. Appended, never prepended: core's own
+            // paths must keep priority so this can never shadow a core view.
+            //
+            // Done first and unconditionally. The view has to be resolvable
+            // before registering the slug is safe, and adding a path costs
+            // nothing when core is absent.
+            View::addLocation(__DIR__.'/../resources/views/core');
+
+            $tabs = 'App\View\Components\Device\PageTabs';
+
+            if (! class_exists($tabs) || ! property_exists($tabs, 'tabsClasses')) {
+                return;
+            }
+
+            if (! View::exists('device.tabs.webterm')) {
+                return;
+            }
+
+            $existing = $tabs::$tabsClasses;
+
+            if (isset($existing['webterm'])) {
+                return;
+            }
+
+            $tabs::$tabsClasses = $this->spliceTabAfter($existing, 'notes', 'webterm', DeviceTab::class);
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Insert a tab after a named one, falling back to the end.
+     *
+     * Order is pure insertion order -- core's blade just iterates the array, so
+     * there is no weight or priority to set. The union operator is left-wins
+     * and position-preserving, which makes this idempotent.
+     *
+     * @param  array<string, class-string>  $tabs
+     * @return array<string, class-string>
+     */
+    private function spliceTabAfter(array $tabs, string $anchor, string $slug, string $class): array
+    {
+        $keys = array_keys($tabs);
+        $at = array_search($anchor, $keys, true);
+
+        if ($at === false) {
+            return $tabs + [$slug => $class];
+        }
+
+        return array_slice($tabs, 0, $at + 1, true)
+            + [$slug => $class]
+            + array_slice($tabs, $at + 1, null, true);
     }
 
     /**

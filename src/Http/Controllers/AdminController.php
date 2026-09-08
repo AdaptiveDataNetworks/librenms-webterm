@@ -19,6 +19,7 @@ use AdaptiveDataNetworks\WebTerm\Models\HostKey;
 use AdaptiveDataNetworks\WebTerm\Models\Session;
 use AdaptiveDataNetworks\WebTerm\Models\Setting;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Session\GroupEnablement;
 use AdaptiveDataNetworks\WebTerm\Support\EditableSettings;
 use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
 use AdaptiveDataNetworks\WebTerm\Support\SshKey;
@@ -290,6 +291,47 @@ final class AdminController
         ] + $validated + ['via' => 'console']);
 
         return $this->back('targets', 'Target saved. Pin its host key before connecting: webterm:hostkey-scan.');
+    }
+
+    /**
+     * Enable every device in a static group.
+     *
+     * Materialises one target row per member rather than making authorization
+     * consult group membership -- see GroupEnablement for why that distinction
+     * is a security property and not a style choice.
+     */
+    public function enableGroup(Request $request, GroupEnablement $groups, AuditLogger $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'group_id' => ['required', 'integer', 'min:1'],
+            'principal' => ['required', 'string', 'max:64'],
+            'flow' => ['required', 'in:database,ssh_signer,kv2,private_key'],
+            'host_key_policy' => ['required', 'in:'.Target::POLICY_PIN.','.Target::POLICY_TOFU],
+            'algorithm_profile' => ['required', 'in:modern,legacy'],
+        ]);
+
+        $groupId = (int) $validated['group_id'];
+        unset($validated['group_id']);
+
+        $result = $groups->apply($groupId, $validated);
+
+        if (! $result['ok']) {
+            return $this->back('targets', $result['error']);
+        }
+
+        $audit->log(Event::ConfigChanged, Auth::user(), detail: [
+            'change' => 'target.group_enabled',
+            'group_id' => $groupId,
+            'created' => $result['created'],
+            'updated' => $result['updated'],
+            'via' => 'console',
+        ]);
+
+        return $this->back('targets', sprintf(
+            'Group enabled: %d device(s) added, %d updated. Devices configured by hand were left alone. Pin host keys with webterm:hostkey-scan.',
+            $result['created'],
+            $result['updated']
+        ));
     }
 
     /**

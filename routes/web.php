@@ -67,6 +67,8 @@ Route::middleware(['web', 'auth', EnsureWebTermEnabled::class, EnsureWebTermAdmi
             ->middleware('throttle:10,1')->name('credentials.store');
         Route::post('credentials/delete', [AdminController::class, 'destroyCredential'])
             ->middleware('throttle:10,1')->name('credentials.destroy');
+        Route::post('targets/group', [AdminController::class, 'enableGroup'])
+            ->middleware('throttle:10,1')->name('targets.group');
         Route::post('settings', [AdminController::class, 'storeSetting'])
             ->middleware('throttle:30,1')->name('settings.store');
     });

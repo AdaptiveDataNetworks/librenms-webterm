@@ -20,7 +20,7 @@ the same menu — or go straight to `/plugin/webterm/admin`.
 
 | Tab | What you can do |
 |---|---|
-| **Targets** | Enable a device for terminal access by name, set its principal, flow, host key policy and algorithm profile; enable and disable existing targets |
+| **Targets** | Enable a device — or a whole static device group — for terminal access; set principal, flow, host key policy and algorithm profile; see why each device is enabled |
 | **Credentials** | Store a password or private key against a device, a device group, or the whole fleet; remove one |
 | **Access** | Create and remove grants; grant and revoke WebTerm abilities |
 | **Host keys** | Read the pinned keys and their status |
@@ -38,6 +38,30 @@ not already see.
 trust-on-first-connect are each defensible on their own, and together they amount
 to turning off SSH host key verification for a device from a browser. Both stay
 on the CLI: `webterm:hostkey-scan` and `webterm:hostkey-reset`.
+
+## Enabling a device group
+
+Enabling a group writes **one target row per member device**, tagged with the
+group it came from, and the Targets table shows that provenance. It does not
+make authorization consult group membership, and that difference is a security
+property rather than an implementation detail.
+
+If membership were resolved at authorization time, a device would become
+shell-reachable the moment it joined a group. LibreNMS recomputes **dynamic**
+group membership on every poll — `DevicePolled` fires `UpdateDeviceGroups`,
+which syncs the pivot table — so a device could gain terminal access because
+discovery re-detected its OS or somebody edited a `sysLocation`, with nobody
+deciding anything. Even for static groups, editing the member list needs only
+core's device-group update permission, which is unrelated to WebTerm's admin
+ability.
+
+So: **only static groups can be enabled**, and a dynamic group is refused with
+that reason rather than silently enabling nothing. A device you configured by
+hand keeps its own settings — a bulk action does not overrule a decision made
+about a specific device.
+
+Adding a device to the group later does **not** enable it. Re-run the group
+enablement, which is idempotent.
 
 ## Credentials in the browser
 

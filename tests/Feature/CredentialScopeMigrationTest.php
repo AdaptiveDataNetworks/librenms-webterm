@@ -94,9 +94,17 @@ it('rolls back only the newest migration, leaving the rest applied', function ()
 
     expect(Schema::hasColumn('webterm_credentials', 'scope_type'))->toBeTrue();
 
-    $rolled = $runner->rollbackSteps(1);
+    // Computed rather than hardcoded to 1: this assertion is about the scope
+    // migration's round trip, and any later migration would otherwise make it
+    // roll back the wrong thing.
+    $applied = $runner->ran();
+    sort($applied);
+    $position = array_search('2026_09_08_000001_add_scope_to_webterm_credentials', $applied, true);
+    $steps = count($applied) - (int) $position;
 
-    expect($rolled)->toHaveCount(1)
+    $rolled = $runner->rollbackSteps($steps);
+
+    expect($rolled)->toHaveCount($steps)
         // The scope migration is undone...
         ->and(Schema::hasColumn('webterm_credentials', 'scope_type'))->toBeFalse()
         ->and(Schema::hasColumn('webterm_credentials', 'device_id'))->toBeTrue()
