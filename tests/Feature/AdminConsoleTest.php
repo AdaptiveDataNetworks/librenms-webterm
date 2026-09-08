@@ -198,3 +198,17 @@ it('offers the console link only to someone who can actually open it', function 
     $this->actingAs(admin(7));
     expect($hook->handle('WebTerm', [])['webtermConsole'])->toBeTrue();
 });
+
+it('tells the operator when the console is unreachable by everyone', function (): void {
+    // A 404 is indistinguishable from a broken install in a browser. Doctor is
+    // the one place that can say the console is merely ungranted.
+    bootConsole();
+
+    $this->artisan('webterm:doctor')
+        ->expectsOutputToContain('nobody holds the admin ability');
+
+    admin(7);
+
+    $this->artisan('webterm:doctor')
+        ->expectsOutputToContain('1 user(s) may open it');
+});

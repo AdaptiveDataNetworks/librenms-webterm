@@ -55,6 +55,7 @@ final class DoctorCommand extends Command
         $this->checkGateway();
         $this->checkOrigins();
         $this->checkStepUp();
+        $this->checkConsole();
         $this->checkCredentials();
         $this->checkTargets();
 
@@ -393,6 +394,32 @@ final class DoctorCommand extends Command
             'enrol TOTP in LibreNMS (Preferences -> Two-Factor Auth), or turn it off with: '
                 .'./lnms webterm:config set security.step_up false'
         );
+    }
+
+    /**
+     * Who, if anyone, can open the admin console.
+     *
+     * The console answers 404 to an account without the admin ability, so that
+     * an unauthorised user cannot confirm it exists. The cost is that "I have
+     * not granted myself the ability" and "the console is broken" look
+     * identical from a browser. This is the operator's side of that trade: it
+     * is the one place that will say the console is simply unreachable.
+     */
+    private function checkConsole(): void
+    {
+        $holders = Ability::query()->where('ability', Ability::ADMIN)->count();
+
+        if ($holders === 0) {
+            $this->reportWarn(
+                'Admin console',
+                'nobody holds the admin ability, so /plugin/webterm/admin answers 404 for everyone',
+                './lnms webterm:ability grant --user=<user> --ability=admin'
+            );
+
+            return;
+        }
+
+        $this->reportOk('Admin console', sprintf('%d user(s) may open it', $holders));
     }
 
     private function checkCredentials(): void
