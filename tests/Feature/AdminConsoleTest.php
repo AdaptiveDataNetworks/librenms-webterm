@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Hooks\MenuEntry;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Models\Ability;
 use AdaptiveDataNetworks\WebTerm\Models\AuditEntry;
@@ -11,11 +12,14 @@ use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use AdaptiveDataNetworks\WebTerm\Models\HostKey;
 use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Models\Setting;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
 use AdaptiveDataNetworks\WebTerm\Tests\Fakes\FakePluginManager;
 use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ViewErrorBag;
 use LibreNMS\Interfaces\Plugins\PluginManagerInterface;
 
@@ -301,4 +305,187 @@ it('escapes a device name rather than trusting it', function (): void {
 
     expect($html)->not->toContain('<script>alert(1)</script>')
         ->and($html)->toContain('&lt;script&gt;');
+});
+
+it('offers a menu entry only to a WebTerm admin', function (): void {
+    bootConsole();
+    $hook = new MenuEntry;
+
+    expect($hook->authorize(new FakeUser(7)))->toBeFalse();
+
+    admin(7);
+
+    expect($hook->authorize(new FakeUser(7)))->toBeTrue();
+});
+
+it('returns a menu entry in the two-element shape core destructures', function (): void {
+    // The menu blade does `@foreach($menu_hooks as [$view, $data])`. Anything
+    // else breaks every page in LibreNMS, not just the menu.
+    $handled = (new MenuEntry)->handle('WebTerm');
+
+    expect($handled)->toBeArray()
+        ->and($handled)->toHaveCount(2)
+        ->and($handled[0])->toBe('WebTerm::menu-entry')
+        ->and($handled[1])->toBeArray();
+});
+
+it('never throws from authorize, whatever the database is doing', function (): void {
+    // Core calls authorize() outside any try/catch.
+    bootConsole();
+    Schema::drop('webterm_abilities');
+
+    $threw = false;
+
+    try {
+        expect((new MenuEntry)->authorize(new FakeUser(7)))->toBeFalse();
+    } catch (Throwable) {
+        $threw = true;
+    }
+
+    expect($threw)->toBeFalse();
+});
+
+it('stores a credential from the browser without ever echoing it back', function (): void {
+    bootConsole();
+    $admin = admin();
+
+    $this->actingAs($admin)->post('plugin/webterm/admin/credentials', [
+        'scope_type' => 'device',
+        'scope_ref' => 42,
+        'username' => 'netops',
+        'secret_kind' => 'password',
+        'secret' => 'correct-horse-battery-staple',
+    ])->assertRedirect();
+
+    $stored = Credential::query()->firstOrFail();
+
+    expect($stored->username)->toBe('netops')
+        ->and($stored->payload)->not->toContain('correct-horse-battery-staple');
+
+    // And the page that lists it must not carry the secret either.
+    $page = $this->actingAs($admin)->get('plugin/webterm/admin?tab=credentials');
+
+    $page->assertOk()->assertSee('netops')->assertDontSee('correct-horse-battery-staple');
+});
+
+it('does not flash the secret back into the session when validation fails', function (): void {
+    // Laravel's withInput() excludes only password/password_confirmation/
+    // current_password, so a field named "secret" would land in the session
+    // store in plaintext. The controller validates manually for this reason.
+    bootConsole();
+
+    $this->actingAs(admin())->post('plugin/webterm/admin/credentials', [
+        'scope_type' => 'device',
+        'scope_ref' => 42,
+        'username' => '',                 // invalid
+        'secret_kind' => 'password',
+        'secret' => 'must-not-be-flashed',
+    ])->assertRedirect();
+
+    expect(json_encode(session()->all()))->not->toContain('must-not-be-flashed');
+});
+
+it('audits a credential write without recording the secret', function (): void {
+    bootConsole();
+
+    $this->actingAs(admin())->post('plugin/webterm/admin/credentials', [
+        'scope_type' => 'global',
+        'scope_ref' => 0,
+        'username' => 'fleet',
+        'secret_kind' => 'password',
+        'secret' => 'super-secret-value',
+    ])->assertRedirect();
+
+    $entries = AuditEntry::query()
+        ->where('event', 'credential.stored')->get();
+
+    expect($entries)->toHaveCount(1)
+        ->and(json_encode($entries->first()->toArray()))->not->toContain('super-secret-value');
+});
+
+it('creates a target from the console, which was CLI-only', function (): void {
+    bootConsole();
+
+    $this->actingAs(admin())->post('plugin/webterm/admin/targets/save', [
+        'device_id' => 42,
+        'principal' => 'netops',
+        'flow' => 'database',
+        'host_key_policy' => 'pin',
+        'algorithm_profile' => 'modern',
+    ])->assertRedirect();
+
+    $target = Target::query()->firstOrFail();
+
+    expect($target->device_id)->toBe(42)
+        ->and($target->principal)->toBe('netops')
+        ->and((bool) $target->enabled)->toBeTrue();
+});
+
+it('refuses credential and target writes from a non-admin', function (): void {
+    bootConsole();
+    $user = new FakeUser(7);
+
+    $this->actingAs($user)->post('plugin/webterm/admin/credentials', [
+        'scope_type' => 'global', 'scope_ref' => 0, 'username' => 'x',
+        'secret_kind' => 'password', 'secret' => 'y',
+    ])->assertNotFound();
+
+    $this->actingAs($user)->post('plugin/webterm/admin/targets/save', [
+        'device_id' => 1, 'principal' => 'x', 'flow' => 'database',
+        'host_key_policy' => 'pin', 'algorithm_profile' => 'modern',
+    ])->assertNotFound();
+
+    expect(Credential::query()->count())->toBe(0)
+        ->and(Target::query()->count())->toBe(0);
+});
+
+it('changes a setting from the console and makes it take effect', function (): void {
+    bootConsole();
+
+    expect((bool) config('webterm.security.step_up'))->toBeTrue();
+
+    $this->actingAs(admin())
+        ->post('plugin/webterm/admin/settings', ['key' => 'security.step_up', 'value' => 'false'])
+        ->assertRedirect();
+
+    // The row exists AND the cache was invalidated, so the next request sees it.
+    expect(Setting::query()
+        ->where('key', 'security.step_up')->value('value'))->toBe('false');
+
+    RuntimeSettings::apply();
+
+    expect((bool) config('webterm.security.step_up'))->toBeFalse();
+});
+
+it('refuses a setting that nothing would read', function (): void {
+    // The failure this plugin has already shipped twice: a row written and
+    // never consumed. allowed_origins belongs to the gateway.
+    bootConsole();
+
+    $this->actingAs(admin())
+        ->post('plugin/webterm/admin/settings', ['key' => 'security.allowed_origins', 'value' => 'https://x'])
+        ->assertRedirect();
+
+    expect(Setting::query()->count())->toBe(0);
+});
+
+it('refuses a value of the wrong type rather than storing nonsense', function (): void {
+    bootConsole();
+
+    $this->actingAs(admin())
+        ->post('plugin/webterm/admin/settings', ['key' => 'session.idle_timeout', 'value' => 'soon'])
+        ->assertRedirect();
+
+    expect(Setting::query()->count())->toBe(0);
+});
+
+it('shows the settings it will not edit, with the reason', function (): void {
+    bootConsole();
+
+    $this->actingAs(admin())
+        ->get('plugin/webterm/admin?tab=settings')
+        ->assertOk()
+        ->assertSee('gateway.secret_file')
+        ->assertSee('security.allowed_origins')
+        ->assertSee('Owned by the gateway', false);
 });

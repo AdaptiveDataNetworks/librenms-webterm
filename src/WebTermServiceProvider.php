@@ -26,6 +26,7 @@ use AdaptiveDataNetworks\WebTerm\Console\WhyCommand;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialManager;
 use AdaptiveDataNetworks\WebTerm\Database\MigrationRunner;
 use AdaptiveDataNetworks\WebTerm\Hooks\DeviceOverview;
+use AdaptiveDataNetworks\WebTerm\Hooks\MenuEntry;
 use AdaptiveDataNetworks\WebTerm\Hooks\Settings;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
 use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
@@ -34,6 +35,7 @@ use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Events\NoPendingMigrations;
 use Illuminate\Support\ServiceProvider;
 use LibreNMS\Interfaces\Plugins\Hooks\DeviceOverviewHook;
+use LibreNMS\Interfaces\Plugins\Hooks\MenuEntryHook;
 use LibreNMS\Interfaces\Plugins\Hooks\SettingsHook;
 use LibreNMS\Interfaces\Plugins\Hooks\SinglePageHook;
 use LibreNMS\Interfaces\Plugins\PluginManagerInterface;
@@ -139,6 +141,7 @@ final class WebTermServiceProvider extends ServiceProvider
         // never called.
         $plugins->publishHook(self::PLUGIN_NAME, DeviceOverviewHook::class, DeviceOverview::class);
         $plugins->publishHook(self::PLUGIN_NAME, SettingsHook::class, Settings::class);
+        $plugins->publishHook(self::PLUGIN_NAME, MenuEntryHook::class, MenuEntry::class);
         $plugins->publishHook(self::PLUGIN_NAME, SinglePageHook::class, Terminal::class);
 
         // Registered ahead of the enabled gate so that a plugin switched off

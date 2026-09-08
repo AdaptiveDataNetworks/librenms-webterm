@@ -90,6 +90,30 @@
             @endforelse
         </table>
 
+        <form method="POST" action="{{ url('plugin/webterm/admin/targets/save') }}" class="form-inline" style="margin-bottom: 18px;">
+            @csrf
+            <select name="device_id" id="webterm-target-device" class="form-control input-sm" required style="min-width: 260px;"></select>
+            <input name="principal" class="form-control input-sm" placeholder="{{ __('SSH login (principal)') }}" required>
+            <select name="flow" class="form-control input-sm">
+                <option value="database">database</option>
+                <option value="ssh_signer">ssh_signer</option>
+                <option value="kv2">kv2</option>
+                <option value="private_key">private_key</option>
+            </select>
+            <select name="host_key_policy" class="form-control input-sm">
+                <option value="pin">pin</option>
+                <option value="tofu_first_connect">tofu_first_connect</option>
+            </select>
+            <select name="algorithm_profile" class="form-control input-sm">
+                <option value="modern">modern</option>
+                <option value="legacy">legacy</option>
+            </select>
+            <button class="btn btn-sm btn-primary" type="submit">{{ __('Enable device') }}</button>
+        </form>
+        <script>
+            if (typeof init_select2 === 'function') { init_select2('#webterm-target-device', 'device', {}); }
+        </script>
+
         <h4>{{ __('Stored credentials') }}</h4>
         <p class="text-muted">
             {{ __('Shown, never set, from here: obtaining a device credential should require shell access to this host, not an admin session in a browser. Most specific wins - device, then group, then global.') }}
@@ -108,6 +132,105 @@
                 <tr><td colspan="3" class="text-muted">{{ __('None stored.') }}</td></tr>
             @endforelse
         </table>
+
+    @elseif ($tab === 'credentials')
+        <p class="text-muted">
+            {{ __('Most specific wins: device, then device group, then the fleet-wide default. A stored secret is never shown again - these fields write, they do not read.') }}
+        </p>
+
+        <table class="table table-condensed table-striped">
+            <tr><th>Applies to</th><th>Method</th><th>Stored as</th><th>Key</th><th></th></tr>
+            @forelse ($credentials as $credential)
+                <tr>
+                    <td>{!! $credential->scope_type->value === 'device'
+                        ? $deviceLabel($credential->scope_ref)
+                        : e($credential->scope_type->label($credential->scope_ref)) !!}</td>
+                    <td>{{ $credential->method }}</td>
+                    <td>{{ $credential->username }}</td>
+                    <td>{{ $credential->key_id }}</td>
+                    <td>
+                        <form method="POST" action="{{ url('plugin/webterm/admin/credentials/delete') }}">
+                            @csrf
+                            <input type="hidden" name="scope_type" value="{{ $credential->scope_type->value }}">
+                            <input type="hidden" name="scope_ref" value="{{ $credential->scope_ref }}">
+                            <button class="btn btn-xs btn-danger" type="submit">{{ __('Remove') }}</button>
+                        </form>
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="5" class="text-muted">{{ __('None stored.') }}</td></tr>
+            @endforelse
+        </table>
+
+        <h4>{{ __('Store a credential') }}</h4>
+        <form method="POST" action="{{ url('plugin/webterm/admin/credentials') }}" autocomplete="off">
+            @csrf
+            <div class="form-inline" style="margin-bottom: 8px;">
+                <select name="scope_type" id="webterm-cred-scope" class="form-control input-sm">
+                    <option value="device">device</option>
+                    <option value="group">device group</option>
+                    <option value="global">fleet-wide default</option>
+                </select>
+                <select name="scope_ref" id="webterm-cred-ref" class="form-control input-sm" style="min-width: 260px;"></select>
+                <input name="username" class="form-control input-sm" placeholder="{{ __('SSH login') }}" required autocomplete="off">
+                <select name="secret_kind" id="webterm-cred-kind" class="form-control input-sm">
+                    <option value="password">password</option>
+                    <option value="private_key">private key</option>
+                </select>
+            </div>
+            {{-- Write-only. Never populated from a stored value, and the failure
+                 path does not flash it back. --}}
+            <div style="margin-bottom: 8px;">
+                <input type="password" name="secret" id="webterm-cred-secret" class="form-control"
+                       placeholder="{{ __('Password') }}" required autocomplete="new-password" style="max-width: 420px;">
+                <textarea name="secret" id="webterm-cred-secret-key" class="form-control" rows="6"
+                          placeholder="{{ __('-----BEGIN OPENSSH PRIVATE KEY-----') }}"
+                          style="display: none; max-width: 620px; font-family: monospace;"></textarea>
+            </div>
+            <button class="btn btn-sm btn-primary" type="submit">{{ __('Store credential') }}</button>
+            <span class="text-muted"><small>{{ __('Encrypted at rest. It is never rendered back to this page.') }}</small></span>
+        </form>
+
+        <script>
+            (function () {
+                var scope = document.getElementById('webterm-cred-scope');
+                var ref = document.getElementById('webterm-cred-ref');
+                var kind = document.getElementById('webterm-cred-kind');
+                var pw = document.getElementById('webterm-cred-secret');
+                var key = document.getElementById('webterm-cred-secret-key');
+
+                function bindRef() {
+                    if (typeof init_select2 !== 'function' || !window.jQuery) { return; }
+                    if (jQuery(ref).data('select2')) { jQuery(ref).select2('destroy').empty(); }
+
+                    if (scope.value === 'global') {
+                        ref.innerHTML = '<option value="0" selected>fleet-wide</option>';
+                        ref.disabled = true;
+                        return;
+                    }
+
+                    ref.disabled = false;
+                    init_select2('#webterm-cred-ref', scope.value === 'group' ? 'device-group' : 'device', {});
+                }
+
+                function bindKind() {
+                    var isKey = kind.value === 'private_key';
+                    // Only one of the two is ever enabled, so exactly one field
+                    // named "secret" is submitted.
+                    pw.style.display = isKey ? 'none' : '';
+                    pw.disabled = isKey;
+                    pw.required = !isKey;
+                    key.style.display = isKey ? '' : 'none';
+                    key.disabled = !isKey;
+                    key.required = isKey;
+                }
+
+                scope.addEventListener('change', bindRef);
+                kind.addEventListener('change', bindKind);
+                bindRef();
+                bindKind();
+            })();
+        </script>
 
     @elseif ($tab === 'access')
         <h4>{{ __('Grants') }}</h4>
@@ -267,6 +390,53 @@
             @empty
                 <tr><td colspan="6" class="text-muted">{{ __('No sessions recorded.') }}</td></tr>
             @endforelse
+        </table>
+
+    @elseif ($tab === 'settings')
+        <p class="text-muted">
+            {{ __('Changes take effect on the next request. Anything not editable here is listed below with the reason - a control that appears to work and does nothing is worse than no control.') }}
+        </p>
+
+        <table class="table table-condensed table-striped">
+            <tr><th style="width: 30%;">Setting</th><th style="width: 22%;">Value</th><th></th></tr>
+            @foreach ($editable as $key => [$type, $label, $help])
+                <tr>
+                    <td><strong>{{ $label }}</strong><br><small class="text-muted"><code>{{ $key }}</code></small></td>
+                    <td>
+                        <form method="POST" action="{{ url('plugin/webterm/admin/settings') }}" class="form-inline">
+                            @csrf
+                            <input type="hidden" name="key" value="{{ $key }}">
+                            @if ($type === 'bool')
+                                <select name="value" class="form-control input-sm">
+                                    <option value="true" @selected(config('webterm.'.$key))>true</option>
+                                    <option value="false" @selected(! config('webterm.'.$key))>false</option>
+                                </select>
+                            @elseif (str_starts_with($type, 'enum:'))
+                                <select name="value" class="form-control input-sm">
+                                    @foreach (explode(',', substr($type, 5)) as $option)
+                                        <option value="{{ $option }}" @selected(config('webterm.'.$key) === $option)>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input name="value" class="form-control input-sm" style="width: 120px;"
+                                       value="{{ config('webterm.'.$key) }}">
+                            @endif
+                            <button class="btn btn-xs btn-primary" type="submit">{{ __('Save') }}</button>
+                        </form>
+                    </td>
+                    <td class="text-muted"><small>{{ $help }}</small></td>
+                </tr>
+            @endforeach
+        </table>
+
+        <h4>{{ __('Not editable here') }}</h4>
+        <table class="table table-condensed">
+            @foreach ($readOnlySettings as $key => $why)
+                <tr>
+                    <td style="width: 30%;"><code>{{ $key }}</code></td>
+                    <td class="text-muted"><small>{{ $why }}</small></td>
+                </tr>
+            @endforeach
         </table>
 
     @else

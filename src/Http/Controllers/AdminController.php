@@ -6,6 +6,8 @@ namespace AdaptiveDataNetworks\WebTerm\Http\Controllers;
 
 use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
 use AdaptiveDataNetworks\WebTerm\Audit\Event;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
+use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceNames;
@@ -15,12 +17,17 @@ use AdaptiveDataNetworks\WebTerm\Models\Credential;
 use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use AdaptiveDataNetworks\WebTerm\Models\HostKey;
 use AdaptiveDataNetworks\WebTerm\Models\Session;
+use AdaptiveDataNetworks\WebTerm\Models\Setting;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
+use AdaptiveDataNetworks\WebTerm\Support\EditableSettings;
+use AdaptiveDataNetworks\WebTerm\Support\RuntimeSettings;
+use AdaptiveDataNetworks\WebTerm\Support\SshKey;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Throwable;
 
@@ -43,7 +50,7 @@ use Throwable;
  */
 final class AdminController
 {
-    private const TABS = ['targets', 'access', 'hostkeys', 'sessions', 'audit'];
+    private const TABS = ['targets', 'credentials', 'access', 'hostkeys', 'sessions', 'settings', 'audit'];
 
     public function index(Request $request, DeviceNames $names): View
     {
@@ -72,6 +79,8 @@ final class AdminController
             'audit' => $audit,
             // Resolved once for the whole page rather than per row: an id per
             // table cell would be an N+1 across six tables.
+            'editable' => EditableSettings::editable(),
+            'readOnlySettings' => EditableSettings::readOnly(),
             'deviceNames' => $names->namesFor(array_merge(
                 $targets->pluck('device_id')->all(),
                 $hostKeys->pluck('device_id')->all(),
@@ -218,6 +227,195 @@ final class AdminController
         );
 
         return $this->back('sessions', 'Session terminated.');
+    }
+
+    /**
+     * Change one setting.
+     *
+     * Only keys EditableSettings declares, coerced to their declared type.
+     * Anything else is refused rather than written, because a row nothing reads
+     * is the failure this plugin has already shipped twice.
+     */
+    public function storeSetting(Request $request, AuditLogger $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'key' => ['required', 'string', 'max:96'],
+            'value' => ['present', 'string', 'max:255'],
+        ]);
+
+        [$ok, $value, $error] = EditableSettings::coerce($validated['key'], $validated['value']);
+
+        if (! $ok) {
+            return $this->back('settings', sprintf('%s: %s', $validated['key'], $error));
+        }
+
+        Setting::query()->updateOrCreate(
+            ['key' => $validated['key']],
+            ['value' => is_bool($value) ? ($value ? 'true' : 'false') : (string) $value]
+        );
+
+        // Otherwise the next request reads a cached value and the change looks
+        // as though it did nothing.
+        RuntimeSettings::flush();
+
+        $audit->log(Event::ConfigChanged, Auth::user(), detail: [
+            'key' => $validated['key'],
+            'value' => is_bool($value) ? ($value ? 'true' : 'false') : (string) $value,
+            'via' => 'console',
+        ]);
+
+        return $this->back('settings', sprintf('%s updated.', $validated['key']));
+    }
+
+    /**
+     * Create or update a target -- previously CLI-only.
+     */
+    public function storeTarget(Request $request, AuditLogger $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'device_id' => ['required', 'integer', 'min:1'],
+            'principal' => ['required', 'string', 'max:64'],
+            'flow' => ['required', 'in:database,ssh_signer,kv2,private_key'],
+            'host_key_policy' => ['required', 'in:'.Target::POLICY_PIN.','.Target::POLICY_TOFU],
+            'algorithm_profile' => ['required', 'in:modern,legacy'],
+        ]);
+
+        Target::query()->updateOrCreate(
+            ['device_id' => $validated['device_id'], 'protocol' => 'ssh'],
+            $validated + ['enabled' => true]
+        );
+
+        $audit->log(Event::ConfigChanged, Auth::user(), (int) $validated['device_id'], detail: [
+            'change' => 'target.saved',
+        ] + $validated + ['via' => 'console']);
+
+        return $this->back('targets', 'Target saved. Pin its host key before connecting: webterm:hostkey-scan.');
+    }
+
+    /**
+     * Store a credential from the browser.
+     *
+     * Credential entry was deliberately CLI-only until the owner decided the
+     * opposite: LibreNMS's plugin surface is already admin-gated, and refusing
+     * to expose this makes the plugin unusable for operators who are perfectly
+     * capable of securing their own install. Doing it well is the job now.
+     *
+     * Four framework mechanics leak secrets by default and each is handled:
+     *
+     *  - Laravel flashes failed-validation input back into the session, minus
+     *    only `password`, `password_confirmation` and `current_password`. A
+     *    field named `private_key` or `passphrase` would be written to the
+     *    session store in plaintext. So validation here is manual and the
+     *    failure path NEVER calls withInput().
+     *  - `zend.exception_ignore_args` is Off on a default PHP, so a plain
+     *    string argument appears in any stack trace LibreNMS logs. Hence
+     *    #[SensitiveParameter] on the method that receives it.
+     *  - The response carries no echo of the secret: the field is write-only
+     *    and a stored credential is never rendered back.
+     *  - Nothing is put in the URL, the flash message, or the audit detail.
+     */
+    public function storeCredential(Request $request, AuditLogger $audit): RedirectResponse
+    {
+        // Validator::make, not $request->validate(): the latter throws a
+        // ValidationException whose handler redirects withInput(), which is
+        // exactly how the secret would reach the session.
+        $validator = Validator::make($request->all(), [
+            'scope_type' => ['required', 'in:global,group,device'],
+            'scope_ref' => ['required', 'integer', 'min:0'],
+            'username' => ['required', 'string', 'max:64'],
+            'secret' => ['required', 'string', 'max:16384'],
+            'secret_kind' => ['required', 'in:password,private_key'],
+        ]);
+
+        if ($validator->fails()) {
+            // No withInput(). Deliberate -- see above.
+            return $this->back('credentials', 'Could not save: '.$validator->errors()->first());
+        }
+
+        $validated = $validator->validated();
+        $scope = CredentialScope::from($validated['scope_type']);
+        $ref = $scope === CredentialScope::Global ? CredentialScope::UNTARGETED : (int) $validated['scope_ref'];
+
+        $this->persistCredential(
+            $scope,
+            $ref,
+            (string) $validated['username'],
+            (string) $validated['secret_kind'],
+            (string) $validated['secret'],
+        );
+
+        $audit->log(
+            Event::CredentialStored,
+            Auth::user(),
+            $scope === CredentialScope::Device ? $ref : null,
+            detail: [
+                'scope' => $scope->value,
+                'scope_ref' => $ref,
+                'method' => $validated['secret_kind'],
+                'username' => $validated['username'],
+                'via' => 'console',
+            ]
+        );
+
+        return $this->back('credentials', 'Credential stored for '.$scope->label($ref).'.');
+    }
+
+    public function destroyCredential(Request $request, AuditLogger $audit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'scope_type' => ['required', 'in:global,group,device'],
+            'scope_ref' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $scope = CredentialScope::from($validated['scope_type']);
+        $ref = (int) $validated['scope_ref'];
+
+        $credential = Credential::query()
+            ->where('scope_type', $scope->value)
+            ->where('scope_ref', $ref)
+            ->where('protocol', 'ssh')
+            ->first();
+
+        if ($credential === null) {
+            return $this->back('credentials', 'That credential is already gone.');
+        }
+
+        $detail = ['scope' => $scope->value, 'scope_ref' => $ref, 'method' => (string) $credential->method, 'username' => (string) $credential->username];
+        $credential->delete();
+
+        $audit->log(Event::CredentialRemoved, Auth::user(), $scope === CredentialScope::Device ? $ref : null, detail: $detail + ['via' => 'console']);
+
+        return $this->back('credentials', 'Credential removed.');
+    }
+
+    /**
+     * Encrypt and store. Isolated so the secret crosses exactly one boundary,
+     * and marked sensitive so it cannot surface in a stack trace.
+     */
+    private function persistCredential(
+        CredentialScope $scope,
+        int $ref,
+        string $username,
+        string $kind,
+        #[\SensitiveParameter] string $secret,
+    ): void {
+        $encrypter = new CredentialEncrypter;
+
+        $secrets = $kind === 'private_key'
+            ? ['private_key' => $secret]
+            : ['password' => $secret];
+
+        Credential::query()->updateOrCreate(
+            ['scope_type' => $scope->value, 'scope_ref' => $ref, 'protocol' => 'ssh'],
+            [
+                'method' => $kind === 'private_key' ? CredentialMethod::PrivateKey->value : CredentialMethod::Password->value,
+                'username' => $username,
+                'payload' => $encrypter->encrypt($secrets),
+                'cipher' => $encrypter->cipher(),
+                'key_id' => $encrypter->keyId(),
+                'fingerprint' => $kind === 'private_key' ? SshKey::fingerprint($secret) : null,
+            ]
+        );
     }
 
     private function back(string $tab, string $message): RedirectResponse

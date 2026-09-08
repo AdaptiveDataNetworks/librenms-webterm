@@ -57,4 +57,16 @@ Route::middleware(['web', 'auth', EnsureWebTermEnabled::class, EnsureWebTermAdmi
         Route::post('abilities', [AdminController::class, 'storeAbility'])->name('abilities.store');
         Route::post('abilities/delete', [AdminController::class, 'destroyAbility'])->name('abilities.destroy');
         Route::post('sessions/kill', [AdminController::class, 'killSession'])->name('sessions.kill');
+
+        // Writes that carry or destroy a secret are throttled harder than the
+        // read-only console: an admin session should not be usable to grind
+        // through credential writes unnoticed.
+        Route::post('targets/save', [AdminController::class, 'storeTarget'])
+            ->middleware('throttle:30,1')->name('targets.save');
+        Route::post('credentials', [AdminController::class, 'storeCredential'])
+            ->middleware('throttle:10,1')->name('credentials.store');
+        Route::post('credentials/delete', [AdminController::class, 'destroyCredential'])
+            ->middleware('throttle:10,1')->name('credentials.destroy');
+        Route::post('settings', [AdminController::class, 'storeSetting'])
+            ->middleware('throttle:30,1')->name('settings.store');
     });

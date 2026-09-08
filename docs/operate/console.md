@@ -4,33 +4,62 @@ Everything WebTerm does can be driven from the CLI, and for a long time that was
 the only way. The console covers the same ground from LibreNMS itself — with one
 deliberate exception.
 
-Open it from **Overview → Plugins → WebTerm → Settings**, or go straight to
-`/plugin/webterm/admin`.
+Open it from **Overview → Plugins → WebTerm** — a sibling of Overview → Tools in
+the same menu — or go straight to `/plugin/webterm/admin`.
+
+!!! note "Why not the Tools menu"
+
+    LibreNMS offers plugins exactly one navigation insertion point,
+    `MenuEntryHook`, which renders into the Plugins submenu. Oxidized and the
+    RIPE NCC API appear under Tools because they are hardcoded entries in core's
+    menu template; there is no list a plugin can append to. Plugins sits
+    directly above Tools in the same Overview dropdown, so it is the same number
+    of clicks.
 
 ## What it does
 
 | Tab | What you can do |
 |---|---|
-| **Targets** | Enable and disable devices for terminal access; see which credentials exist and what each applies to |
+| **Targets** | Enable a device for terminal access by name, set its principal, flow, host key policy and algorithm profile; enable and disable existing targets |
+| **Credentials** | Store a password or private key against a device, a device group, or the whole fleet; remove one |
 | **Access** | Create and remove grants; grant and revoke WebTerm abilities |
 | **Host keys** | Read the pinned keys and their status |
 | **Sessions** | See recent sessions and terminate a live one |
+| **Settings** | Change the settings that take effect at runtime; see the rest read-only, with the reason |
 | **Audit** | The 100 most recent events |
 
-## What it deliberately does not do
+Devices are chosen by name everywhere, using LibreNMS's own device picker —
+which filters by your device visibility, so it cannot offer a device you could
+not already see.
 
-**Set credentials.** Storing a device credential requires shell access to the
-LibreNMS host and always will. LibreNMS is a public-facing PHP application, and
-its compromise is the largest residual risk in this design — so the bar for
-writing a reusable device secret is deliberately higher than an admin session in
-a browser. The console shows which credentials exist and what they apply to,
-because that is not a secret. Use
-[`webterm:credentials:set`](../reference/cli.md#credentials).
+## What it deliberately does not do
 
 **Change host key pins or policy.** Resetting a pin and switching a target to
 trust-on-first-connect are each defensible on their own, and together they amount
 to turning off SSH host key verification for a device from a browser. Both stay
 on the CLI: `webterm:hostkey-scan` and `webterm:hostkey-reset`.
+
+## Credentials in the browser
+
+Credential entry is available from the console. It is written to be safe rather
+than merely convenient:
+
+- The field is **write-only**. A stored secret is never rendered back to the
+  page, in any tab.
+- **Validation failures do not flash it.** Laravel's `withInput()` excludes only
+  `password`, `password_confirmation` and `current_password`, so a field named
+  anything else would land in the session store in plaintext. The controller
+  validates manually and never calls `withInput()`.
+- The value is marked `#[\SensitiveParameter]` where it is handled, so it cannot
+  surface in a stack trace — PHP's default `zend.exception_ignore_args=Off`
+  otherwise puts the first 15 characters of a string argument into any trace
+  that gets logged.
+- Every write and delete is audited, and the audit detail records the scope, the
+  method and the login — never the secret.
+
+The equivalent CLI commands still exist and are unchanged. They remain the only
+path that requires shell access, if you would rather keep it that way: grant
+nobody the `admin` ability and administer from the command line.
 
 ## Who can reach it
 
