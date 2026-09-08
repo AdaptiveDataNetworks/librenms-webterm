@@ -59,7 +59,10 @@ final class DeviceOverview implements DeviceOverviewHook
      * short-lived cache populated out of band.
      *
      * @param  array<string, mixed>  $settings
-     * @param  Device  $device
+     * @param  object  $device  A LibreNMS App\Models\Device. Typed loosely
+     *                          because the parameter itself is untyped (core
+     *                          injects it by name) and because tests
+     *                          substitute a stand-in.
      */
     public function handle(string $pluginName, array $settings, $device): Htmlable
     {

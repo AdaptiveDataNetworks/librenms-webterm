@@ -2,24 +2,26 @@
 
 ## Before tagging
 
-```bash
-composer test
-php tools/composer-guard.php
-php tools/check-docs.php
-cd gateway && go test ./... && gofmt -l . && cd ..
-
-# The release workflow is NOT exercised by CI -- it only runs on a tag. Prove
-# it builds before you create one:
-goreleaser check
-goreleaser release --snapshot --clean --skip=docker,sign
-```
-
-That snapshot produces the real archives, deb and rpm in `dist/`. Check that
-the tarball contains `LICENSE`, and that the binary runs:
+One command, and it **fails** rather than printing:
 
 ```bash
-tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz
+sh tools/preflight.sh
 ```
+
+It runs composer validation, the dependency guard, the docs check, Pint,
+PHPStan, the test suite, the protocol codegen check, gofmt, go vet, go test,
+and a real GoReleaser snapshot build.
+
+!!! warning "Why this is a script and not a checklist"
+
+    Two releases were tagged while static analysis was failing. The checks had
+    been run individually and piped through `grep`, which hides the exit code,
+    and the output scrolled past unread. A tag cannot be withdrawn once
+    Packagist has seen it, so the gate has to fail rather than report.
+
+    The GoReleaser snapshot is in there for the same reason: the release
+    workflow only runs on a tag, so CI never exercises it. v1.0.0's release
+    failed for a path error that this snapshot would have caught.
 
 Update `CHANGELOG.md`. Confirm the compatibility matrix in `docs/reference/compatibility.md` still reflects reality.
 

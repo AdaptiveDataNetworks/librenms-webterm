@@ -18,14 +18,14 @@ parameters:
         # still exist against a real checkout.
         -
             identifier: class.notFound
-            path: src/Hooks/*
-        -
-            identifier: class.notFound
             path: tests/Contract/*
         # Pest rebinds $this inside test closures to the configured TestCase
         # (ours extends Orchestra\Testbench\TestCase), which static analysis
         # cannot see. Only the Laravel testing helpers are ignored, so a genuine
         # typo in a method name is still caught.
         -
-            message: '#Call to an undefined method PHPUnit\\Framework\\TestCase::(artisan|assertDatabase\w+|withoutExceptionHandling)\(\)#'
+            message: '#Call to an undefined method PHPUnit\\Framework\\TestCase::(artisan|assertDatabase\w+|withoutExceptionHandling|actingAs|beforeApplicationDestroyed)\(\)#'
+            path: tests/*
+        -
+            message: '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$app#'
             path: tests/*
