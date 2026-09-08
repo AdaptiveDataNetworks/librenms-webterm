@@ -79,13 +79,37 @@ Changes are audited. Secrets cannot be set here, and anything whose key looks se
 ## Credentials
 
 ```bash
+./lnms webterm:credentials:list                    # what is stored, and for what
+./lnms webterm:credentials:list --device=core-sw-01
 ./lnms webterm:credentials:set --device=core-sw-01 --username=netops
 ./lnms webterm:credentials:set --device=core-sw-01 --username=netops --key-file=/path/to/key
+./lnms webterm:credentials:forget --device=core-sw-01
 ./lnms webterm:credentials:rekey --dry-run
 ./lnms webterm:credentials:rekey --from="<old key>"
 ```
 
-Secrets are always prompted for, never passed as arguments.
+Secrets are always prompted for, never passed as arguments, and never printed
+back — `list` shows the login and the encryption key generation, never the
+secret itself.
+
+`list` also answers the two questions that stored credentials otherwise raise
+silently:
+
+- **Does the stored login match what the device is actually connected as?** The
+  target's `principal` is what the SSH session uses; the credential's username
+  is only a label. Nothing used to check they agreed, so a mismatch showed up
+  as an authentication failure against real equipment and nowhere else.
+- **Is this row still encrypted under the current key?** Anything left on a
+  superseded key needs `webterm:credentials:rekey`.
+
+`forget` is the only way to remove a stored secret. It accepts a numeric device
+id even when the device no longer exists in LibreNMS, because nothing links
+`webterm_credentials` to core's `devices` table — deleting a device leaves its
+credential behind, and that row still needs removing.
+
+Both writing and deleting a credential are audited, and both are treated as
+security-relevant, so they reach an off-box syslog stream before the local
+database write.
 
 ## Host keys
 

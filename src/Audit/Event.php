@@ -28,6 +28,8 @@ enum Event: string
 
     case CredentialResolved = 'credential.resolved';
     case CredentialFailed = 'credential.failed';
+    case CredentialStored = 'credential.stored';
+    case CredentialRemoved = 'credential.removed';
 
     case HostKeyPinned = 'hostkey.pinned';
     case HostKeyChanged = 'hostkey.changed';
@@ -48,7 +50,8 @@ enum Event: string
             self::SessionRevoked => Severity::Error,
 
             self::SessionStarted, self::SessionKilled, self::GrantCreated,
-            self::GrantRemoved, self::ConfigChanged, self::HostKeyPinned => Severity::Notice,
+            self::GrantRemoved, self::ConfigChanged, self::HostKeyPinned,
+            self::CredentialStored, self::CredentialRemoved => Severity::Notice,
 
             default => Severity::Info,
         };
@@ -66,7 +69,11 @@ enum Event: string
         return match ($this) {
             self::SessionDenied, self::AuthStepUpFailed, self::AuthStepUpLocked,
             self::CredentialFailed, self::HostKeyChanged, self::HostKeyRejected,
-            self::SessionRevoked => true,
+            self::SessionRevoked,
+            // Writing or deleting a reusable device credential is exactly the
+            // kind of change an intruder makes and then edits out of the local
+            // table, so it goes off-box first.
+            self::CredentialStored, self::CredentialRemoved => true,
             default => false,
         };
     }

@@ -6,6 +6,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.0.9] - 2026-09-08
+
+Credentials were write-only. You could store one and then had no way to ask
+what was stored, no way to remove it, and no warning when it disagreed with the
+login the device actually uses.
+
+### Added
+
+- **`webterm:credentials:list`** — what is stored, for which device, under which
+  login, and whether it still decrypts with the current key. No secret is
+  printed. It also surfaces two failures that were previously silent: a
+  credential whose username disagrees with the target's `principal` (the
+  principal is what the SSH session uses; the username was only ever a label,
+  and nothing checked they matched), and a row left on a superseded encryption
+  key.
+
+- **`webterm:credentials:forget`** — there was no way to delete a stored secret.
+  `credentials:set` could only overwrite it, so a password written against the
+  wrong device, or left behind after a move to Vault, could be removed only by
+  editing the database by hand. It accepts a numeric device id even when the
+  device is gone from LibreNMS: nothing links `webterm_credentials` to core's
+  `devices` table, so deleting a device orphans its credential, and that row
+  still has to be removable.
+
+- Storing and deleting a credential are now audited (`credential.stored`,
+  `credential.removed`) and classed security-relevant, so they reach the
+  off-box stream before the local database write. Storing a device credential
+  previously wrote no audit record at all.
+
+### Fixed
+
+- **`webterm:why` recommended a command that does not exist.** An operator
+  blocked by a deny rule was told to run `./lnms webterm:deny --list`; there has
+  never been a `webterm:deny`. It now names the real command. A test asserts
+  every remediation string refers to a registered command, so this cannot
+  return.
+
+- `webterm:credentials:set` now warns when the login it is storing differs from
+  the target's principal, and prints the command to fix whichever side is
+  wrong.
+
 ## [Unreleased]
 
 ### Fixed
@@ -289,6 +330,7 @@ Defaults are closed. A fresh install cannot open a terminal to anything until an
 
 Session recording, RDP/VNC, just-in-time access approvals, break-glass credentials and cryptographic operator attribution. Each is discussed in the documentation rather than left as an unexplained gap.
 
+[1.0.9]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.9
 [1.0.8]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.8
 [1.0.7]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.7
 [1.0.6]: https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/tag/v1.0.6

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Console;
 
+use AdaptiveDataNetworks\WebTerm\Audit\AuditLogger;
+use AdaptiveDataNetworks\WebTerm\Audit\Event;
 use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialMethod;
 use AdaptiveDataNetworks\WebTerm\Models\Credential;
+use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Support\SshKey;
 use Illuminate\Console\Command;
 
@@ -28,7 +31,7 @@ final class SetCredentialCommand extends Command
 
     protected $description = 'Store an encrypted SSH credential for a device';
 
-    public function handle(): int
+    public function handle(AuditLogger $audit): int
     {
         $device = $this->findDevice((string) $this->option('device'));
         if ($device === null) {
@@ -79,8 +82,18 @@ final class SetCredentialCommand extends Command
 
         $encrypter = new CredentialEncrypter;
 
+        $deviceId = (int) $device->device_id;
+
+        // The login the device actually sees is the target's principal. Nothing
+        // has ever checked that the two agree, so a typo here surfaced only as
+        // an authentication failure against real equipment.
+        $principal = Target::query()
+            ->where('device_id', $deviceId)
+            ->where('protocol', 'ssh')
+            ->value('principal');
+
         Credential::query()->updateOrCreate(
-            ['device_id' => (int) $device->device_id, 'protocol' => 'ssh'],
+            ['device_id' => $deviceId, 'protocol' => 'ssh'],
             [
                 'method' => $method->value,
                 'username' => $username,
@@ -91,7 +104,25 @@ final class SetCredentialCommand extends Command
             ]
         );
 
-        $this->info(sprintf('Stored an encrypted %s credential for %s.', $method->value, $device->hostname ?? $device->device_id));
+        $audit->log(Event::CredentialStored, deviceId: $deviceId, detail: [
+            'method' => $method->value,
+            'username' => $username,
+        ]);
+
+        $this->info(sprintf('Stored an encrypted %s credential for %s.', $method->value, $device->hostname ?? $deviceId));
+
+        if ($principal !== null && $principal !== $username) {
+            $this->line('');
+            $this->warn(sprintf(
+                'This device connects as "%s", not "%s" -- the target principal wins.',
+                $principal,
+                $username
+            ));
+            $this->line('  Fix whichever is wrong:');
+            $this->line(sprintf('    ./lnms webterm:target:enable --device=%s --principal=%s', $device->hostname ?? $deviceId, $username));
+            $this->line(sprintf('    ./lnms webterm:credentials:set --device=%s --username=%s', $device->hostname ?? $deviceId, $principal));
+        }
+
         $this->line('');
         $this->line('  This secret is reusable and now lives in your monitoring database.');
         $this->line('  For anything beyond a small estate, consider Vault:');

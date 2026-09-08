@@ -9,9 +9,11 @@ use AdaptiveDataNetworks\WebTerm\Authorization\TotpStepUp;
 use AdaptiveDataNetworks\WebTerm\Console\AbilityCommand;
 use AdaptiveDataNetworks\WebTerm\Console\ConfigCommand;
 use AdaptiveDataNetworks\WebTerm\Console\DoctorCommand;
+use AdaptiveDataNetworks\WebTerm\Console\ForgetCredentialCommand;
 use AdaptiveDataNetworks\WebTerm\Console\GrantCommand;
 use AdaptiveDataNetworks\WebTerm\Console\HostKeyResetCommand;
 use AdaptiveDataNetworks\WebTerm\Console\HostKeyScanCommand;
+use AdaptiveDataNetworks\WebTerm\Console\ListCredentialsCommand;
 use AdaptiveDataNetworks\WebTerm\Console\MigrateCommand;
 use AdaptiveDataNetworks\WebTerm\Console\ReconcileCommand;
 use AdaptiveDataNetworks\WebTerm\Console\RekeyCredentialsCommand;
@@ -74,9 +76,11 @@ final class WebTermServiceProvider extends ServiceProvider
                 AbilityCommand::class,
                 ConfigCommand::class,
                 DoctorCommand::class,
+                ForgetCredentialCommand::class,
                 GrantCommand::class,
                 HostKeyResetCommand::class,
                 HostKeyScanCommand::class,
+                ListCredentialsCommand::class,
                 MigrateCommand::class,
                 ReconcileCommand::class,
                 RekeyCredentialsCommand::class,

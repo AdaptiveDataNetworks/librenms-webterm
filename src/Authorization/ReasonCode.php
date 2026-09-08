@@ -81,7 +81,7 @@ enum ReasonCode: string
             self::TargetUnresolvable => 'Set the device IP, or an IP override, in LibreNMS. The gateway does not resolve DNS.',
             self::DeviceNotVisible => 'Grant the user access to the device in LibreNMS itself.',
             self::MissingAbility => './lnms webterm:ability grant --user=<user> --ability=use',
-            self::ExplicitDeny => './lnms webterm:deny --list  (then remove the matching deny grant)',
+            self::ExplicitDeny => './lnms webterm:grant --user=<user> --device=<device> --deny --remove',
             self::NoGrant, self::GrantNotYetActive, self::GrantExpired => './lnms webterm:grant --user=<user> --device=<device>',
             self::NoPrincipal => './lnms webterm:credentials:set --device=<device> --username=<login>',
             self::HostKeyNotPinned => './lnms webterm:hostkey-scan --device=<device>',
