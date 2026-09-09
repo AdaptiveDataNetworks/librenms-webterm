@@ -11,47 +11,114 @@
      to the proxy access log and leaks through Referer, and the ticket is a
      credential.
 
-     $webtermDeviceId may be supplied by the includer (the tab does); the
-     full-page view leaves it unset and the device comes from the query string. --}}
-<div class="row">
-    <div class="col-md-12">
-        <div id="webterm-status" class="alert alert-info">{{ __('Requesting a terminal session…') }}</div>
-        <div id="webterm-stepup" style="display: none;" class="panel panel-default">
-            <div class="panel-body">
-                <label for="webterm-code">{{ __('Confirm your identity to open a terminal') }}</label>
-                <div class="input-group" style="max-width: 320px;">
-                    <input type="text" id="webterm-code" class="form-control"
-                           inputmode="numeric" autocomplete="one-time-code"
-                           placeholder="{{ __('Authenticator code') }}">
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" id="webterm-verify">{{ __('Confirm') }}</button>
-                    </span>
-                </div>
-            </div>
-        </div>
-        <iframe id="webterm-frame"
-                title="{{ __('Terminal') }}"
-                style="display: none; width: 100%; height: 70vh; border: 1px solid #30363d; border-radius: 4px;"
-                sandbox="allow-scripts allow-same-origin"></iframe>
-    </div>
+     Three values may be supplied by the includer:
+
+       $webtermDeviceId    the device to connect to; the full-page view leaves it
+                           unset and takes it from the query string instead.
+       $webtermAutoConnect whether to mint on load. The full-page route was
+                           reached with an explicit ?device=, so it may; the
+                           device tab may not -- opening a tab is not consent to
+                           start an audited SSH session and spend a concurrency
+                           slot. DeviceTabPresenter says the same thing in its
+                           own comment: "a session is created when the operator
+                           clicks, not when the tab renders".
+       $webtermFrameHeight how tall the frame is, because the chrome above it
+                           differs between the two.
+
+     Every translated string reaches JavaScript through @json, never through a
+     quoted {{ }}: Blade escapes with ENT_QUOTES, HTML entities are not decoded
+     inside a <script>, and the first translation containing an apostrophe would
+     otherwise render "&#039;" to the operator. --}}
+@php
+    $webtermAutoConnect = $webtermAutoConnect ?? true;
+    $webtermFrameHeight = $webtermFrameHeight ?? '70vh';
+@endphp
+
+{{-- Hidden only when we are about to mint anyway. --}}
+<div id="webterm-start" @if ($webtermAutoConnect) style="display: none;" @endif>
+    <button type="button" class="btn btn-primary" id="webterm-open">
+        <i class="fa fa-terminal fa-fw" aria-hidden="true"></i> {{ __('Open terminal') }}
+    </button>
+    <span class="text-muted"><small>{{ __('Opens an SSH session and records it in the audit log.') }}</small></span>
 </div>
+
+<div id="webterm-status" class="alert alert-info" role="status" aria-live="polite" aria-atomic="true"
+     style="display: none;">
+    <span id="webterm-status-text">{{ __('Requesting a terminal session…') }}</span>
+    <button type="button" class="btn btn-default btn-xs" id="webterm-retry"
+            style="display: none; margin-left: 8px;">{{ __('Try again') }}</button>
+</div>
+
+<form id="webterm-stepup" class="well well-sm" style="display: none;">
+    <p><strong>{{ __('Confirm your identity to open a terminal') }}</strong></p>
+    <div class="form-group" style="margin-bottom: 0;">
+        <label for="webterm-code">{{ __('Authenticator code') }}</label>
+        <div class="input-group" style="max-width: 320px;">
+            <input type="text" id="webterm-code" class="form-control"
+                   inputmode="numeric" autocomplete="one-time-code" maxlength="8"
+                   spellcheck="false" aria-describedby="webterm-stepup-help">
+            <span class="input-group-btn">
+                <button class="btn btn-primary" type="submit" id="webterm-verify">{{ __('Confirm') }}</button>
+            </span>
+        </div>
+        <span class="help-block" id="webterm-stepup-help"><small>
+            {{ __('WebTerm asks for a second factor before opening a terminal, independently of your login session, and the attempt is recorded. This is the code from the authenticator you enrolled in LibreNMS; if you have not enrolled one, a terminal cannot be opened for you.') }}
+        </small></span>
+    </div>
+</form>
+
+{{-- No border of its own: the panel that wraps this on the device tab already
+     draws the host's, and a literal colour would follow neither theme. --}}
+<iframe id="webterm-frame"
+        title="{{ __('Terminal') }}"
+        style="display: none; width: 100%; height: {{ $webtermFrameHeight }}; border: 0;"
+        sandbox="allow-scripts allow-same-origin"></iframe>
+
+<noscript>
+    <p class="text-muted">
+        {{ __('The terminal needs JavaScript. Without it, connect with an SSH client instead.') }}
+    </p>
+</noscript>
 
 <script>
 (function () {
     'use strict';
 
-    var deviceId = @json($webtermDeviceId ?? null)
-        || new URLSearchParams(window.location.search).get('device');
+    var suppliedId = @json($webtermDeviceId ?? null);
+    var deviceId = suppliedId === null
+        ? new URLSearchParams(window.location.search).get('device')
+        : suppliedId;
+
+    var autoConnect = @json($webtermAutoConnect);
+    var startEl = document.getElementById('webterm-start');
     var statusEl = document.getElementById('webterm-status');
+    var statusText = document.getElementById('webterm-status-text');
+    var retryEl = document.getElementById('webterm-retry');
     var stepUpEl = document.getElementById('webterm-stepup');
+    var codeEl = document.getElementById('webterm-code');
+    var verifyEl = document.getElementById('webterm-verify');
     var frame = document.getElementById('webterm-frame');
     var token = document.querySelector('meta[name="csrf-token"]');
     var pendingTicket = null;
 
-    function status(message, level) {
+    var TEXT = {
+        requesting: @json(__('Requesting a terminal session…')),
+        confirming: @json(__('Confirming…')),
+        confirm: @json(__('Confirm')),
+        couldNotOpen: @json(__('Could not open a terminal.')),
+        couldNotReach: @json(__('Could not reach LibreNMS.')),
+        couldNotCheck: @json(__('Could not reach LibreNMS to check that code.')),
+        rejected: @json(__('That code was not accepted.')),
+        noDevice: @json(__('No device selected.')),
+        noAnswer: @json(__('The gateway did not answer. The terminal may still be reachable — try again.'))
+    };
+
+    function status(message, level, retryable) {
         statusEl.className = 'alert alert-' + (level || 'info');
-        statusEl.textContent = message;
+        statusText.textContent = message;
+        retryEl.style.display = retryable ? '' : 'none';
         statusEl.style.display = '';
+        startEl.style.display = 'none';
     }
 
     function post(url, body) {
@@ -68,9 +135,9 @@
     }
 
     function mint() {
-        status('{{ __('Requesting a terminal session…') }}');
+        status(TEXT.requesting, 'info', false);
 
-        post('{{ route('webterm.session.store') }}', { device_id: deviceId })
+        post(@json(route('webterm.session.store')), { device_id: deviceId })
             .then(function (response) {
                 return response.json().then(function (data) {
                     return { status: response.status, data: data };
@@ -80,19 +147,27 @@
                 if (result.status === 428) {
                     statusEl.style.display = 'none';
                     stepUpEl.style.display = '';
-                    document.getElementById('webterm-code').focus();
+                    codeEl.focus();
                     return;
                 }
 
                 if (result.status !== 200) {
-                    status(result.data.message || '{{ __('Could not open a terminal.') }}', 'danger');
+                    // The reason code is rendered verbatim beside the message so
+                    // it can be matched against webterm:why and the audit trail.
+                    var message = result.data.message || TEXT.couldNotOpen;
+
+                    if (result.data.reason) {
+                        message += ' (' + result.data.reason + ')';
+                    }
+
+                    status(message, 'danger', true);
                     return;
                 }
 
                 connect(result.data);
             })
             .catch(function () {
-                status('{{ __('Could not reach LibreNMS.') }}', 'danger');
+                status(TEXT.couldNotReach, 'danger', true);
             });
     }
 
@@ -100,13 +175,25 @@
         pendingTicket = session.ticket;
         statusEl.style.display = 'none';
         stepUpEl.style.display = 'none';
-        frame.style.display = '';
+        startEl.style.display = 'none';
+        // display:'' would restore the UA default of inline, which leaves the
+        // frame sitting on a text baseline with dead space beneath it.
+        frame.style.display = 'block';
 
         // The gateway page tells us when it is ready; only then does the ticket
         // cross, and it crosses by postMessage, never in the URL.
         frame.src = session.ui_url + '?ws=' + encodeURIComponent(
             (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + session.ws_url
         );
+
+        // A misconfigured proxy 404s the gateway page, webterm.ready never
+        // arrives, and the surface would otherwise be a permanently blank box.
+        window.setTimeout(function () {
+            if (pendingTicket !== null) {
+                frame.style.display = 'none';
+                status(TEXT.noAnswer, 'danger', true);
+            }
+        }, 10000);
     }
 
     window.addEventListener('message', function (event) {
@@ -124,12 +211,19 @@
             window.location.origin
         );
         pendingTicket = null;
+        frame.focus();
     });
 
-    document.getElementById('webterm-verify').addEventListener('click', function () {
-        var code = document.getElementById('webterm-code').value;
+    // A real form, so Enter submits the one-time code -- which is the muscle
+    // memory of every other code field, and what autocomplete="one-time-code"
+    // sets the platform up to expect.
+    stepUpEl.addEventListener('submit', function (event) {
+        event.preventDefault();
 
-        post('{{ route('webterm.stepup') }}', { code: code })
+        verifyEl.disabled = true;
+        verifyEl.textContent = TEXT.confirming;
+
+        post(@json(route('webterm.stepup')), { code: codeEl.value })
             .then(function (response) { return response.json(); })
             .then(function (data) {
                 if (data.satisfied) {
@@ -137,14 +231,29 @@
                     mint();
                     return;
                 }
-                status(data.message, 'warning');
+
+                status(data.message || TEXT.rejected, 'warning', false);
                 statusEl.style.display = '';
+                stepUpEl.style.display = '';
+                codeEl.value = '';
+                codeEl.focus();
+            })
+            .catch(function () {
+                status(TEXT.couldNotCheck, 'danger', false);
+                stepUpEl.style.display = '';
+            })
+            .then(function () {
+                verifyEl.disabled = false;
+                verifyEl.textContent = TEXT.confirm;
             });
     });
 
+    document.getElementById('webterm-open').addEventListener('click', mint);
+    retryEl.addEventListener('click', mint);
+
     if (!deviceId) {
-        status('{{ __('No device selected.') }}', 'warning');
-    } else {
+        status(TEXT.noDevice, 'warning', false);
+    } else if (autoConnect) {
         mint();
     }
 })();
