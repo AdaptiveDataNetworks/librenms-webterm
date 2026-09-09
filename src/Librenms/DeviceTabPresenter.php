@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
+use AdaptiveDataNetworks\WebTerm\Authorization\ReasonCode;
 use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayStatus;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
@@ -77,7 +78,14 @@ final class DeviceTabPresenter
                 // data() without ever consulting it.
                 $decision = (new ShellAuthorizer)->admit($user, $device);
 
-                if (! $decision->allowed) {
+                // Step-up is a prompt, not a refusal, and the tab used to get
+                // that wrong: on a default install (security.step_up is true)
+                // every first visit rendered "Confirm your identity to open a
+                // terminal." as a dead-end denial, with no field to type the
+                // code into, while the overview panel eleven lines away
+                // special-cased the identical decision to ready. The terminal
+                // partial already handles the 428 and reveals the form.
+                if (! $decision->allowed && $decision->reason !== ReasonCode::StepUpRequired) {
                     return [
                         'webtermState' => 'denied',
                         'webtermReason' => $decision->reason->message(),

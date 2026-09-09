@@ -25,7 +25,7 @@ the same menu — or go straight to `/plugin/webterm/admin`.
 | **Access** | Create and remove grants; grant and revoke WebTerm abilities |
 | **Host keys** | Read the pinned keys and their status |
 | **Sessions** | See recent sessions and terminate a live one |
-| **Settings** | Change the settings that take effect at runtime; see the rest read-only, with the reason |
+| **Runtime settings** | Change the settings that take effect at runtime; see the rest read-only, with the reason |
 | **Audit** | The 100 most recent events |
 
 Devices are chosen by name everywhere, using LibreNMS's own device picker —
@@ -150,8 +150,19 @@ including the automatic disable LibreNMS performs when a plugin hook throws. An
 operator disabling the plugin to contain an incident must not be left with a live
 grant-writing surface, so the check happens per request.
 
-The global kill switch removes it too:
+The global kill switch does **not** remove it:
 
 ```bash
+# LibreNMS server, as the librenms user
 ./lnms webterm:config set enabled false
 ```
+
+Reading the console and changing a runtime setting survive the switch, so that
+the operator who flipped it can flip it back. Every other console write —
+targets, credentials, grants, abilities, terminating a session — is refused
+while it is off, because an operator switching WebTerm off to contain an
+incident must not be left with a live grant-writing surface.
+
+The console says so when you arrive: with the switch off it opens on a banner
+naming the state, and the kill switch is the first control under **Runtime
+settings**.

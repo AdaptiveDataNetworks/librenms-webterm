@@ -106,7 +106,7 @@ final class AdminController
             ->first();
 
         if ($target === null) {
-            return $this->back('targets', 'No target exists for that device. Create it with webterm:target:enable.');
+            return $this->refuse('targets', 'No target exists for that device. Create it with webterm:target:enable.');
         }
 
         $target->update(['enabled' => (bool) $validated['enabled']]);
@@ -144,7 +144,7 @@ final class AdminController
         $grant = Grant::query()->find($validated['id']);
 
         if ($grant === null) {
-            return $this->back('access', 'That grant no longer exists.');
+            return $this->refuse('access', 'That grant no longer exists.');
         }
 
         $detail = $grant->only(['subject_type', 'subject_ref', 'object_type', 'object_id', 'effect']);
@@ -182,7 +182,7 @@ final class AdminController
         // UI: the console is the only surface that can grant it back, and
         // locking every admin out of it would need a shell to undo.
         if ((int) $validated['user_id'] === (int) Auth::id() && $validated['ability'] === Ability::ADMIN) {
-            return $this->back('access', 'Refusing to remove your own admin ability -- use the CLI if you mean it.');
+            return $this->refuse('access', 'Refusing to remove your own admin ability -- use the CLI if you mean it.');
         }
 
         Ability::query()->where($validated)->delete();
@@ -201,7 +201,7 @@ final class AdminController
         $session = Session::query()->find($validated['session_id']);
 
         if ($session === null) {
-            return $this->back('sessions', 'That session is already gone.');
+            return $this->refuse('sessions', 'That session is already gone.');
         }
 
         // The same call webterm:sessions --kill makes, rather than a second
@@ -211,7 +211,7 @@ final class AdminController
         try {
             (new GatewayClient)->killSession($session->session_id, 'terminated from the console');
         } catch (Throwable $e) {
-            return $this->back('sessions', 'Could not reach the gateway: '.$e->getMessage());
+            return $this->refuse('sessions', 'Could not reach the gateway: '.$e->getMessage());
         }
 
         $session->state = Session::CLOSED;
@@ -247,7 +247,7 @@ final class AdminController
         [$ok, $value, $error] = EditableSettings::coerce($validated['key'], $validated['value']);
 
         if (! $ok) {
-            return $this->back('settings', sprintf('%s: %s', $validated['key'], $error));
+            return $this->refuse('settings', sprintf('%s: %s', $validated['key'], $error));
         }
 
         Setting::query()->updateOrCreate(
@@ -316,7 +316,7 @@ final class AdminController
         $result = $groups->apply($groupId, $validated);
 
         if (! $result['ok']) {
-            return $this->back('targets', $result['error']);
+            return $this->refuse('targets', $result['error']);
         }
 
         $audit->log(Event::ConfigChanged, Auth::user(), detail: [
@@ -371,7 +371,7 @@ final class AdminController
 
         if ($validator->fails()) {
             // No withInput(). Deliberate -- see above.
-            return $this->back('credentials', 'Could not save: '.$validator->errors()->first());
+            return $this->refuse('credentials', 'Could not save: '.$validator->errors()->first());
         }
 
         $validated = $validator->validated();
@@ -419,7 +419,7 @@ final class AdminController
             ->first();
 
         if ($credential === null) {
-            return $this->back('credentials', 'That credential is already gone.');
+            return $this->refuse('credentials', 'That credential is already gone.');
         }
 
         $detail = ['scope' => $scope->value, 'scope_ref' => $ref, 'method' => (string) $credential->method, 'username' => (string) $credential->username];
@@ -460,10 +460,27 @@ final class AdminController
         );
     }
 
-    private function back(string $tab, string $message): RedirectResponse
+    /**
+     * Redirect back to a tab with a message AND its severity.
+     *
+     * The level is flashed rather than inferred: the console previously sent
+     * every outcome through one key, so "Could not reach the gateway" -- which
+     * means the shell you tried to cut is probably still open -- rendered in
+     * the same blue alert as "Session terminated." A view cannot honestly pick
+     * a colour by matching on message text, because the text is copy and copy
+     * gets reworded.
+     */
+    private function back(string $tab, string $message, string $level = 'success'): RedirectResponse
     {
         return redirect()
             ->to(url('plugin/webterm/admin').'?tab='.$tab)
-            ->with('webterm_status', $message);
+            ->with('webterm_status', $message)
+            ->with('webterm_status_level', $level);
+    }
+
+    /** A refusal or a failure: the same redirect, painted as one. */
+    private function refuse(string $tab, string $message): RedirectResponse
+    {
+        return $this->back($tab, $message, 'danger');
     }
 }

@@ -114,13 +114,43 @@ it('disappears entirely once the plugin is disabled in LibreNMS', function (): v
     }
 });
 
-it('disappears when the kill switch is off', function (): void {
+it('stays readable when the kill switch is off, so it can be switched back on', function (): void {
+    // It used to 403 here, which locked the operator out of the only browser
+    // control that could set `enabled` back to true: EnsureWebTermEnabled runs
+    // before EnsureWebTermAdmin, so the redirect after the write was refused
+    // and the success message was never seen. Reading the console and writing a
+    // setting therefore survive the switch.
     bootConsole();
     config()->set('webterm.enabled', false);
 
     $this->actingAs(admin())
         ->get('plugin/webterm/admin')
-        ->assertForbidden();
+        ->assertOk()
+        ->assertSee('WebTerm is switched off.');
+});
+
+it('lets an admin switch WebTerm back on from the console', function (): void {
+    bootConsole();
+    config()->set('webterm.enabled', false);
+
+    $this->actingAs(admin())
+        ->post('plugin/webterm/admin/settings', ['key' => 'enabled', 'value' => 'true'])
+        ->assertRedirect();
+
+    expect(Setting::query()->where('key', 'enabled')->value('value'))->toBe('true');
+});
+
+it('still refuses every other console write while the kill switch is off', function (): void {
+    // The switch must keep closing the write surface. An operator switching
+    // WebTerm off to contain an incident must not be left with a live
+    // grant-writing console -- only the way back on survives.
+    bootConsole();
+    config()->set('webterm.enabled', false);
+    $admin = admin();
+
+    foreach (consoleMutations() as [$uri, $payload]) {
+        $this->actingAs($admin)->post($uri, $payload)->assertForbidden();
+    }
 });
 
 it('lets an admin create and remove a grant, and audits both', function (): void {

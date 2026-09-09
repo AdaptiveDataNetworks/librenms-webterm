@@ -44,13 +44,35 @@ Route::middleware(['web', 'auth', EnsureWebTermEnabled::class])
 |
 | No closures: a closure in a route file breaks route:cache for the whole
 | LibreNMS application, not just for this plugin.
+|
+| Two groups, and the split is the point.
+|
+| Reading the console and writing a setting survive the kill switch, because
+| `webterm:config set enabled false` used to lock the operator out of the only
+| browser control that could set it back: EnsureWebTermEnabled runs before
+| EnsureWebTermAdmin, so the redirect after the write 403'd and the success
+| message was never seen.
+|
+| Every other write does NOT survive it. An operator who switches WebTerm off to
+| contain an incident must not be left with a live grant-writing surface -- that
+| is the whole reason the check is per-request rather than assumed from route
+| registration. So the switch still closes the console's write surface; it just
+| no longer closes the door behind itself.
 */
-Route::middleware(['web', 'auth', EnsureWebTermEnabled::class, EnsureWebTermAdmin::class])
+Route::middleware(['web', 'auth', EnsureWebTermAdmin::class])
     ->prefix('plugin/webterm/admin')
     ->name('webterm.admin.')
     ->group(function (): void {
         Route::get('/', [AdminController::class, 'index'])->name('index');
 
+        Route::post('settings', [AdminController::class, 'storeSetting'])
+            ->middleware('throttle:30,1')->name('settings.store');
+    });
+
+Route::middleware(['web', 'auth', EnsureWebTermEnabled::class, EnsureWebTermAdmin::class])
+    ->prefix('plugin/webterm/admin')
+    ->name('webterm.admin.')
+    ->group(function (): void {
         Route::post('targets', [AdminController::class, 'toggleTarget'])->name('targets.toggle');
         Route::post('grants', [AdminController::class, 'storeGrant'])->name('grants.store');
         Route::post('grants/delete', [AdminController::class, 'destroyGrant'])->name('grants.destroy');
@@ -69,6 +91,4 @@ Route::middleware(['web', 'auth', EnsureWebTermEnabled::class, EnsureWebTermAdmi
             ->middleware('throttle:10,1')->name('credentials.destroy');
         Route::post('targets/group', [AdminController::class, 'enableGroup'])
             ->middleware('throttle:10,1')->name('targets.group');
-        Route::post('settings', [AdminController::class, 'storeSetting'])
-            ->middleware('throttle:30,1')->name('settings.store');
     });

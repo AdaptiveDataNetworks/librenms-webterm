@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
+use AdaptiveDataNetworks\WebTerm\Authorization\StepUpGate;
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceTabPresenter;
+use AdaptiveDataNetworks\WebTerm\Models\Grant;
 use AdaptiveDataNetworks\WebTerm\Tests\Fakes\FakePluginManager;
 use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeDevice;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeStepUp;
+use AdaptiveDataNetworks\WebTerm\Tests\Support\FakeUser;
 use AdaptiveDataNetworks\WebTerm\WebTermServiceProvider;
 use App\Models\Device;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use LibreNMS\Interfaces\Plugins\PluginManagerInterface;
 
@@ -92,6 +97,43 @@ it('denies in data() rather than trusting visible()', function (): void {
     // DeviceController authorizes `view` and calls data() directly, never
     // consulting visible(). So data() must make the real decision.
     bootWithTab();
+
+    $data = (new DeviceTabPresenter)->dataFor(new FakeDevice(42));
+
+    expect($data['webtermState'])->toBe('denied')
+        ->and($data)->not->toHaveKey('webtermDeviceId');
+});
+
+it('treats step-up as a prompt, not a refusal', function (): void {
+    // A default install ships security.step_up = true, so ShellAuthorizer
+    // answers StepUpRequired on the first visit of the day. Reporting that as
+    // 'denied' rendered "Confirm your identity to open a terminal." with no
+    // field to type a code into -- a dead end on the happy path -- while
+    // DevicePanelPresenter special-cased the identical decision to 'ready'.
+    // The terminal partial handles the 428 and reveals the form itself.
+    bootWithTab();
+    seedMintable();
+    app()->instance(StepUpGate::class, FakeStepUp::pending());
+    Gate::define('view', fn () => true);
+
+    $this->actingAs(new FakeUser(7));
+
+    $data = (new DeviceTabPresenter)->dataFor(new FakeDevice(42));
+
+    expect($data['webtermState'])->toBe('ready')
+        ->and($data['webtermDeviceId'])->toBe(42);
+});
+
+it('still denies for every refusal that is not step-up', function (): void {
+    bootWithTab();
+    seedMintable();
+    app()->instance(StepUpGate::class, FakeStepUp::pending());
+    Gate::define('view', fn () => true);
+
+    // Remove the one thing that is not step-up.
+    Grant::query()->delete();
+
+    $this->actingAs(new FakeUser(7));
 
     $data = (new DeviceTabPresenter)->dataFor(new FakeDevice(42));
 
