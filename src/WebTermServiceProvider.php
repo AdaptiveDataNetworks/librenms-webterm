@@ -256,6 +256,14 @@ final class WebTermServiceProvider extends ServiceProvider
      * `artisan schedule:run` every minute, so this needs no cron of its own on
      * a standard install. withoutOverlapping matters because the pass talks to
      * the gateway over HTTP and a slow gateway must not stack up runs.
+     *
+     * Deliberately NOT runInBackground(): that spawns a second process and
+     * relies on a trailing `schedule:finish` to release the mutex, so a failure
+     * to spawn or to finish leaves the lock held and the task silently dead.
+     * The pass is bounded by the gateway client's own timeouts -- two seconds
+     * to connect, five to complete -- which is nothing next to a one-minute
+     * schedule, and running it in the foreground puts any failure in the
+     * scheduler's own output where an operator can see it.
      */
     private function scheduleReconciler(): void
     {
@@ -272,8 +280,7 @@ final class WebTermServiceProvider extends ServiceProvider
                 // deploy, an OOM, a restart -- would silently stop the
                 // reconciler for a DAY. A pass takes seconds; five minutes is
                 // generous and self-heals.
-                ->withoutOverlapping(5)
-                ->runInBackground();
+                ->withoutOverlapping(5);
         });
     }
 
