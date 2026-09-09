@@ -155,3 +155,34 @@ it('shows the real denial reason, not a generic fallback', function (): void {
         ->and($html)->toContain('webterm:grant')
         ->and($html)->not->toContain('The terminal is unavailable for this device.');
 });
+
+it('extends a layout, so the page carries the CSRF token the terminal needs', function (): void {
+    // The tab rendered a bare panel with no layout, so there was no
+    // <meta name="csrf-token"> on the page and every attempt to mint a session
+    // failed with a CSRF token mismatch. Core's own tab views all start with
+    // @extends('layouts.librenmsv1') for exactly this reason.
+    $source = file_get_contents(__DIR__.'/../../resources/views/core/device/tabs/webterm.blade.php');
+
+    expect($source)->toContain("@extendsFirst(['layouts.librenmsv1'")
+        ->and($source)->toContain("@section('content')");
+});
+
+it('renders inside the device chrome when core provides it', function (): void {
+    // <x-device.page> draws the device header and tab bar -- the reason to be a
+    // tab at all. It is in its own view because Blade resolves component tags
+    // at compile time, so a view containing one cannot even be compiled without
+    // LibreNMS present.
+    $chrome = file_get_contents(__DIR__.'/../../resources/views/partials/device-chrome.blade.php');
+
+    expect($chrome)->toContain('<x-device.page :device="$device">');
+
+    // And the wrapper must reach it only through an include, never inline.
+    $wrapper = (string) file_get_contents(__DIR__.'/../../resources/views/core/device/tabs/webterm.blade.php');
+
+    // Comments stripped: they discuss the tag, which is not the same as
+    // containing one the compiler would try to resolve.
+    $markup = preg_replace('/\{\{--.*?--\}\}/s', '', $wrapper) ?? $wrapper;
+
+    expect($markup)->toContain("@include('WebTerm::partials.device-chrome')")
+        ->and($markup)->not->toContain('<x-device.page');
+});

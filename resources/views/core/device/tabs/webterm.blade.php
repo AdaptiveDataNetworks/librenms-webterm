@@ -5,33 +5,31 @@
      global fallback for any view name core fails to resolve -- including names
      core builds from request parameters. It cannot SHADOW a core view (core's
      paths are searched first), but it can answer for one that does not exist,
-     so nothing else may live here. --}}
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h3 class="panel-title"><i class="fa fa-terminal" aria-hidden="true"></i> {{ __('Terminal') }}</h3>
-    </div>
-    <div class="panel-body">
-        {{-- Read from $data, not from top-level variables. DeviceController
-             nests a tab's data() return under a 'data' key rather than
-             spreading it:
+     so nothing else may live here.
 
-                 $data_array = ['title' =>, 'device' =>, 'data' => $data, ...];
-                 return view('device.tabs.'.$current_tab, $data_array);
+     The shape below is core's own, and both halves are load-bearing:
 
-             so $webtermState is never defined. Core's own tabs read $data[...]
-             the same way -- see device/tabs/config.blade.php. --}}
-        @if (($data['webtermState'] ?? 'denied') !== 'ready')
-            <p>{{ $data['webtermReason'] ?? __('The terminal is unavailable for this device.') }}</p>
-            @if (! empty($data['webtermFix']))
-                <pre style="margin-bottom: 0;">{{ $data['webtermFix'] }}</pre>
-            @endif
-        @else
-            {{-- The terminal itself, in the page. Navigating to this tab is
-                 the deliberate act that opens a session -- the same weight as
-                 clicking a button -- so it connects on arrival rather than
-                 making the operator click twice. The device overview panel is
-                 still a link, so merely browsing devices mints nothing. --}}
-            @include('WebTerm::partials.terminal', ['webtermDeviceId' => $data['webtermDeviceId']])
-        @endif
-    </div>
-</div>
+       @extends('layouts.librenmsv1') supplies the page, including the
+       <meta name="csrf-token"> the terminal needs to mint a session. Without
+       it the tab rendered a bare panel and every connection failed with a CSRF
+       token mismatch.
+
+       <x-device.page> draws the device header and the tab bar, which is the
+       entire point of being a tab rather than a page: you can see which device
+       you are connected to, and get back.
+
+     Both are guarded so the standalone test suite -- where neither core's
+     layout nor its components exist -- still renders this view. --}}
+@extendsFirst(['layouts.librenmsv1', 'WebTerm::layouts.standalone'])
+
+@section('content')
+    @if (class_exists(\App\View\Components\Device\Page::class) && ! empty($device))
+        {{-- Included, not inlined: <x-device.page> is resolved by Blade's
+             compiler, so an @if around the tag itself would still fail to
+             compile without LibreNMS. A view that is never included is never
+             compiled. --}}
+        @include('WebTerm::partials.device-chrome')
+    @else
+        @include('WebTerm::partials.device-terminal-tab')
+    @endif
+@endsection
