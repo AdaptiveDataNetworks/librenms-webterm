@@ -33,6 +33,10 @@ fi
 
 echo "== package lifecycle"
 sh tools/package-lifecycle-check.sh
+sh tools/probe-polarity-check.sh
+sh tools/webserver-insert-check.sh
+sh -n packaging/install.sh
+sh -n packaging/webserver.sh
 
 echo "== gateway"
 cd gateway
@@ -46,6 +50,22 @@ if command -v goreleaser >/dev/null 2>&1; then
     goreleaser check
     goreleaser release --snapshot --clean --skip=docker,sign >/dev/null
     tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz | grep -q 'packaging/install.sh'
+    tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz | grep -q 'packaging/webserver.sh'
+    # install.sh sources webserver.sh from /usr/share when it runs as the
+    # packaged /usr/sbin/librenms-webterm-setup, so shipping one without the
+    # other silently degrades to "skipping proxy setup".
+    for _deb in dist/*_linux_amd64.deb; do
+        dpkg-deb -c "$_deb" | grep -q '/usr/sbin/librenms-webterm-setup'
+        dpkg-deb -c "$_deb" | grep -q '/usr/share/librenms-webterm/webserver.sh'
+        dpkg-deb -c "$_deb" | grep -q '/usr/share/librenms-webterm/lifecycle.sh'
+    done
+    if command -v rpm >/dev/null 2>&1; then
+        for _rpm in dist/*_linux_amd64.rpm; do
+            rpm -qlp "$_rpm" 2>/dev/null | grep -q '/usr/sbin/librenms-webterm-setup'
+            rpm -qlp "$_rpm" 2>/dev/null | grep -q '/usr/share/librenms-webterm/webserver.sh'
+        done
+    fi
+    echo "  packages carry the setup script and its helper"
     rm -rf dist
 else
     echo "!! goreleaser not installed -- the release path is unverified"

@@ -47,6 +47,9 @@ archives:
       # connection, with no config file for the operator to edit.
       - packaging/systemd/librenms-webterm-gw.env.example
       - packaging/install.sh
+      # install.sh sources this from its own directory. Ship one without the
+      # other and the tarball install silently skips proxy setup.
+      - packaging/webserver.sh
 
 checksum:
   name_template: checksums.txt
@@ -80,6 +83,17 @@ nfpms:
       # `dnf upgrade` with a stopped, disabled gateway.
       - src: packaging/scripts/lifecycle.sh
         dst: /usr/share/librenms-webterm/lifecycle.sh
+        file_info:
+          mode: 0644
+      # The end-to-end setup helper. Shipped so an operator who installed the
+      # package from the repo can run one command instead of following the
+      # install page by hand; install.sh finds webserver.sh via /usr/share.
+      - src: packaging/install.sh
+        dst: /usr/sbin/librenms-webterm-setup
+        file_info:
+          mode: 0755
+      - src: packaging/webserver.sh
+        dst: /usr/share/librenms-webterm/webserver.sh
         file_info:
           mode: 0644
       - dst: /etc/librenms-webterm
