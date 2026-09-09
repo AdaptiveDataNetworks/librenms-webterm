@@ -35,9 +35,13 @@ builds:
 archives:
   - id: default
     formats: [tar.gz]
-    # GoReleaser runs with workdir: gateway, so these are relative to that --
-    # the repository root is one level up. Getting this wrong is invisible
-    # until a tag is pushed, because the release workflow never runs in CI.
+    # These paths are relative to the REPOSITORY ROOT. GoReleaser runs from
+    # there. There is no `workdir` set -- this comment used to claim there was,
+    # which would make every path here wrong by one level; the Go build finds
+    # the gateway through its own `dir:` instead.
+    # Getting this wrong is invisible until a tag is pushed, because the
+    # release workflow never runs in CI. A `goreleaser release --snapshot` in
+    # tools/preflight.sh is what catches it now.
     files:
       - LICENSE
       - README.md

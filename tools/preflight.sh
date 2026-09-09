@@ -34,6 +34,7 @@ fi
 echo "== package lifecycle"
 sh tools/package-lifecycle-check.sh
 sh tools/probe-polarity-check.sh
+sh tools/dist-contents-check.sh
 sh tools/webserver-insert-check.sh
 sh -n packaging/install.sh
 sh -n packaging/webserver.sh
@@ -55,9 +56,19 @@ if command -v goreleaser >/dev/null 2>&1; then
     # packaged /usr/sbin/librenms-webterm-setup, so shipping one without the
     # other silently degrades to "skipping proxy setup".
     for _deb in dist/*_linux_amd64.deb; do
-        dpkg-deb -c "$_deb" | grep -q '/usr/sbin/librenms-webterm-setup'
-        dpkg-deb -c "$_deb" | grep -q '/usr/share/librenms-webterm/webserver.sh'
-        dpkg-deb -c "$_deb" | grep -q '/usr/share/librenms-webterm/lifecycle.sh'
+        # Listed once into a variable: piping dpkg-deb into `grep -q` three
+        # times makes it print "tar subprocess was killed by signal (Broken
+        # pipe)" when grep exits early, which puts the word "error" in a log
+        # people scan for exactly that word.
+        _listing=$(dpkg-deb -c "$_deb")
+        for _want in /usr/sbin/librenms-webterm-setup \
+                     /usr/share/librenms-webterm/webserver.sh \
+                     /usr/share/librenms-webterm/lifecycle.sh; do
+            printf '%s\n' "$_listing" | grep -q "$_want" || {
+                echo "!! the deb is missing $_want" >&2
+                exit 1
+            }
+        done
     done
     if command -v rpm >/dev/null 2>&1; then
         for _rpm in dist/*_linux_amd64.rpm; do
