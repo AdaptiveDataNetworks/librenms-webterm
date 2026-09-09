@@ -15,6 +15,9 @@
 /phpunit.xml        export-ignore
 /pint.json          export-ignore
 /rector.php         export-ignore
+# Repository-host tooling. Useful to whoever runs packages.adaptivedatanetworks.com,
+# useless in an operator's vendor/ tree.
+/packaging/repo     export-ignore
 /.goreleaser.yaml   export-ignore
 /DESIGN.md          export-ignore
 /PRODUCT.md         export-ignore
