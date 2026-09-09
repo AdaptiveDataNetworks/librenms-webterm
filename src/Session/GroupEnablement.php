@@ -25,6 +25,12 @@ use AdaptiveDataNetworks\WebTerm\Models\Target;
  * ability: a resolved default would let a device-group editor hand out shell
  * access.
  *
+ * Materialising is what makes allowing dynamic groups a defensible OPTION
+ * rather than a trap. With security.refuse_dynamic_groups turned off, enabling
+ * a dynamic group writes rows for the devices in it AT THAT MOMENT -- an
+ * operator's snapshot, not a standing rule. A device joining the group later
+ * still gains nothing until somebody re-applies it.
+ *
  * Materialising keeps the decision where an operator made it, keeps
  * "N devices enabled" a true device count, and leaves admit() reading exactly
  * one row keyed by device_id.
@@ -44,14 +50,17 @@ final class GroupEnablement
         $members = $this->groups->staticMembersOf($groupId);
 
         if ($members === null) {
-            return [
-                'ok' => false,
-                'created' => 0,
-                'updated' => 0,
-                'error' => 'No such static device group. Dynamic groups cannot be enabled: '
-                    .'LibreNMS recomputes their membership on every poll, so a device could gain '
-                    .'terminal access without anyone deciding it should.',
-            ];
+            // The message depends on whether dynamic groups are refused, or
+            // the operator has deliberately allowed them -- otherwise "no such
+            // static group" is simply wrong for someone who turned that off.
+            $error = (bool) config('webterm.security.refuse_dynamic_groups', true)
+                ? 'No such static device group. Dynamic groups are refused by default: LibreNMS '
+                    .'recomputes their membership on every poll, so a device could gain terminal '
+                    .'access without anyone deciding it should. You can allow them in Settings '
+                    .'(security.refuse_dynamic_groups) if that trade suits your fleet.'
+                : 'No such device group.';
+
+            return ['ok' => false, 'created' => 0, 'updated' => 0, 'error' => $error];
         }
 
         $created = 0;

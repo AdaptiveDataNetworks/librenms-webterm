@@ -39,6 +39,7 @@ final class EditableSettings
             'security.step_up_grace_seconds' => ['int', 'Step-up grace (seconds)', 'How long one step-up covers further connections.'],
             'security.step_up_absolute_cap_seconds' => ['int', 'Step-up absolute cap (seconds)', 'The grace cannot be renewed past this.'],
             'security.host_key_policy' => ['enum:pin,tofu_first_connect', 'Default host key policy', 'Applied to targets that do not set their own.'],
+            'security.refuse_dynamic_groups' => ['bool', 'Refuse dynamic device groups', 'ON is the safe default. Turning it OFF lets you enable terminal access for a rule-based group -- and LibreNMS recomputes those memberships on every poll, so a device can gain terminal access because discovery re-detected its OS, with nobody deciding anything.'],
 
             'audit.syslog' => ['bool', 'Mirror audit to syslog', 'Security-relevant events leave the host before the local write.'],
             'audit.mirror_to_eventlog' => ['bool', 'Mirror audit to the LibreNMS eventlog', 'Events appear on the device page.'],

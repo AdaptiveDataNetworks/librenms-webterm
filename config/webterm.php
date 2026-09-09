@@ -134,6 +134,18 @@ return [
         // 'pin' forbids trust-on-first-use. Forced regardless for any flow that
         // carries a reusable secret (password / private key).
         'host_key_policy' => env('WEBTERM_HOST_KEY_POLICY', 'pin'),
+
+        // Refuse to enable terminal access for a rule-based device group.
+        //
+        // On by default because the consequence is not obvious: LibreNMS
+        // recomputes dynamic group membership on every poll, so a device can
+        // join a group -- and inherit terminal access -- because discovery
+        // re-detected its OS or somebody edited a sysLocation. Nobody decides
+        // anything.
+        //
+        // An operator who understands that and wants it anyway can turn this
+        // off. It is their fleet.
+        'refuse_dynamic_groups' => env('WEBTERM_REFUSE_DYNAMIC_GROUPS', true),
     ],
 
     'audit' => [

@@ -93,3 +93,22 @@ it('leaves authorization reading exactly one row per device', function (): void 
 
     expect(Target::query()->where('device_id', 11)->where('protocol', 'ssh')->count())->toBe(1);
 });
+
+it('explains the setting when it refuses a dynamic group', function (): void {
+    config()->set('webterm.security.refuse_dynamic_groups', true);
+
+    $result = (new GroupEnablement(fakeGroups(null)))->apply(9, GROUP_SETTINGS);
+
+    expect($result['error'])->toContain('refuse_dynamic_groups')
+        ->and($result['error'])->toContain('every poll');
+});
+
+it('does not blame dynamic groups when the operator has allowed them', function (): void {
+    // With the refusal off, a null result means the group is missing -- saying
+    // "no such STATIC group" would send them looking for the wrong problem.
+    config()->set('webterm.security.refuse_dynamic_groups', false);
+
+    $result = (new GroupEnablement(fakeGroups(null)))->apply(9, GROUP_SETTINGS);
+
+    expect($result['error'])->toBe('No such device group.');
+});

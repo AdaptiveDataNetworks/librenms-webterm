@@ -4,6 +4,17 @@ declare(strict_types=1);
 
 use AdaptiveDataNetworks\WebTerm\Librenms\DeviceGroups;
 
+/*
+ * A Feature test, not a Unit one, because the adapter reads config() to decide
+ * whether dynamic groups are refused -- and tests/Unit has no Laravel
+ * application (tests/Pest.php binds the Testbench TestCase to Feature only).
+ *
+ * That mattered: as a Unit test the dynamic-group case passed VACUOUSLY.
+ * config() threw a BindingResolutionException, Guard::safely swallowed it and
+ * returned the empty fallback, and the assertion "no dynamic groups" was
+ * satisfied by the failure rather than by the behaviour.
+ */
+
 /**
  * Stands in for App\Models\DeviceGroup. Only the surface the adapter touches.
  */
@@ -79,4 +90,30 @@ it('falls back to the rules heuristic only when type is absent', function (): vo
     ]);
 
     expect((new DeviceGroups)->staticGroupIdsFor($device))->toBe([9]);
+});
+
+it('includes dynamic groups when the operator has deliberately allowed them', function (): void {
+    // The refusal is a default, not a prohibition -- it is the operator's
+    // fleet. Materialising is what makes allowing it defensible: enabling a
+    // dynamic group captures its members at that moment rather than creating a
+    // standing rule, so a device joining later still gains nothing.
+    config()->set('webterm.security.refuse_dynamic_groups', false);
+
+    $device = new FakeGroupedDevice([
+        new FakeDeviceGroup(id: 3, type: 'static', rules: ['joins' => []]),
+        new FakeDeviceGroup(id: 4, type: 'dynamic', rules: ['joins' => [['a']]]),
+    ]);
+
+    expect((new DeviceGroups)->staticGroupIdsFor($device))->toBe([3, 4]);
+});
+
+it('excludes dynamic groups again as soon as the refusal is back on', function (): void {
+    config()->set('webterm.security.refuse_dynamic_groups', true);
+
+    $device = new FakeGroupedDevice([
+        new FakeDeviceGroup(id: 3, type: 'static', rules: ['joins' => []]),
+        new FakeDeviceGroup(id: 4, type: 'dynamic', rules: ['joins' => [['a']]]),
+    ]);
+
+    expect((new DeviceGroups)->staticGroupIdsFor($device))->toBe([3]);
 });

@@ -123,7 +123,13 @@
 
         <h4>{{ __('Enable a whole device group') }}</h4>
         <p class="text-muted"><small>
-            {{ __('Writes one target per member device, recorded as coming from the group. Devices you configured by hand are left alone. Only static groups: LibreNMS recomputes dynamic group membership on every poll, so a device could gain terminal access with nobody deciding it should.') }}
+            {{ __('Writes one target per member device, recorded as coming from the group. Devices you configured by hand are left alone.') }}
+            @if (config('webterm.security.refuse_dynamic_groups', true))
+                {{ __('Static groups only. LibreNMS recomputes dynamic group membership on every poll, so a device could gain terminal access with nobody deciding it should — allow them in Settings if that trade suits your fleet.') }}
+            @else
+                <strong>{{ __('Dynamic groups are allowed.') }}</strong>
+                {{ __('Enabling one captures the devices in it right now; it is a snapshot, not a standing rule, so devices matching the rule later gain nothing until you re-apply it.') }}
+            @endif
         </small></p>
         <form method="POST" action="{{ url('plugin/webterm/admin/targets/group') }}" class="form-inline" style="margin-bottom: 18px;">
             @csrf

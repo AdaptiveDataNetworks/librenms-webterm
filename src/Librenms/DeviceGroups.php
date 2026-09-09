@@ -63,9 +63,7 @@ final class DeviceGroups implements CoreDependency, GroupMembers, GroupSource
                     return null;
                 }
 
-                $type = $group->type ?? null;
-
-                if (! is_string($type) || $type !== 'static') {
+                if (! self::eligible($group)) {
                     return null;
                 }
 
@@ -87,6 +85,49 @@ final class DeviceGroups implements CoreDependency, GroupMembers, GroupSource
     }
 
     /**
+     * Whether a group may confer WebTerm access.
+     *
+     * One implementation for both lookups. It was two, and they had already
+     * drifted -- one honoured the dynamic-groups setting and the other did not,
+     * so allowing dynamic groups worked for enabling a group and silently did
+     * nothing for grants and credentials.
+     *
+     * Discriminates on `type`, which is what LibreNMS itself uses
+     * (UpdateDeviceGroupsAction and DeviceGroup both test type == 'dynamic').
+     * It once guessed from `rules` being empty, which is wrong for exactly the
+     * groups operators create: DeviceGroup::saving() rewrites `rules` whenever
+     * that attribute is dirty and DeviceGroupController sets it unconditionally
+     * before branching on type, so a STATIC group made in the web UI is stored
+     * with rules = {"joins":[]}. Every such group was classified dynamic and
+     * skipped.
+     *
+     * Dynamic groups are refused by default because LibreNMS recomputes their
+     * membership on every poll, so a device could gain terminal access because
+     * discovery re-detected its OS. An operator may allow them anyway --
+     * materialising means enabling one captures a snapshot, not a standing
+     * rule.
+     */
+    private static function eligible(object $group): bool
+    {
+        $type = $group->type ?? null;
+
+        if (is_string($type) && $type !== '') {
+            return $type === 'static' || ! self::refusesDynamic();
+        }
+
+        // Only for a core predating the column.
+        $rules = $group->rules ?? null;
+        $looksDynamic = is_array($rules) ? $rules !== [] : ! empty($rules);
+
+        return ! $looksDynamic || ! self::refusesDynamic();
+    }
+
+    private static function refusesDynamic(): bool
+    {
+        return (bool) config('webterm.security.refuse_dynamic_groups', true);
+    }
+
+    /**
      * Static group ids containing this device.
      *
      * @param  object  $device  A LibreNMS App\Models\Device.
@@ -102,31 +143,8 @@ final class DeviceGroups implements CoreDependency, GroupMembers, GroupSource
 
                 $ids = [];
                 foreach ($device->groups()->get() as $group) {
-                    // Discriminate on `type`, which is what LibreNMS itself
-                    // uses (UpdateDeviceGroupsAction and DeviceGroup::…
-                    // both test `type == 'dynamic'`).
-                    //
-                    // This previously guessed from the `rules` payload being
-                    // empty, which is wrong and silently disabled the feature:
-                    // DeviceGroup::saving() rewrites `rules` for any group whose
-                    // rules attribute is dirty, and DeviceGroupController sets
-                    // `rules` unconditionally before branching on type -- so a
-                    // STATIC group created in the web UI is stored with
-                    // rules = {"joins":[]}. Every such group was classified
-                    // dynamic and skipped, so group grants and group-scoped
-                    // credentials never matched a UI-created group at all.
-                    $type = $group->type ?? null;
-
-                    if (is_string($type) && $type !== '') {
-                        if ($type !== 'static') {
-                            continue;
-                        }
-                    } else {
-                        // Only if a core predating the column ever turns up.
-                        $rules = $group->rules ?? null;
-                        if (is_array($rules) ? $rules !== [] : ! empty($rules)) {
-                            continue;
-                        }
+                    if (! self::eligible($group)) {
+                        continue;
                     }
 
                     $id = $group->id ?? null;
