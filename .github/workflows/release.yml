@@ -64,6 +64,70 @@ jobs:
         with:
           subject-path: dist/checksums.txt
 
+  packages:
+    name: Publish to the package repository
+    runs-on: ubuntu-latest
+    # The host fetches the artifacts from the release itself, so the release
+    # has to exist first.
+    needs: gateway
+    # Absent secrets mean "no repository host configured yet" -- skip quietly
+    # rather than failing every release with a red X.
+    if: vars.PACKAGES_ENABLED == 'true'
+    steps:
+      - name: Trigger a publish on the repository host
+        env:
+          KEY: ${{ secrets.PACKAGES_SSH_KEY }}
+          HOST: ${{ secrets.PACKAGES_HOST }}
+          USER: ${{ secrets.PACKAGES_USER }}
+          KNOWN_HOSTS: ${{ secrets.PACKAGES_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for v in KEY HOST USER KNOWN_HOSTS; do
+            if [ -z "${!v}" ]; then
+              echo "::error::secret PACKAGES_$v is not set"
+              exit 1
+            fi
+          done
+
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_publish
+          chmod 0600 ~/.ssh/id_publish
+          # Pinned host key. Without this, StrictHostKeyChecking would either
+          # block or trust-on-first-use, and TOFU inside a runner that is
+          # destroyed every time trusts a new key on every single release.
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0644 ~/.ssh/known_hosts
+
+          # This key is a trigger, not a channel. The forced command on the
+          # host accepts exactly "publish vX.Y.Z" and fetches the artifacts
+          # from the GitHub release itself, verifying checksums and build
+          # provenance before it signs anything. Nothing is uploaded here, so
+          # a stolen key cannot introduce content into the signing path.
+          ssh -i ~/.ssh/id_publish \
+              -o StrictHostKeyChecking=yes \
+              -o BatchMode=yes \
+              -o ConnectTimeout=30 \
+              "$USER@$HOST" "publish ${GITHUB_REF_NAME}"
+
+      - name: Confirm the packages are actually being served
+        env:
+          HOST: ${{ secrets.PACKAGES_HOST }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          # A publish that reports success but serves the previous release is
+          # the failure mode worth catching here, so check for THIS version.
+          for i in $(seq 1 10); do
+            if curl -fsSL "https://$HOST/deb/dists/stable/main/binary-amd64/Packages" \
+                 | grep -q "^Version: ${VERSION}"; then
+              echo "deb repository is serving $VERSION"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "::error::$VERSION never appeared in the deb Packages index"
+          exit 1
+
   docs:
     name: Publish versioned docs
     runs-on: ubuntu-latest

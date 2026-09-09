@@ -37,11 +37,15 @@ To pin an exact version, see [LibreNMS updates](librenms-updates.md#pinning-an-e
 
 ## Upgrading the gateway
 
-!!! info "There is no APT or YUM repository"
+!!! info "There will be a package repository"
 
-    Releases are published as GitHub release assets, not through a package
-    repository, so `apt upgrade` and `dnf upgrade` will never find a new
-    gateway. Point your package manager at the downloaded file instead.
+    `packages.adaptivedatanetworks.com` is built and tested but not serving yet.
+    Once it is, `apt upgrade` and `dnf upgrade` will pick up new gateway releases
+    on their own — see [the package repository](package-repo.md).
+
+    Until then, releases are published as GitHub release assets only, so your
+    package manager will never find a new gateway by itself. Point it at the
+    downloaded file, as below.
 
 First, check how the gateway was installed. The two paths do not mix: a tarball
 install writes files your package manager does not know about, and letting

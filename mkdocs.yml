@@ -62,6 +62,7 @@ nav:
   - Installation:
       - Requirements: install/requirements.md
       - Bare metal: install/bare-metal.md
+      - Package repository: install/package-repo.md
       - Docker: install/docker.md
       - LibreNMS updates: install/librenms-updates.md
       - Upgrading: install/upgrading.md
