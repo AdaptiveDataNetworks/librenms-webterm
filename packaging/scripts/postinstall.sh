@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+. /usr/share/librenms-webterm/lifecycle.sh 2>/dev/null || . "$(dirname "$0")/lifecycle.sh"
+
 install -d -o root -g librenms-webterm -m 0750 /etc/librenms-webterm
 
 # Generate the shared secret only if absent. Regenerating it on every upgrade
@@ -34,8 +36,25 @@ else
     echo "  sudo usermod -a -G librenms-webterm <that-user> && systemctl restart php-fpm"
 fi
 
-if [ -d /run/systemd/system ]; then
+if webterm_have_systemd; then
     systemctl daemon-reload >/dev/null 2>&1 || true
+fi
+
+if webterm_is_upgrade_install "${1:-}" "${2:-}"; then
+    # try-restart, not restart: it starts nothing that was not already running,
+    # so an operator who deliberately keeps the gateway stopped stays stopped.
+    #
+    # Without this the upgrade replaced /usr/bin/librenms-webterm-gw while the
+    # old process kept serving -- so the new binary delivered nothing on the
+    # day and then took effect at an unrelated reboot weeks later, with the
+    # cause long out of anyone's scrollback.
+    if webterm_have_systemd; then
+        systemctl try-restart librenms-webterm-gw >/dev/null 2>&1 || true
+    fi
+
+    echo "Upgraded. The running gateway was restarted if it was up."
+    echo "Check both halves still agree:  su - librenms -c 'cd /opt/librenms && ./lnms webterm:doctor'"
+    exit 0
 fi
 
 echo "Set WEBTERM_ALLOWED_ORIGINS in /etc/librenms-webterm/gateway.env before starting."

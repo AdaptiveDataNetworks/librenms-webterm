@@ -68,7 +68,8 @@ rpm -q librenms-webterm-gw 2>/dev/null || dpkg -s librenms-webterm-gw 2>/dev/nul
 
     `dnf install` on a file whose version is newer than the installed one
     performs an upgrade; there is no separate command. Your `gateway.env` and
-    `gateway.secret` are config files and are left alone.
+    `gateway.secret` are config files and are left alone, and a gateway that
+    was running is restarted onto the new binary.
 
 === "DEB (Debian, Ubuntu)"
 

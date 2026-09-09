@@ -31,6 +31,9 @@ if [ "$codegen_before" != "$codegen_after" ]; then
     exit 1
 fi
 
+echo "== package lifecycle"
+sh tools/package-lifecycle-check.sh
+
 echo "== gateway"
 cd gateway
 test -z "$(gofmt -l .)" || { echo "gofmt: files need formatting"; gofmt -l .; exit 1; }

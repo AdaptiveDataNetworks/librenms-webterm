@@ -75,6 +75,13 @@ nfpms:
       - src: packaging/systemd/librenms-webterm-gw.env.example
         dst: /etc/librenms-webterm/gateway.env
         type: config|noreplace
+      # Sourced by the maintainer scripts. deb and rpm disagree about the
+      # arguments that say "this is an upgrade", and getting that wrong left
+      # `dnf upgrade` with a stopped, disabled gateway.
+      - src: packaging/scripts/lifecycle.sh
+        dst: /usr/share/librenms-webterm/lifecycle.sh
+        file_info:
+          mode: 0644
       - dst: /etc/librenms-webterm
         type: dir
         file_info:
