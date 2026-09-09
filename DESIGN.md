@@ -1,6 +1,5 @@
 # Design
 
-
 The visual world is **LibreNMS's**, not ours. This file does not invent one; it
 records the host's conventions we are bound to, and the handful of decisions
 that are genuinely ours to make inside them. Read [PRODUCT.md](PRODUCT.md) first
