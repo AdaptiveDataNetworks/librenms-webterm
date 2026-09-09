@@ -131,4 +131,4 @@ release:
         ./lnms plugin:add adaptivedatanetworks/librenms-webterm
 
     Plugin and gateway version independently and support one protocol version
-    of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
+    protocol version, and there is no skew tolerance today: a mismatch is refused. Run `./lnms webterm:doctor` after upgrading either.

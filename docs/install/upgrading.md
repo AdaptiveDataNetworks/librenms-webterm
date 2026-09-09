@@ -7,8 +7,7 @@ Plugin and gateway version **independently**, and that is the normal state, not 
 | Skew | Behaviour |
 |---|---|
 | Same version | Normal |
-| One version apart | Works, with a warning banner |
-| Further apart | The terminal button disables itself |
+| Any protocol mismatch | Refused outright |
 
 The button disabling is deliberate. Failing at connect time — after the user has clicked, authenticated and waited — is a worse experience than not offering the button.
 
@@ -109,6 +108,16 @@ gh attestation verify ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm \
 Restarting ends live sessions. Each one is told what happened before the socket closes, rather than simply dropping — but pick your moment anyway.
 
 The upgrade never regenerates the shared secret. If it did, LibreNMS would keep the old one and every session mint would fail with an opaque 401.
+
+!!! warning "There is no skew tolerance today"
+
+    The gateway advertises `min_protocol` and `max_protocol`, and both are
+    currently **1** — so the plugin and gateway must agree exactly. A mismatch
+    is refused when a session is created, which is *after* the operator has
+    clicked, and it surfaces as an error rather than a disabled button.
+
+    `webterm:doctor` compares the two and reports the mismatch before anyone
+    clicks. Run it after upgrading either half.
 
 ## Order
 

@@ -43,7 +43,7 @@ The plugin and the gateway version independently, and LibreNMS's updater re-reso
 | Skew | Behaviour |
 |---|---|
 | Same version | Normal operation |
-| One version apart (N / N−1) | Works, with a warning banner in the UI |
+| Any protocol mismatch | Refused. The plugin raises `GatewayVersionException` and the session is not created |
 | Further apart | Terminal button disabled, with both versions named |
 
 Check with `./lnms webterm:doctor`.
