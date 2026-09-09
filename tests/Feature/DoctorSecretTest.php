@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use AdaptiveDataNetworks\WebTerm\Console\ConfigCommand;
 use AdaptiveDataNetworks\WebTerm\Console\DoctorCommand;
 
 /*
@@ -42,4 +43,29 @@ it('tells the operator to create a secret that is genuinely missing', function (
     $this->artisan('webterm:doctor')
         ->expectsOutputToContain('does not exist')
         ->expectsOutputToContain('init --path');
+});
+
+it('never tells an operator to run a config command the plugin refuses', function (): void {
+    // webterm:config REFUSES gateway.secret_file, yet four shipped places told
+    // operators to run exactly that -- including doctor's own remediation, so
+    // the one moment an operator most needs a working instruction was the one
+    // that handed them a command that errors.
+    $refused = (new ReflectionClass(ConfigCommand::class))
+        ->getConstant('REFUSED');
+
+    $shipped = [
+        'src/Console/DoctorCommand.php',
+        'packaging/install.sh',
+        'packaging/scripts/postinstall.sh',
+        'docs/install/bare-metal.md',
+        'docs/getting-started/quickstart.md',
+    ];
+
+    foreach ($shipped as $file) {
+        $body = (string) file_get_contents(__DIR__.'/../../'.$file);
+
+        foreach ($refused as $key) {
+            expect($body)->not->toContain('config set '.$key, sprintf('%s tells operators to set a refused key', $file));
+        }
+    }
 });

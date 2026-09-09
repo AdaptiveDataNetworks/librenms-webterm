@@ -206,10 +206,12 @@ Before starting it:
        WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com
      Without this every browser connection is refused.
 
-  2. Point the plugin at the secret:
-       su - $LIBRENMS_USER
-       cd /opt/librenms
-       ./lnms webterm:config set gateway.secret_file $CONFDIR/gateway.secret
+  2. The plugin already looks for the secret at
+       $CONFDIR/gateway.secret
+     which is its default, so there is nothing to set. If you moved it, put
+     WEBTERM_GATEWAY_SECRET_FILE in /opt/librenms/.env -- webterm:config
+     refuses this key on purpose, because a config row pointing somewhere the
+     gateway is not reading fails every session mint with an opaque 401.
 
      Group membership does not reach processes that are already running, so
      restart php-fpm and start a fresh shell:

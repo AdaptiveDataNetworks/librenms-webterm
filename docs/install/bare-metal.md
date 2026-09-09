@@ -68,7 +68,11 @@ Then point the plugin at it:
 
 ```bash
 # as the librenms user
-./lnms webterm:config set gateway.secret_file /etc/librenms-webterm/gateway.secret
+# Nothing to run: /etc/librenms-webterm/gateway.secret is already the default.
+# Only if you moved it, add this to /opt/librenms/.env instead --
+# webterm:config refuses the key, because a config row pointing somewhere the
+# gateway is not reading fails every session mint with an opaque 401:
+#   WEBTERM_GATEWAY_SECRET_FILE=/path/to/gateway.secret
 ```
 
 !!! note "php-fpm may need restarting"

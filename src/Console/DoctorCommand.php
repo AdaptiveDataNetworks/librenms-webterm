@@ -55,6 +55,7 @@ final class DoctorCommand extends Command
         $this->checkKillSwitch();
         $this->checkSecret();
         $this->checkGateway();
+        $this->checkSelinux();
         $this->checkOrigins();
         $this->checkStepUp();
         $this->checkConsole();
@@ -253,7 +254,9 @@ final class DoctorCommand extends Command
             $this->reportFail(
                 'Shared secret',
                 'no path configured',
-                './lnms webterm:config set gateway.secret_file /etc/librenms-webterm/gateway.secret'
+                'set WEBTERM_GATEWAY_SECRET_FILE in /opt/librenms/.env (webterm:config refuses this key: '
+                    .'it names a file, and a config row pointing somewhere the gateway is not reading '
+                    .'would fail every session mint with an opaque 401)'
             );
 
             return;
@@ -347,6 +350,78 @@ final class DoctorCommand extends Command
      * The gateway is asked directly. An older gateway does not report the
      * count, in which case we say where to look rather than guess.
      */
+    /**
+     * SELinux blocks the loopback proxy on RHEL by default, and doctor cannot
+     * feel it.
+     *
+     * nginx and php-fpm both run as httpd_t. Port 8377 is unreserved_port_t,
+     * which httpd_can_network_relay does not cover, so connecting to the
+     * gateway needs httpd_can_network_connect -- a boolean that ships OFF, and
+     * that LibreNMS's own SELinux instructions do not turn on (they set
+     * httpd_can_sendmail, httpd_execmem and httpd_can_network_connect_db, none
+     * of which help).
+     *
+     * This command runs under php-cli in the invoking user's domain, not
+     * httpd_t, so it is NOT subject to that boolean: every gateway check above
+     * can pass while every browser request fails. Reading the boolean is the
+     * only way to see it from here.
+     */
+    private function checkSelinux(): void
+    {
+        $enforce = $this->readCommand('getenforce');
+
+        if ($enforce === null) {
+            return; // Not an SELinux system; nothing to say.
+        }
+
+        if (strtolower(trim($enforce)) !== 'enforcing') {
+            $this->reportOk('SELinux', strtolower(trim($enforce)));
+
+            return;
+        }
+
+        $boolean = $this->readCommand('getsebool httpd_can_network_connect');
+
+        if ($boolean === null) {
+            $this->reportWarn(
+                'SELinux',
+                'enforcing, and httpd_can_network_connect could not be read',
+                'getsebool httpd_can_network_connect  -- it must be on, or nginx and php-fpm cannot reach the gateway'
+            );
+
+            return;
+        }
+
+        if (! str_contains($boolean, '--> on')) {
+            $this->reportFail(
+                'SELinux',
+                'enforcing with httpd_can_network_connect off, so nginx and php-fpm cannot reach the gateway '
+                    .'even though this check passed -- the CLI is not confined the way they are',
+                'setsebool -P httpd_can_network_connect 1'
+            );
+
+            return;
+        }
+
+        $this->reportOk('SELinux', 'enforcing, httpd_can_network_connect on');
+    }
+
+    /**
+     * Run a short command, or null when it is not available.
+     */
+    private function readCommand(string $command): ?string
+    {
+        $binary = strtok($command, ' ');
+
+        if ($binary === false || trim((string) shell_exec('command -v '.escapeshellarg($binary).' 2>/dev/null')) === '') {
+            return null;
+        }
+
+        $output = shell_exec($command.' 2>/dev/null');
+
+        return is_string($output) && trim($output) !== '' ? $output : null;
+    }
+
     private function checkOrigins(): void
     {
         $count = $this->gatewayHello['allowed_origins'] ?? null;

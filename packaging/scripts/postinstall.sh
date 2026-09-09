@@ -16,7 +16,7 @@ if [ ! -f /etc/librenms-webterm/gateway.secret ]; then
     echo ""
     echo "Give LibreNMS read access to that file, then:"
     echo "  su - librenms"
-    echo "  ./lnms webterm:config set gateway.secret_file /etc/librenms-webterm/gateway.secret"
+    echo "  (the plugin already defaults to /etc/librenms-webterm/gateway.secret -- nothing to set)"
     echo ""
 fi
 

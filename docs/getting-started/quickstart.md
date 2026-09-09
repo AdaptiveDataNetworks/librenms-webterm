@@ -95,7 +95,9 @@ nginx -t && systemctl reload nginx
 ```bash
 # LibreNMS server, as the librenms user
 ./lnms webterm:config set gateway.url http://127.0.0.1:8377
-./lnms webterm:config set security.allowed_origins https://librenms.example.com
+# Origins belong to the GATEWAY, not the plugin. Set them in its environment
+# file and restart it -- a plugin config row here is read by nothing:
+#   WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com  in /etc/librenms-webterm/gateway.env
 ./lnms webterm:config set enabled true
 ```
 
