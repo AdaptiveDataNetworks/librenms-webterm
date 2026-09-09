@@ -353,7 +353,9 @@ if command -v webterm_configure_webserver >/dev/null 2>&1; then
 else
     step "Reverse proxy"
     warn "webserver.sh not found next to this script -- skipping proxy setup"
-    say "  See https://adaptivedatanetworks.github.io/librenms-webterm/install/reverse-proxy/"
+    say "  It is published beside install.sh on the release page. Download it into"
+    say "  the same directory and re-run, or add the proxy by hand:"
+    say "  https://adaptivedatanetworks.github.io/librenms-webterm/operate/reverse-proxy/"
 fi
 
 # ------------------------------------------------------------------ selinux --

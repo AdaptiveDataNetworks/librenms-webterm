@@ -71,8 +71,22 @@ php artisan route:clear
 Then enable it under **Overview → Plugins → Plugin Admin**, and install the gateway:
 
 ```bash
-curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
-# Read it. Then:
+# A distribution package, then the setup helper it ships:
+dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm   # or apt install ./..._amd64.deb
+librenms-webterm-setup
+```
+
+The helper finds your LibreNMS install and web server, asks for the URL your
+operators use, adds the WebSocket proxy to your vhost, and verifies the result.
+It shows the plan before touching anything, and every prompt has a flag for
+unattended runs.
+
+Without packages, the same script and its helper are release assets:
+
+```bash
+BASE=https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download
+curl -fsSLO $BASE/install.sh && curl -fsSLO $BASE/webserver.sh
+# Read them. Then:
 sh install.sh --version vX.Y.Z
 ```
 

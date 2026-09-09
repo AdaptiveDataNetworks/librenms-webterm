@@ -4,6 +4,17 @@ The browser reaches the gateway through your existing LibreNMS vhost. One path n
 
 Three settings below are load-bearing. Omitting any of them produces a symptom that looks like a bug somewhere else, and between them they account for most reported problems.
 
+!!! tip "`librenms-webterm-setup` can do this for you"
+
+    It writes these stanzas to a file of its own and adds one `include` inside
+    your LibreNMS server block, behind a `# librenms-webterm (managed)` marker
+    comment. Your vhost is backed up first and restored if `nginx -t` or
+    `apachectl configtest` rejects the result. To detach later, delete the
+    marker and the `include` beneath it and reload.
+
+    Read on if you would rather place them yourself, or need to understand what
+    each line is doing.
+
 ## nginx
 
 ```nginx

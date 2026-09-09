@@ -31,84 +31,85 @@ Nothing works yet — that is intentional. WebTerm ships default-deny.
 
 ## 2. Install the gateway
 
-The gateway is a single static binary. Download it, check it, then install it:
+=== "Debian / Ubuntu"
+
+    ```bash
+    # LibreNMS server, as root
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    apt install ./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    ```
+
+=== "RHEL / Rocky / Alma"
+
+    ```bash
+    # LibreNMS server, as root
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+    dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+    ```
+
+=== "No packages"
+
+    ```bash
+    # LibreNMS server, as root
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/webserver.sh
+    less install.sh          # read it before you run it
+    sh install.sh --version vX.Y.Z
+    ```
+
+    Both files, in the same directory: `install.sh` sources `webserver.sh` for
+    the proxy step and skips it if it is not there.
+
+The binary lands at `/usr/bin/librenms-webterm-gw` and binds `127.0.0.1:8377`
+only. It is not reachable from outside the host, and it refuses to start
+without a valid 32-byte secret.
+
+It is deliberately **not** started yet. A gateway running before its allowed
+origins are set refuses every browser connection with a 403 and looks broken.
+
+## 3. Wire it up
 
 ```bash
 # LibreNMS server, as root
-curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
-less install.sh          # read it before you run it
-sh install.sh --version vX.Y.Z
+librenms-webterm-setup
 ```
 
-This creates a `librenms-webterm` system user, installs the binary to `/usr/bin/librenms-webterm-gw`, generates the shared secret at `/etc/librenms-webterm/gateway.secret`, and installs a systemd unit.
+This is the rest of the install in one command: it finds your LibreNMS
+directory and web server, asks for the URL your operators use, adds the proxy
+to your vhost, shares the gateway secret with the LibreNMS user, starts the
+gateway, and checks its own work.
 
-Start it:
+It shows you the plan and does nothing until you say yes, backs up your vhost
+before touching it, and restores it if your web server rejects the result.
+Every prompt has a flag for unattended runs, and `--dry-run` prints the plan
+and exits.
 
-```bash
-# LibreNMS server, as root
-systemctl enable --now librenms-webterm-gw
-systemctl status librenms-webterm-gw
-```
+!!! note "It will ask for your LibreNMS URL"
 
-The gateway binds `127.0.0.1:8377` only. It is not reachable from outside the host, and it refuses to start without a valid 32-byte secret.
+    That one cannot be inferred. `APP_URL` is unset on a stock LibreNMS and
+    reads back as `http://localhost`, `base_url` is legitimately a bare path,
+    and `server_name` knows nothing about a TLS terminator in front of it. The
+    browser sends the origin *it* used, so that is the one the gateway must be
+    told about — scheme included. A mismatch is rejected deliberately: origin
+    checking is what prevents cross-site WebSocket hijacking.
 
-## 3. Let the browser reach it
-
-The gateway needs one WebSocket path proxied through your existing LibreNMS vhost. For nginx, inside the LibreNMS `server` block:
-
-```nginx
-location ^~ /webterm/ws {
-    # The trailing /ws is load-bearing. Without a URI component nginx forwards
-    # the original path, and the gateway -- which serves /ws, not /webterm/ws --
-    # answers 404.
-    proxy_pass http://127.0.0.1:8377/ws;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
-    proxy_buffering off;
-    proxy_read_timeout 3600s;
-}
-
-location ^~ /webterm/ui/ {
-    proxy_pass http://127.0.0.1:8377/ui/;
-    proxy_set_header Host $host;
-}
-```
-
-Both blocks are required. The first carries the terminal session; the second
-serves the terminal's own assets, which the gateway embeds rather than adding
-anything to LibreNMS's asset build. Without it the terminal page loads and then
-shows LibreNMS's 404 page where the terminal should be.
-
-Three of the `/webterm/ws` lines are load-bearing and are the cause of almost every "it connects then hangs" report: `proxy_http_version 1.1` (HTTP/1.0 has no `Upgrade`), `proxy_buffering off` (or output arrives in chunks and feels broken), and `proxy_read_timeout` (nginx's 60-second default kills idle terminals).
-
-Reload nginx:
-
-```bash
-# LibreNMS server, as root
-nginx -t && systemctl reload nginx
-```
-
-## 4. Point the plugin at the gateway
-
-```bash
-# LibreNMS server, as the librenms user
-./lnms webterm:config set gateway.url http://127.0.0.1:8377
-# Origins belong to the GATEWAY, not the plugin. Set them in its environment
-# file and restart it -- a plugin config row here is read by nothing:
-#   WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com  in /etc/librenms-webterm/gateway.env
-./lnms webterm:config set enabled true
-```
-
-Use the exact origin your browser shows, scheme included. A mismatch is rejected — deliberately, because origin checking is what prevents cross-site WebSocket hijacking.
-
-Confirm both halves agree:
+## 4. Confirm both halves agree
 
 ```bash
 # LibreNMS server, as the librenms user
 ./lnms webterm:doctor
 ```
+
+The setup helper already ran this and exited with its status, so if it finished
+cleanly there is nothing to do here.
+
+??? info "Doing steps 3 and 4 by hand"
+
+    Every step, written out — the reverse-proxy stanzas, the secret's group
+    permissions, SELinux, and what to set where — is in
+    [installing on bare metal](../install/bare-metal.md#doing-it-by-hand).
+    The [reverse proxy](../operate/reverse-proxy.md) page explains which lines
+    are load-bearing and what breaks without each one.
 
 ## 5. Add a credential and enable one device
 

@@ -43,8 +43,11 @@ To pin an exact version, see [LibreNMS updates](librenms-updates.md#pinning-an-e
     repository, so `apt upgrade` and `dnf upgrade` will never find a new
     gateway. Point your package manager at the downloaded file instead.
 
-First, check how the gateway was installed — the two paths do not mix, and
-`install.sh` refuses to run over a packaged install for exactly that reason:
+First, check how the gateway was installed. The two paths do not mix: a tarball
+install writes files your package manager does not know about, and letting
+`install.sh` overwrite a package-managed binary would leave the two disagreeing
+about what is on disk. It detects a packaged gateway and leaves the binary
+alone — but the upgrade itself still belongs to your package manager.
 
 ```bash
 # as root
@@ -94,10 +97,15 @@ rpm -q librenms-webterm-gw 2>/dev/null || dpkg -s librenms-webterm-gw 2>/dev/nul
 
     ```bash
     # as root
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/install.sh
+    BASE=https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z
+    curl -fsSLO $BASE/install.sh
+    curl -fsSLO $BASE/webserver.sh
     sh install.sh --version vX.Y.Z
-    systemctl restart librenms-webterm-gw
     ```
+
+    Fetch both: `install.sh` sources `webserver.sh` for the proxy step. It
+    restarts the gateway itself and reports whether it came back up, so there
+    is no separate `systemctl restart` to run.
 
 If you have the GitHub CLI, every release asset carries build provenance:
 

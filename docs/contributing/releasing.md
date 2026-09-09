@@ -23,6 +23,35 @@ and a real GoReleaser snapshot build.
     workflow only runs on a tag, so CI never exercises it. v1.0.0's release
     failed for a path error that this snapshot would have caught.
 
+### The installer, on real distributions
+
+`preflight.sh` checks the installer's logic but runs nothing. Before a release
+that touches `packaging/`, run it against real systems:
+
+```bash
+tools/testbox/run.sh
+```
+
+This builds a container per distribution with real systemd, real nginx and real
+Apache, installs the packages just built, runs the setup helper and asserts the
+outcome — including a real WebSocket upgrade through the proxy returning 101,
+and a foreign origin getting 403. Rocky 9, Alma 9, Debian 12 and Ubuntu 24.04
+against both web servers.
+
+Narrow it while iterating, and keep the container to poke at:
+
+```bash
+KEEP=1 tools/testbox/run.sh debian apache
+```
+
+It needs podman (rootless is fine) and goreleaser. Images are cached, so only
+the first run is slow. It rebuilds the packages every time — reusing `dist/`
+silently tests the previous commit.
+
+What it does **not** cover is the plugin half: that needs a database and a full
+Laravel app, and the nightly integration job already exercises it against real
+LibreNMS core. SELinux in enforcing mode needs a VM, not a container.
+
 Update `CHANGELOG.md`. Confirm the compatibility matrix in `docs/reference/compatibility.md` still reflects reality.
 
 ## Tagging

@@ -140,6 +140,9 @@ release:
   # trusted the tarball.
   extra_files:
     - glob: packaging/install.sh
+    # install.sh sources this from its own directory. Published beside it so the
+    # documented "download, read, run" flow gets a working proxy step.
+    - glob: packaging/webserver.sh
   footer: |
     ## Verifying this release
 
@@ -151,5 +154,6 @@ release:
 
         ./lnms plugin:add adaptivedatanetworks/librenms-webterm
 
-    Plugin and gateway version independently and support one protocol version
-    protocol version, and there is no skew tolerance today: a mismatch is refused. Run `./lnms webterm:doctor` after upgrading either.
+    Plugin and gateway version independently and support one protocol version.
+    There is no skew tolerance today: a mismatch is refused before the terminal
+    opens. Run `./lnms webterm:doctor` after upgrading either.
