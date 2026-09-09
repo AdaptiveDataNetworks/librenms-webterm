@@ -117,8 +117,11 @@ The upgrade never regenerates the shared secret. If it did, LibreNMS would keep 
     is refused when a session is created, which is *after* the operator has
     clicked, and it surfaces as an error rather than a disabled button.
 
-    `webterm:doctor` compares the two and reports the mismatch before anyone
-    clicks. Run it after upgrading either half.
+    `webterm:doctor` compares the two and reports the mismatch. So does the
+    terminal tab: the reconciler records the gateway's advertised range on each
+    pass, and the tab refuses with that explanation rather than letting the
+    click fail. A gateway that has never been heard from is treated as fine —
+    an unchecked gateway must not hide the terminal on a fresh install.
 
 ## Order
 

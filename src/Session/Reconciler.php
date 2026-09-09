@@ -9,6 +9,7 @@ use AdaptiveDataNetworks\WebTerm\Audit\Event;
 use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayClient;
 use AdaptiveDataNetworks\WebTerm\Gateway\GatewayException;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayStatus;
 use AdaptiveDataNetworks\WebTerm\Models\Session as SessionModel;
 use AdaptiveDataNetworks\WebTerm\Protocol;
 use Illuminate\Support\Carbon;
@@ -56,6 +57,15 @@ final class Reconciler
             // dead on the clock alone can still be closed: a pending ticket
             // past its TTL can no longer be redeemed by anyone.
             return ['live' => 0, 'reaped' => $this->expireOnTime(), 'revoked' => 0];
+        }
+
+        // Recorded here so the device panel and the terminal tab can refuse a
+        // protocol mismatch BEFORE the operator clicks, without either of them
+        // making a synchronous call to the gateway during a page render.
+        try {
+            GatewayStatus::record($gateway->hello());
+        } catch (GatewayException) {
+            // A reachable gateway that will not say hello changes nothing here.
         }
 
         $instanceId = (string) ($report['instance_id'] ?? '');

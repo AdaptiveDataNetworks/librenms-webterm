@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AdaptiveDataNetworks\WebTerm\Librenms;
 
 use AdaptiveDataNetworks\WebTerm\Authorization\ShellAuthorizer;
+use AdaptiveDataNetworks\WebTerm\Gateway\GatewayStatus;
 use AdaptiveDataNetworks\WebTerm\Models\Target;
 use AdaptiveDataNetworks\WebTerm\Support\Guard;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,13 @@ final class DeviceTabPresenter
 
                 if ($user === null) {
                     return ['webtermState' => 'denied', 'webtermReason' => __('Not signed in.')];
+                }
+
+                // Refused before the click rather than as a 409 after it.
+                $mismatch = GatewayStatus::protocolMismatch();
+
+                if ($mismatch !== null) {
+                    return ['webtermState' => 'denied', 'webtermReason' => $mismatch];
                 }
 
                 // The real gate. visible() gates only the link; core reaches
