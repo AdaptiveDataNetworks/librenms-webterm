@@ -217,6 +217,7 @@ webterm_verify_proxy() {
     _code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 --http1.1 \
         -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
         -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: AAAAAAAAAAAAAAAAAAAAAA==' \
+        -H 'Sec-WebSocket-Protocol: lnms-webterm.v1' \
         -H "Origin: $ORIGIN" "$ORIGIN/webterm/ws" 2>/dev/null) || _code="000"
 
     case "$_code" in

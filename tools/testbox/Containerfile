@@ -1,0 +1,47 @@
+# A reusable box for exercising packaging/install.sh against a real distro,
+# a real web server and real systemd.
+#
+# What this proves that no unit test can: that nginx and Apache actually accept
+# the config we generate, that the unit starts under systemd, and that a real
+# WebSocket upgrade survives the proxy hop. What it deliberately does NOT carry
+# is LibreNMS itself -- the plugin half needs a database and a full Laravel app,
+# and the nightly integration job already covers it against real core. /opt
+# holds a stub lnms so the installer's detection has something to find.
+ARG BASE=docker.io/library/debian:12
+FROM ${BASE}
+
+ARG FAMILY=debian
+RUN set -eux; \
+    if [ "$FAMILY" = debian ]; then \
+        export DEBIAN_FRONTEND=noninteractive; \
+        apt-get update -qq; \
+        apt-get install -y -qq --no-install-recommends \
+            systemd systemd-sysv nginx apache2 curl ca-certificates procps \
+            >/dev/null; \
+        a2enmod proxy proxy_http proxy_wstunnel rewrite >/dev/null; \
+        rm -f /etc/nginx/sites-enabled/default; \
+        systemctl disable apache2 nginx >/dev/null 2>&1 || true; \
+    else \
+        if command -v dnf >/dev/null; then PKG=dnf; else PKG=yum; fi; \
+        $PKG install -y -q systemd nginx httpd procps-ng >/dev/null; \
+        command -v curl >/dev/null || $PKG install -y -q --allowerasing curl >/dev/null; \
+        $PKG clean all >/dev/null; \
+        rm -f /etc/nginx/conf.d/*.conf; \
+    fi
+
+# The installer resolves the LibreNMS user and directory before it does
+# anything, and runs the plugin half as that user.
+RUN set -eux; \
+    useradd -r -M -d /opt/librenms -s /bin/bash librenms 2>/dev/null || true; \
+    mkdir -p /opt/librenms; \
+    printf '%s\n' '#!/bin/sh' \
+        'case "$1" in' \
+        '  webterm:doctor) echo "  (stub lnms: the plugin half is covered by the integration job)"; exit 0 ;;' \
+        '  *) exit 0 ;;' \
+        'esac' > /opt/librenms/lnms; \
+    chmod +x /opt/librenms/lnms; \
+    ln -sf /opt/librenms/lnms /usr/bin/lnms; \
+    chown -R librenms:librenms /opt/librenms
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]

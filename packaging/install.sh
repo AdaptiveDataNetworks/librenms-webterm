@@ -26,6 +26,8 @@ WEBSERVER=""
 VHOST=""
 PHPFPM=""
 CONFIGURE_WEBSERVER="ask"
+# auto: install the gateway only if a package has not already done it.
+INSTALL_GATEWAY="auto"
 CONFIGURE_SELINUX="ask"
 INSTALL_PLUGIN="ask"
 ASSUME_YES=0
@@ -75,6 +77,8 @@ while [ $# -gt 0 ]; do
         --webserver) WEBSERVER="${2:-}"; shift 2 ;;
         --vhost) VHOST="${2:-}"; shift 2 ;;
         --php-fpm) PHPFPM="${2:-}"; shift 2 ;;
+        --install-gateway) INSTALL_GATEWAY=yes; shift ;;
+        --no-install-gateway) INSTALL_GATEWAY=no; shift ;;
         --configure-webserver) CONFIGURE_WEBSERVER=yes; shift ;;
         --no-configure-webserver) CONFIGURE_WEBSERVER=no; shift ;;
         --selinux) CONFIGURE_SELINUX=yes; shift ;;
@@ -127,13 +131,29 @@ confirm() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-[ -n "$VERSION" ] || {
-    echo "error: --version is required." >&2
-    echo "Pinning the version is deliberate: an unpinned install cannot be reproduced," >&2
-    echo "and this component versions independently of the LibreNMS plugin." >&2
-    exit 2
-}
 [ "$(id -u)" -eq 0 ] || die "run this as root."
+
+# Was the gateway already installed by a package? If so this script is almost
+# certainly the /usr/sbin/librenms-webterm-setup that package shipped, and its
+# job is everything EXCEPT the binary: origins, the proxy, the plugin, doctor.
+# Downloading a tarball over a package-managed file would be actively wrong.
+if [ "$INSTALL_GATEWAY" = auto ]; then
+    if { [ -f /etc/debian_version ] && dpkg -s librenms-webterm-gw >/dev/null 2>&1; } \
+       || { command -v rpm >/dev/null 2>&1 && rpm -q librenms-webterm-gw >/dev/null 2>&1; }; then
+        INSTALL_GATEWAY=no
+    else
+        INSTALL_GATEWAY=yes
+    fi
+fi
+
+# Pinning the version is deliberate: an unpinned install cannot be reproduced,
+# and the gateway versions independently of the LibreNMS plugin.
+if [ "$INSTALL_GATEWAY" = yes ] && [ -z "$VERSION" ]; then
+    echo "error: --version is required when installing the gateway from a release." >&2
+    echo "If it is already installed from your package manager, pass --no-install-gateway" >&2
+    echo "(or let this script detect it, which it normally does)." >&2
+    exit 2
+fi
 
 # ---------------------------------------------------------------- detection --
 
@@ -213,7 +233,9 @@ PREVIOUS=""
 [ -x "$PREFIX/librenms-webterm-gw" ] && PREVIOUS="$("$PREFIX/librenms-webterm-gw" version 2>/dev/null || echo 'an unknown version')"
 
 step "Plan"
-if [ -n "$PREVIOUS" ]; then
+if [ "$INSTALL_GATEWAY" = no ]; then
+    say "  * leave the packaged gateway alone (${PREVIOUS:-already installed})"
+elif [ -n "$PREVIOUS" ]; then
     say "  * replace $PREFIX/librenms-webterm-gw (currently $PREVIOUS)"
     say "  * leave $CONFDIR/gateway.env and gateway.secret untouched"
 else
@@ -233,12 +255,11 @@ confirm "Proceed?" "$([ "$ASSUME_YES" -eq 1 ] && echo yes || echo ask)" || die "
 
 step "Installing the gateway"
 
-if [ -f /etc/debian_version ] && dpkg -s librenms-webterm-gw >/dev/null 2>&1; then
-    die "librenms-webterm-gw is installed from a package. Upgrade with apt instead."
-fi
-if have rpm && rpm -q librenms-webterm-gw >/dev/null 2>&1; then
-    die "librenms-webterm-gw is installed from a package. Upgrade with your package manager."
-fi
+if [ "$INSTALL_GATEWAY" = no ]; then
+
+say "  installed from a package -- leaving the binary, unit and users alone"
+
+else
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -266,6 +287,21 @@ if [ ! -f "$CONFDIR/gateway.secret" ]; then
     say "  generated $CONFDIR/gateway.secret"
 fi
 
+if [ ! -f "$CONFDIR/gateway.env" ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.env.example" ]; then
+    install -m 0640 -o root -g librenms-webterm \
+        "$TMP/packaging/systemd/librenms-webterm-gw.env.example" "$CONFDIR/gateway.env"
+fi
+
+if [ -d /lib/systemd/system ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.service" ]; then
+    install -m 0644 "$TMP/packaging/systemd/librenms-webterm-gw.service" \
+        /lib/systemd/system/librenms-webterm-gw.service
+    systemctl daemon-reload || true
+fi
+
+fi
+
+# --- both modes: the gateway needs origins, and the plugin needs the group. ---
+
 if getent passwd "$LIBRENMS_USER" >/dev/null 2>&1; then
     if ! id -nG "$LIBRENMS_USER" 2>/dev/null | tr ' ' '\n' | grep -qx librenms-webterm; then
         usermod -a -G librenms-webterm "$LIBRENMS_USER"
@@ -275,23 +311,12 @@ else
     warn "no '$LIBRENMS_USER' account; the plugin will not be able to read the secret."
 fi
 
-if [ ! -f "$CONFDIR/gateway.env" ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.env.example" ]; then
-    install -m 0640 -o root -g librenms-webterm \
-        "$TMP/packaging/systemd/librenms-webterm-gw.env.example" "$CONFDIR/gateway.env"
-fi
-
 # Exactly one uncommented line, replaced rather than appended, so re-running
 # does not accumulate origins.
 touch "$CONFDIR/gateway.env"
 sed -i '/^[[:space:]]*WEBTERM_ALLOWED_ORIGINS=/d' "$CONFDIR/gateway.env"
 printf 'WEBTERM_ALLOWED_ORIGINS=%s\n' "$ORIGIN" >> "$CONFDIR/gateway.env"
 say "  set WEBTERM_ALLOWED_ORIGINS=$ORIGIN"
-
-if [ -d /lib/systemd/system ] && [ -f "$TMP/packaging/systemd/librenms-webterm-gw.service" ]; then
-    install -m 0644 "$TMP/packaging/systemd/librenms-webterm-gw.service" \
-        /lib/systemd/system/librenms-webterm-gw.service
-    systemctl daemon-reload || true
-fi
 
 # ------------------------------------------------------------------- plugin --
 
@@ -356,12 +381,17 @@ step "Starting"
 # browser connection with a 403 and looks broken.
 if have systemctl; then
     systemctl enable librenms-webterm-gw >/dev/null 2>&1 || true
-    if [ -n "$PREVIOUS" ]; then
-        systemctl try-restart librenms-webterm-gw >/dev/null 2>&1 || true
+    # restart, not try-restart: try-restart is a no-op on a stopped unit, which
+    # is exactly the state a freshly installed package leaves it in. "Do not
+    # start a service the admin stopped" is a rule for package upgrades, and it
+    # lives in the maintainer scripts; someone who just ran this by hand wants
+    # the gateway up.
+    systemctl restart librenms-webterm-gw >/dev/null 2>&1 || true
+    if systemctl is-active --quiet librenms-webterm-gw; then
+        say "  gateway started"
     else
-        systemctl start librenms-webterm-gw >/dev/null 2>&1 || true
+        warn "the gateway did not start -- journalctl -u librenms-webterm-gw -n 30"
     fi
-    say "  gateway started"
 fi
 
 step "Checking"
