@@ -53,6 +53,13 @@ if command -v goreleaser >/dev/null 2>&1; then
     goreleaser release --snapshot --clean --skip=docker,sign >/dev/null
     tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz | grep -q 'packaging/install.sh'
     tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz | grep -q 'packaging/webserver.sh'
+    tar -tzf dist/librenms-webterm-gw_*_linux_amd64.tar.gz | grep -q 'packaging/repository.sh'
+    # The release page offers exactly one install.sh, and it must be the bundle.
+    # Publishing the module-dependent script instead gives an operator a file
+    # that skips the proxy step and still reports success.
+    test -s build/install.sh
+    grep -q 'webterm_install_from_repository()' build/install.sh
+    grep -q 'webterm_configure_webserver()' build/install.sh
     # install.sh sources webserver.sh from /usr/share when it runs as the
     # packaged /usr/sbin/librenms-webterm-setup, so shipping one without the
     # other silently degrades to "skipping proxy setup".
@@ -64,6 +71,7 @@ if command -v goreleaser >/dev/null 2>&1; then
         _listing=$(dpkg-deb -c "$_deb")
         for _want in /usr/sbin/librenms-webterm-setup \
                      /usr/share/librenms-webterm/webserver.sh \
+                     /usr/share/librenms-webterm/repository.sh \
                      /usr/share/librenms-webterm/lifecycle.sh; do
             printf '%s\n' "$_listing" | grep -q "$_want" || {
                 echo "!! the deb is missing $_want" >&2

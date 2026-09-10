@@ -60,38 +60,47 @@ Full detail: [`protocol/PROTOCOL.md`](protocol/PROTOCOL.md) and [`docs/architect
 
 ## Install
 
-Install the plugin as the `librenms` user — **not as root**, which leaves a root-owned `vendor/` and breaks later updates:
+One command, on the LibreNMS server, as root:
 
 ```bash
-su - librenms
-./lnms plugin:add adaptivedatanetworks/librenms-webterm
-php artisan route:clear
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+less install.sh          # read it before you run it
+sh install.sh
 ```
 
-Then enable it under **Overview → Plugins → Plugin Admin**, and install the gateway:
+It shows you a plan and does nothing until you say yes. Then it:
 
-```bash
-# Debian / Ubuntu, as root
-curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc \
-  | gpg --dearmor -o /usr/share/keyrings/adn-archive-keyring.gpg
-printf 'Types: deb\nURIs: https://packages.adaptivedatanetworks.com/deb\nSuites: stable\nComponents: main\nArchitectures: amd64 arm64\nSigned-By: /usr/share/keyrings/adn-archive-keyring.gpg\n' \
-  > /etc/apt/sources.list.d/adn.sources
-apt update && apt install librenms-webterm-gw
+- adds the [package repository](https://adaptivedatanetworks.github.io/librenms-webterm/install/package-repo/),
+  after checking its signing key against the published fingerprint, and installs
+  the gateway from it — so later releases arrive with your normal package updates
+- installs and migrates the LibreNMS plugin as the `librenms` user, never as root
+- adds the WebSocket proxy to your nginx or Apache vhost, behind a marked and
+  reversible include, restoring your config untouched if the web server rejects it
+- offers the SELinux boolean the gateway needs on RHEL-family hosts
+- proves the whole path end to end before it exits
 
-# Then, either way:
-librenms-webterm-setup
-```
+It asks for one thing it cannot work out: the URL your operators use to reach
+LibreNMS. `APP_URL` is unset on a stock install, `base_url` is legitimately a
+bare path, and `server_name` knows nothing about a TLS terminator in front of
+it — and a wrong guess there means every terminal is refused with a 403 and
+nothing in the logs to explain it.
 
-RHEL, Rocky and Alma use the matching `/etc/yum.repos.d/adn.repo` — see the
-[package repository](https://adaptivedatanetworks.github.io/librenms-webterm/install/package-repo/)
-page, which also carries the signing key's fingerprint.
+Every prompt has a flag, so `--origin ... -y` runs it unattended. `--dry-run`
+prints the plan and exits.
 
-The setup helper finds your LibreNMS install and web server, asks for the URL
-your operators use, adds the WebSocket proxy to your vhost, and verifies the
-result. It shows the plan before touching anything, and every prompt has a flag
-for unattended runs.
+<details>
+<summary>Prefer to do it by hand?</summary>
 
-Nothing can open a shell yet — the plugin ships default-deny. The [10-minute quickstart](docs/getting-started/quickstart.md) takes you from here to a working terminal.
+Add the repository and install the two halves yourself — see
+[installing on bare metal](https://adaptivedatanetworks.github.io/librenms-webterm/install/bare-metal/).
+The setup helper ships in the package as `librenms-webterm-setup`, so you can
+install the gateway however you like and run just the configuration half.
+
+</details>
+
+Nothing can open a shell yet — the plugin ships default-deny. The
+[10-minute quickstart](docs/getting-started/quickstart.md) takes you from here to
+a working terminal.
 
 ---
 

@@ -29,89 +29,50 @@ Enable the plugin in the web UI under **Overview → Plugins → Plugin Admin**.
 
 Nothing works yet — that is intentional. WebTerm ships default-deny.
 
-## 2. Install the gateway
-
-=== "Debian / Ubuntu"
-
-    ```bash
-    # LibreNMS server, as root
-    install -d -m 0755 /usr/share/keyrings
-    curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc \
-      | gpg --dearmor -o /usr/share/keyrings/adn-archive-keyring.gpg
-
-    cat > /etc/apt/sources.list.d/adn.sources <<'EOF'
-    Types: deb
-    URIs: https://packages.adaptivedatanetworks.com/deb
-    Suites: stable
-    Components: main
-    Architectures: amd64 arm64
-    Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg
-    EOF
-
-    apt update && apt install librenms-webterm-gw
-    ```
-
-=== "RHEL / Rocky / Alma"
-
-    ```bash
-    # LibreNMS server, as root
-    rpm --import https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
-
-    cat > /etc/yum.repos.d/adn.repo <<'EOF'
-    [adn]
-    name=Adaptive Data Networks
-    baseurl=https://packages.adaptivedatanetworks.com/rpm/
-    enabled=1
-    gpgcheck=1
-    repo_gpgcheck=1
-    gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
-    EOF
-
-    dnf install librenms-webterm-gw
-    ```
-
-Adding the repository means `apt upgrade` and `dnf upgrade` pick up future
-gateway releases on their own. See [the package repository](../install/package-repo.md)
-for the key's fingerprint and how to remove the repository later.
-
-??? info "Without adding the repository"
-
-    Download the package or the installer from the
-    [release page](https://github.com/AdaptiveDataNetworks/librenms-webterm/releases) instead — see
-    [installing on bare metal](../install/bare-metal.md#2-the-gateway-package).
-
-The binary lands at `/usr/bin/librenms-webterm-gw` and binds `127.0.0.1:8377`
-only. It is not reachable from outside the host, and it refuses to start
-without a valid 32-byte secret.
-
-It is deliberately **not** started yet. A gateway running before its allowed
-origins are set refuses every browser connection with a 403 and looks broken.
-
-## 3. Wire it up
+## 2. Install everything
 
 ```bash
 # LibreNMS server, as root
-librenms-webterm-setup
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+less install.sh          # read it before you run it
+sh install.sh
 ```
 
-This is the rest of the install in one command: it finds your LibreNMS
-directory and web server, asks for the URL your operators use, adds the proxy
-to your vhost, shares the gateway secret with the LibreNMS user, starts the
-gateway, and checks its own work.
+It shows a plan and does nothing until you say yes. Then it adds the
+[package repository](../install/package-repo.md) — after checking its signing key
+against the published fingerprint — installs the gateway from it, installs and
+migrates the plugin as the `librenms` user, adds the WebSocket proxy to your
+vhost, offers the SELinux boolean on RHEL-family hosts, and verifies the whole
+path before it exits.
 
-It shows you the plan and does nothing until you say yes, backs up your vhost
-before touching it, and restores it if your web server rejects the result.
-Every prompt has a flag for unattended runs, and `--dry-run` prints the plan
-and exits.
+Installing the gateway from the repository rather than a downloaded file is what
+makes `apt upgrade` and `dnf upgrade` pick up later releases on their own.
 
 !!! note "It will ask for your LibreNMS URL"
 
-    That one cannot be inferred. `APP_URL` is unset on a stock LibreNMS and
-    reads back as `http://localhost`, `base_url` is legitimately a bare path,
-    and `server_name` knows nothing about a TLS terminator in front of it. The
-    browser sends the origin *it* used, so that is the one the gateway must be
-    told about — scheme included. A mismatch is rejected deliberately: origin
-    checking is what prevents cross-site WebSocket hijacking.
+    That one cannot be inferred. `APP_URL` is unset on a stock LibreNMS and reads
+    back as `http://localhost`, `base_url` is legitimately a bare path, and
+    `server_name` knows nothing about a TLS terminator in front of it. The browser
+    sends the origin *it* used, so that is the one the gateway must be told about —
+    scheme included. A mismatch is rejected deliberately: origin checking is what
+    prevents cross-site WebSocket hijacking.
+
+Every prompt has a flag, so it runs unattended:
+
+```bash
+# LibreNMS server, as root
+sh install.sh --origin https://librenms.example.com -y
+```
+
+`--dry-run` prints the plan and exits. The exit code is `webterm:doctor`'s, so it
+is safe to gate a playbook on.
+
+??? info "Doing it in pieces instead"
+
+    Add the repository and install the two halves yourself — see
+    [installing on bare metal](../install/bare-metal.md). The package ships the
+    configuration half as `librenms-webterm-setup`, so you can install the
+    gateway however you like and run only that.
 
 ## 4. Confirm both halves agree
 

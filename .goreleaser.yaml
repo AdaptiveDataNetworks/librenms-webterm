@@ -8,6 +8,7 @@ project_name: librenms-webterm-gw
 # root-level, and GoReleaser refuses ".." in archive paths.
 before:
   hooks:
+    - sh tools/bundle-installer.sh build/install.sh
     # -C changes directory before running; before.hooks takes plain strings,
     # not a cmd/dir map.
     - go -C gateway mod tidy
@@ -54,6 +55,9 @@ archives:
       # install.sh sources this from its own directory. Ship one without the
       # other and the tarball install silently skips proxy setup.
       - packaging/webserver.sh
+      # install.sh sources this to add the package repository, which is how it
+      # installs the gateway by default.
+      - packaging/repository.sh
 
 snapshot:
   # A snapshot is built from commits AHEAD of the last tag, so it must sort
@@ -109,6 +113,10 @@ nfpms:
         dst: /usr/share/librenms-webterm/webserver.sh
         file_info:
           mode: 0644
+      - src: packaging/repository.sh
+        dst: /usr/share/librenms-webterm/repository.sh
+        file_info:
+          mode: 0644
       - dst: /etc/librenms-webterm
         type: dir
         file_info:
@@ -161,10 +169,11 @@ release:
   # tarball it is unreachable until after you have already downloaded and
   # trusted the tarball.
   extra_files:
-    - glob: packaging/install.sh
-    # install.sh sources this from its own directory. Published beside it so the
-    # documented "download, read, run" flow gets a working proxy step.
-    - glob: packaging/webserver.sh
+    # The generated single-file installer. packaging/install.sh is NOT published
+    # on its own: it sources two sibling modules, and an operator who fetched
+    # only the one file got a script that skipped the reverse proxy and could
+    # not reach the package repository, while still reporting success.
+    - glob: build/install.sh
   footer: |
     ## Verifying this release
 
@@ -172,9 +181,15 @@ release:
 
         gh attestation verify librenms-webterm-gw_..._linux_amd64.tar.gz --repo adaptivedatanetworks/librenms-webterm
 
-    The plugin half is installed separately, through LibreNMS:
+    ## Installing
 
-        ./lnms plugin:add adaptivedatanetworks/librenms-webterm
+        curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+        less install.sh          # read it before you run it
+        sh install.sh
+
+    That adds the package repository, installs both halves, configures the
+    reverse proxy and verifies the result. Existing installs upgrade with
+    `apt upgrade` or `dnf upgrade` once the repository is added.
 
     Plugin and gateway version independently and support one protocol version.
     There is no skew tolerance today: a mismatch is refused before the terminal

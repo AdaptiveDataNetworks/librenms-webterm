@@ -28,6 +28,8 @@ PHPFPM=""
 CONFIGURE_WEBSERVER="ask"
 # auto: install the gateway only if a package has not already done it.
 INSTALL_GATEWAY="auto"
+# auto: prefer the package repository, because a tarball gateway is never upgraded.
+GATEWAY_SOURCE="auto"
 CONFIGURE_SELINUX="ask"
 INSTALL_PLUGIN="ask"
 ASSUME_YES=0
@@ -77,6 +79,8 @@ while [ $# -gt 0 ]; do
         --webserver) WEBSERVER="${2:-}"; shift 2 ;;
         --vhost) VHOST="${2:-}"; shift 2 ;;
         --php-fpm) PHPFPM="${2:-}"; shift 2 ;;
+        --from-tarball) GATEWAY_SOURCE=tarball; shift ;;
+        --from-repository) GATEWAY_SOURCE=repository; shift ;;
         --install-gateway) INSTALL_GATEWAY=yes; shift ;;
         --no-install-gateway) INSTALL_GATEWAY=no; shift ;;
         --configure-webserver) CONFIGURE_WEBSERVER=yes; shift ;;
@@ -131,6 +135,16 @@ confirm() {
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# Loaded here, not next to webserver.sh further down: the gateway source is
+# decided long before that point, and a module sourced after its first caller
+# silently defines nothing.
+for _dir in "$(dirname "$0")" /usr/share/librenms-webterm /usr/local/share/librenms-webterm; do
+    if [ -r "$_dir/repository.sh" ]; then
+        . "$_dir/repository.sh"
+        break
+    fi
+done
+
 [ "$(id -u)" -eq 0 ] || die "run this as root."
 
 # Was the gateway already installed by a package? If so this script is almost
@@ -146,12 +160,28 @@ if [ "$INSTALL_GATEWAY" = auto ]; then
     fi
 fi
 
-# Pinning the version is deliberate: an unpinned install cannot be reproduced,
-# and the gateway versions independently of the LibreNMS plugin.
-if [ "$INSTALL_GATEWAY" = yes ] && [ -z "$VERSION" ]; then
-    echo "error: --version is required when installing the gateway from a release." >&2
-    echo "If it is already installed from your package manager, pass --no-install-gateway" >&2
-    echo "(or let this script detect it, which it normally does)." >&2
+# Where the gateway comes from. The repository is preferred because a tarball
+# install is a dead end -- nothing ever tells the operator a newer gateway
+# exists, and nothing upgrades it. From the repository, `apt upgrade` and
+# `dnf upgrade` do.
+if [ "$INSTALL_GATEWAY" = yes ] && [ "$GATEWAY_SOURCE" = auto ]; then
+    if { command -v apt-get >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 \
+         || command -v yum >/dev/null 2>&1; } \
+       && command -v webterm_repo_available >/dev/null 2>&1 && webterm_repo_available; then
+        GATEWAY_SOURCE=repository
+    else
+        GATEWAY_SOURCE=tarball
+    fi
+fi
+
+# Pinning the version is deliberate for a tarball: an unpinned install cannot be
+# reproduced. From the repository the package manager pins it instead, and the
+# operator gets upgrades, so --version is neither needed nor meaningful there.
+if [ "$INSTALL_GATEWAY" = yes ] && [ "$GATEWAY_SOURCE" = tarball ] && [ -z "$VERSION" ]; then
+    echo "error: --version is required to install the gateway from a release tarball." >&2
+    echo "Your package manager could not reach $WEBTERM_REPO_HOST, so there is no" >&2
+    echo "repository to install from. Either give --version vX.Y.Z, or fix connectivity" >&2
+    echo "and re-run to get an install that upgrades itself." >&2
     exit 2
 fi
 
@@ -238,6 +268,11 @@ if [ "$INSTALL_GATEWAY" = no ]; then
 elif [ -n "$PREVIOUS" ]; then
     say "  * replace $PREFIX/librenms-webterm-gw (currently $PREVIOUS)"
     say "  * leave $CONFDIR/gateway.env and gateway.secret untouched"
+elif [ "$GATEWAY_SOURCE" = repository ]; then
+    say "  * add the $WEBTERM_REPO_HOST package repository, after checking its"
+    say "    signing key against the published fingerprint"
+    say "  * install librenms-webterm-gw from it, so later releases arrive with"
+    say "    your normal package updates"
 else
     say "  * download and verify $TARBALL"
     say "  * install the gateway, create its user and $CONFDIR"
@@ -258,6 +293,13 @@ step "Installing the gateway"
 if [ "$INSTALL_GATEWAY" = no ]; then
 
 say "  installed from a package -- leaving the binary, unit and users alone"
+
+elif [ "$GATEWAY_SOURCE" = repository ]; then
+
+if ! webterm_install_from_repository; then
+    die "could not install from $WEBTERM_REPO_HOST. Re-run with --from-tarball --version vX.Y.Z
+  to install a pinned release directly instead."
+fi
 
 else
 

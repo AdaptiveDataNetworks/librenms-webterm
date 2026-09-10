@@ -230,6 +230,9 @@ webterm_configure_webserver() {
 # the status line.
 webterm_verify_proxy() {
     have curl || return 0
+    # Nothing to verify if we were told not to touch a web server: there is no
+    # proxy for the request to traverse, and warning about one is noise.
+    [ "${WEBSERVER:-none}" = none ] && return 0
 
     # Retry, because `systemctl reload nginx` returns before nginx has finished
     # swapping configs. Probing immediately hits the OLD config, falls through to
@@ -239,7 +242,13 @@ webterm_verify_proxy() {
     _code=000
     _try=0
     while [ "$_try" -lt 10 ]; do
-        _code=$(_webterm_probe_once)
+        # First three digits, not the raw output. On a successful upgrade curl
+        # writes its -w output TWICE -- 101 for the switch, then 000 when the
+        # held-open connection hits --max-time -- and the caller then reports
+        # "/webterm/ws returned 101000", which looks like a gateway fault on an
+        # install that is working perfectly. The first code is the answer.
+        _code=$(_webterm_probe_once | tr -dc '0-9' | cut -c1-3)
+        [ -n "$_code" ] || _code=000
         case "$_code" in
             101) break ;;
         esac
@@ -264,5 +273,9 @@ _webterm_probe_once() {
         -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
         -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: AAAAAAAAAAAAAAAAAAAAAA==' \
         -H 'Sec-WebSocket-Protocol: lnms-webterm.v1' \
-        -H "Origin: $ORIGIN" "$ORIGIN/webterm/ws" 2>/dev/null || printf '000'
+        -H "Origin: $ORIGIN" "$ORIGIN/webterm/ws" 2>/dev/null
+    # No `|| printf 000` here. curl still writes its -w output when the transfer
+    # fails, so a fallback appends a SECOND code and the caller reports
+    # "returned 000000" -- six zeros, which reads like a bug in the gateway
+    # rather than an unreachable host. An empty result is handled by the caller.
 }

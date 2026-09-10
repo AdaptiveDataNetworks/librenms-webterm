@@ -40,4 +40,13 @@ for code in 403 404; do
     }
 done
 
+# 5. curl writes its -w output more than once on an upgraded connection, so the
+#    probe must reduce it to a single code. Without this it reported 101000 on a
+#    healthy install and 000000 on an unreachable one.
+grep -q "cut -c1-3" packaging/webserver.sh || {
+    echo "FAIL: the probe uses curl's raw write-out. curl emits it twice on a 101," >&2
+    echo "so the status becomes 101000 and no case matches." >&2
+    exit 1
+}
+
 echo "probe-polarity-check OK"
