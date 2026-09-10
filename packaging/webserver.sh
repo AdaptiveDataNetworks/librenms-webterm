@@ -173,9 +173,26 @@ webterm_configure_webserver() {
     if [ "${_anchor_line:-0}" -gt 0 ]; then
         _directive="include $_snippet;"
         [ "$WEBSERVER" = apache ] && _directive="Include $_snippet"
+        # Printing the directive AFTER the anchor line is right for a normal
+        # multi-line block and wrong for `server { ... }` written on one line --
+        # there it lands outside the block, and nginx rejects the whole file with
+        # "location directive is not allowed here". So when the anchor line also
+        # closes its block, inject just after the opening brace instead.
         awk -v at="$_anchor_line" -v marker="$WEBTERM_MARKER" -v directive="$_directive" '
-            { print }
-            NR == at { print "    " marker; print "    " directive }' "$_backup" > "$VHOST"
+            NR == at {
+                o = $0; nopen  = gsub(/\{/, "{", o)
+                o = $0; nclose = gsub(/\}/, "}", o)
+                if (nclose >= nopen && nopen > 0) {
+                    sub(/\{/, "{ " marker "\n    " directive, $0)
+                    print
+                    next
+                }
+                print
+                print "    " marker
+                print "    " directive
+                next
+            }
+            { print }' "$_backup" > "$VHOST"
     fi
 
     if ! grep -q 'librenms-webterm (managed)' "$VHOST"; then
@@ -214,19 +231,38 @@ webterm_configure_webserver() {
 webterm_verify_proxy() {
     have curl || return 0
 
-    _code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 --http1.1 \
-        -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
-        -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: AAAAAAAAAAAAAAAAAAAAAA==' \
-        -H 'Sec-WebSocket-Protocol: lnms-webterm.v1' \
-        -H "Origin: $ORIGIN" "$ORIGIN/webterm/ws" 2>/dev/null) || _code="000"
+    # Retry, because `systemctl reload nginx` returns before nginx has finished
+    # swapping configs. Probing immediately hits the OLD config, falls through to
+    # the LibreNMS `location /`, loops into index.php and returns 500 -- a loud
+    # warning about a perfectly good install. Measured: 500 immediately, 101 three
+    # seconds later, on an unchanged config.
+    _code=000
+    _try=0
+    while [ "$_try" -lt 10 ]; do
+        _code=$(_webterm_probe_once)
+        case "$_code" in
+            101) break ;;
+        esac
+        _try=$((_try + 1))
+        sleep 1
+    done
 
     case "$_code" in
         101) say "  /webterm/ws reaches the gateway and the origin is accepted" ; return 0 ;;
         403) warn "/webterm/ws returned 403 -- the gateway is refusing this origin. Check WEBTERM_ALLOWED_ORIGINS=$ORIGIN" ;;
         404) warn "/webterm/ws returned 404 -- the proxy is missing, or proxy_pass has no /ws path component" ;;
+        500) warn "/webterm/ws returned 500 -- the request is reaching LibreNMS instead of the proxy, so the location block is not in the server that serves $ORIGIN" ;;
         502|503) warn "/webterm/ws returned $_code -- the proxy is there but the gateway is not answering" ;;
         000) warn "could not reach $ORIGIN at all from this host (that may just be split DNS)" ;;
         *) warn "/webterm/ws returned $_code" ;;
     esac
     return 1
+}
+
+_webterm_probe_once() {
+    curl -sS -o /dev/null -w '%{http_code}' --max-time 5 --http1.1 \
+        -H 'Connection: Upgrade' -H 'Upgrade: websocket' \
+        -H 'Sec-WebSocket-Version: 13' -H 'Sec-WebSocket-Key: AAAAAAAAAAAAAAAAAAAAAA==' \
+        -H 'Sec-WebSocket-Protocol: lnms-webterm.v1' \
+        -H "Origin: $ORIGIN" "$ORIGIN/webterm/ws" 2>/dev/null || printf '000'
 }

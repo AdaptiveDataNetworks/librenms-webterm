@@ -34,3 +34,4 @@ webterm_is_final_removal() {
 webterm_have_systemd() {
     [ -d /run/systemd/system ]
 }
+

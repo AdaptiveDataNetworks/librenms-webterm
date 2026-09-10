@@ -35,11 +35,19 @@ use Throwable;
 /**
  * The admin console.
  *
- * Deliberately narrow. Credential *entry* is not here and is not coming: a
- * credential should require shell access on the LibreNMS host, not merely an
- * admin web session, because a public-facing PHP application's compromise is
- * the largest residual risk in this design. What the console does show is which
- * credentials exist and what they apply to, which is not a secret.
+ * Credential entry IS here, and this docblock said the opposite for a while --
+ * "not here and is not coming" -- while storeCredential() sat 300 lines below
+ * it. The original reasoning was sound as far as it went: a public-facing PHP
+ * application's compromise is the largest residual risk in this design, so
+ * writing a reusable device secret should cost more than an admin web session.
+ *
+ * What that reasoning missed is the other side of the trade. Requiring a shell
+ * meant credentials were stored once, by whoever built the install, and then
+ * never rotated -- a secret nobody can rotate without a shell is a secret nobody
+ * rotates. The bar moved rather than dropped: the write is rate-limited, audited
+ * as security-relevant before the local database write, never repopulated into
+ * the form on a validation error, and carried only through
+ * #[\SensitiveParameter] so it cannot surface in a stack trace.
  *
  * Host key mutation is also absent. Resetting a pin and flipping a target to
  * trust-on-first-connect are individually reasonable and jointly amount to

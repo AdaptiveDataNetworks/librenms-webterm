@@ -6,6 +6,197 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.1.0] - 2026-09-10
+
+WebTerm was administered from a shell. The only page it put inside LibreNMS said
+so in as many words — "WebTerm is configured from the command line, not from this
+page" — and the terminal itself was a full-page pop-out at `/plugin/WebTerm`,
+which lost every scrap of device context and offered no way back. Enabling a
+device, granting an operator, storing a credential and reading the audit trail
+all required an account on the LibreNMS host.
+
+This release moves administration into the UI and the terminal into the device
+page, and scopes credentials so one secret can serve a fleet.
+
+### Added
+
+- **An admin console in LibreNMS**, at `/plugin/webterm/admin`: targets,
+  credentials, access (grants and abilities), host keys, sessions, settings and
+  audit.
+
+  Access is WebTerm's own `admin` ability, never a core Gate ability — LibreNMS
+  registers a `Gate::before` returning true for every ability when the user has
+  the admin role, which would hand the console to every LibreNMS admin.
+  Unauthorised requests get 404 rather than 403, so the console's existence is
+  not confirmed to an account that may not use it.
+
+  Authorization is re-checked on every request rather than inferred from route
+  registration. `lnms plugin:enable` runs `route:cache`; `lnms plugin:disable`
+  updates a column and nothing else, so a cached route table keeps serving these
+  paths after a disable — including the automatic disable LibreNMS performs when
+  a hook throws. An operator disabling the plugin to contain an incident must not
+  be left with a live grant-writing surface. The read views and the kill switch
+  stay reachable when WebTerm is disabled, so nobody can lock themselves out of
+  turning it back on; every other write is refused.
+
+- **Credentials can be stored from the console.** This reverses a position
+  stated in 1.0.9's own notes, and the reversal is deliberate rather than an
+  oversight: requiring shell access to store a secret meant that in practice
+  credentials were stored once, by whoever built the install, and never rotated.
+  A secret nobody can rotate without a shell is a secret nobody rotates.
+
+  The bar is raised elsewhere instead — the write is rate-limited, audited as
+  security-relevant before the local database write, never echoed back into the
+  form on a validation error, and carried through `#[\SensitiveParameter]` so it
+  cannot surface in a stack trace. Host key pins and policy are still not
+  editable from a browser: resetting a pin and switching a target to
+  trust-on-first-connect are each defensible alone and together amount to turning
+  off SSH host key verification from a web page.
+
+- **The terminal is a device tab.** It opens at `/device/{id}/webterm`, inside
+  LibreNMS's own device page, with the header, the device menu and the breadcrumb
+  still there. Opening the tab does not open a session: a terminal costs a
+  concurrency slot and produces an audit record, so it waits for a deliberate
+  click.
+
+- **Credentials have a scope: global, device group, or device.** One secret can
+  now serve a fleet. Previously the schema was strictly per-device (`device_id`
+  NOT NULL, `unique(device_id, protocol)`), so an estate on one service account
+  needed a row — and a command — per device.
+
+  Most specific wins: device, then group, then global. A device in several groups
+  resolves to the lowest-numbered group's credential, so the result never depends
+  on row order. The order is fixed, not configurable: configurable precedence
+  produces an operator who cannot predict which secret a device uses.
+
+- **`webterm:credentials:explain --device=`** ships with it rather than after it.
+  Scope buys one command instead of two hundred and costs the ability to know
+  what any given device will do; that trade is only acceptable if the answer is
+  one command away. It prints every candidate in precedence order, marks the
+  winner, and names what it overrode.
+
+- **Enable a whole device group for terminal access.** It materialises one target
+  row per member rather than resolving membership at authorization time, so a
+  device that joins the group later gains nothing until somebody applies it
+  again. A device enabled by hand is left alone, so a group can never quietly
+  override a per-device decision, and each row records why it exists.
+
+- **`security.refuse_dynamic_groups`** (default on). A dynamic group's membership
+  is a rule LibreNMS recomputes on every poll, so enabling one would let a device
+  gain terminal access because discovery re-detected its OS, with nobody deciding
+  anything. Refusing that outright was the original behaviour; it is now a
+  setting, because an operator who understands the trade may want it. It is their
+  fleet.
+
+- **`librenms-webterm-setup`** takes an operator from an installed package to a
+  working terminal: it finds LibreNMS and the web server, adds the WebSocket
+  proxy to the vhost behind a marked, reversible include, offers the SELinux
+  boolean, installs and migrates the plugin, and proves the path end to end
+  before it exits. It asks before each decision and every prompt has a flag for
+  unattended use. It is shipped in the packages as `/usr/sbin/librenms-webterm-setup`.
+
+- **A package repository** at `packages.adaptivedatanetworks.com`, so `apt
+  upgrade` and `dnf upgrade` find new gateway releases. Packages and repository
+  metadata are signed with an RSA 4096 key whose fingerprint is published in
+  `SECURITY.md`.
+
+- **`webterm:migrate --rollback --step=N`** undoes only the most recent
+  migrations instead of every one. Without it, downgrading past a migration was a
+  one-way door: the only rollback dropped every `webterm_*` table, audit history
+  included.
+
+- **`webterm:doctor` detects a schema newer than the code.** Downgrading past a
+  migration leaves the columns changed and nothing pending, so every check that
+  looks for outstanding work reports green while credential resolution dies on a
+  missing column. Reproduced on MariaDB 11: `ERROR 1054 Unknown column
+  'device_id'` on every credential path, with a clean bill of health from doctor.
+  It now fails, and names the rollback command.
+
+### Changed
+
+- **`webterm:credentials:list` no longer takes `--device=`.** With scopes, "the
+  credentials for this device" is a different question from "the credentials
+  stored", and answering it means precedence, not filtering. Use
+  `webterm:credentials:explain --device=` for that; `credentials:list` now lists
+  everything with its scope. Scripts passing `--device=` will fail rather than
+  silently list the wrong thing.
+
+- `webterm:credentials:set` and `:forget` take `--global` and `--group=` as well
+  as `--device=`. Exactly one is required — there is no default, because
+  defaulting either way silently does the wrong thing.
+
+- The plugin settings page no longer claims WebTerm cannot be configured from a
+  page. It links to the console.
+
+- `docs/security/threat-model.md` states what the console costs. The "stolen
+  session cookie" and "XSS in LibreNMS" sections previously rested on step-up
+  bounding the damage; step-up gates opening a terminal, not administering the
+  plugin, so for an account holding `admin` the worst case is now a persistent
+  self-grant rather than one session.
+
+- Development snapshots are versioned from the *next* patch level
+  (`1.0.10-SNAPSHOT-<sha>`, not `1.0.9-SNAPSHOT-<sha>`). Now that a package
+  repository exists, the old scheme made a dev-channel build sort below the
+  release it was ahead of, so `apt upgrade` would quietly move a tester backwards
+  onto the last tag.
+
+### Fixed
+
+- **A package upgrade left the gateway stopped and disabled.** Releases up to
+  1.0.9 ran `systemctl stop` and `systemctl disable` from their package's
+  pre-removal script with no argument guard, and on an upgrade it is the
+  *outgoing* package's script that runs — so no newer package could prevent it.
+  Measured against the real 1.0.9 artifacts on both formats: a gateway that was
+  active and enabled came out inactive and disabled, silently. Upgrading to this
+  release restores it, and from here the outgoing package records its own state
+  so the next upgrade does not have to infer anything from a version number.
+
+- **The terminal tab rendered without its data.** LibreNMS nests a device tab's
+  `data()` under a `data` key, so the view read an always-undefined variable.
+
+- **A protocol mismatch was reported after the click, not before it.** An
+  operator opened a terminal, waited, and got a failure that a check at render
+  time could have shown as a disabled tab with a reason.
+
+- **The session reconciler was never scheduled**, so nothing reaped abandoned
+  sessions; when it was scheduled, its overlap lock defaulted to 24 hours, which
+  meant one slow run blocked reaping for a day. It runs in the foreground with a
+  five-minute lock.
+
+- **A failed connection attempt cost a concurrency slot.** Enough failed dials
+  and an operator was locked out of a device by their own retries.
+
+- **Group grants and group credentials never matched a UI-created group.**
+
+- **A rejected credential was reported as an unreachable device**, sending
+  operators to check the network when the password was wrong.
+
+- **The Access tab crashed on `__('device')`**, which returns LibreNMS's whole
+  `device` translation array rather than a string.
+
+- **`./validate.php` reported extra migrations**, because a plugin recording
+  migrations in core's table is flagged forever. WebTerm keeps its own
+  repository table.
+
+- The admin console link was offered to accounts that could not open it, and
+  `webterm:doctor` said nothing when the console was unreachable by anyone.
+
+### Upgrading
+
+- Migrations apply themselves when LibreNMS next runs migrations, or immediately
+  via `./lnms webterm:migrate`. Existing credentials, grants and targets are
+  preserved; the credential table gains a scope and every 1.0.9 row becomes a
+  device-scoped credential.
+
+- **Run `php artisan route:clear` after upgrading**, or the console and the
+  device tab return 404 from a cached route table.
+
+- Rolling the credential migration back deletes group and global credentials —
+  they have nowhere to go in the old schema. Device-scoped rows survive.
+
+- Plugin and gateway must be the same protocol version. Upgrade both, then run
+  `./lnms webterm:doctor`.
+
 ## [1.0.9] - 2026-09-08
 
 Credentials were write-only. You could store one and then had no way to ask
@@ -46,123 +237,6 @@ login the device actually uses.
 - `webterm:credentials:set` now warns when the login it is storing differs from
   the target's principal, and prints the command to fix whichever side is
   wrong.
-
-## [Unreleased]
-
-### Added
-
-- **Credentials have a scope: global, device group, or device.** One secret can
-  now serve a fleet. Previously the schema was strictly per-device
-  (`device_id` NOT NULL, `unique(device_id, protocol)`), so an estate on one
-  service account needed a row -- and a command -- per device.
-
-  Most specific wins: device, then group, then global. A device in several
-  groups resolves to the lowest-numbered group's credential, so the result never
-  depends on row order. The order is fixed, not configurable: configurable
-  precedence produces an operator who cannot predict which secret a device uses.
-
-- **`webterm:credentials:explain --device=`** ships with it rather than after
-  it. Scope buys one command instead of two hundred and costs the ability to
-  know what any given device will do; that trade is only acceptable if the
-  answer is one command away. It prints every candidate in precedence order,
-  marks the winner, and names what it overrode.
-
-- **An admin console in LibreNMS**, at `/plugin/webterm/admin`, covering targets,
-  access (grants and abilities), host keys, sessions and audit.
-
-  It deliberately does not set credentials. Storing a device secret requires
-  shell access to the LibreNMS host and will continue to: LibreNMS is a
-  public-facing PHP application whose compromise is the largest residual risk in
-  this design, so the bar for writing a reusable device credential stays higher
-  than an admin session in a browser. The console shows which credentials exist
-  and what they apply to, which is not a secret.
-
-  It also does not change host key pins or policy. Resetting a pin and switching
-  a target to trust-on-first-connect are each defensible alone and together
-  amount to turning off SSH host key verification from a browser.
-
-  Access is WebTerm's own `admin` ability, never a core Gate ability — LibreNMS
-  registers a `Gate::before` returning true for every ability when the user has
-  the admin role, which would hand the console to every LibreNMS admin.
-  Unauthorised requests get 404 rather than 403, so the console's existence is
-  not confirmed to an account that may not use it.
-
-  Authorization is re-checked on every request rather than inferred from route
-  registration. `lnms plugin:enable` runs `route:cache`; `lnms plugin:disable`
-  updates a column and nothing else, so a cached route table keeps serving these
-  paths after a disable — including the automatic disable LibreNMS performs when
-  a hook throws. An operator disabling the plugin to contain an incident must
-  not be left with a live grant-writing surface.
-
-### Changed
-
-- `docs/security/threat-model.md` now states what the console costs. The
-  "stolen session cookie" and "XSS in LibreNMS" sections previously rested on
-  step-up bounding the damage; step-up gates opening a terminal, not
-  administering the plugin, so for an account holding `admin` the worst case is
-  now a persistent self-grant rather than one session.
-
-- The plugin settings page no longer claims WebTerm cannot be configured from a
-  page. It links to the console, and explains why credentials are still not
-  settable there.
-
-- `webterm:credentials:set` and `:forget` take `--global` and `--group=` as well
-  as `--device=`. Exactly one is required — there is no default, because
-  defaulting either way silently does the wrong thing.
-
-- **`webterm:migrate --rollback --step=N`** undoes only the most recent
-  migrations instead of every one. Without it, downgrading past a migration was
-  a one-way door: the only rollback dropped every `webterm_*` table, audit
-  history included.
-
-- **`webterm:doctor` detects a schema newer than the code.** Downgrading past a
-  migration leaves the columns changed and nothing pending, so every check that
-  looks for outstanding work reports green while credential resolution dies on a
-  missing column. Reproduced on MariaDB 11: `ERROR 1054 Unknown column
-  'device_id'` on every credential path, with a clean bill of health from
-  doctor. It now fails, and names the rollback command.
-
-### Fixed
-
-- `docs/contributing/development.md` told developers to install with
-  `plugin:add ... @dev`, which resolves to the newest *release*, not the branch.
-  Anyone following it silently got a released version. The constraint is
-  `dev-main`.
-
-### Notes
-
-- The global scope stores `scope_ref = 0` rather than NULL. A unique index
-  treats NULLs as distinct on MySQL, MariaDB and SQLite alike, so a nullable
-  reference would have accepted two global credentials and left resolution to
-  insertion order. A test pins this.
-
-- The migration is idempotent by necessity, not habit. It is the first here to
-  alter an existing table, and Laravel wraps a migration in a transaction only
-  where the grammar supports schema transactions — true for PostgreSQL and SQL
-  Server, false for every database this plugin supports. An interrupted run is
-  never recorded, so the next run restarts from the top and must not fail on
-  work it already did.
-
-### Fixed
-
-- **The documented way to upgrade the gateway could not work.** `upgrading.md`
-  said `apt install --only-upgrade librenms-webterm-gw    # or dnf upgrade`,
-  which presupposes a package repository. There isn't one -- releases are
-  GitHub assets -- so those commands never find a newer gateway. The page now
-  says so plainly, shows how to tell a packaged install from a tarball one
-  (they do not mix; `install.sh` refuses to run over a package), and gives the
-  real commands for each: `dnf install ./<file>.rpm`, `apt install ./<file>.deb`,
-  or re-running the new release's `install.sh`. Checksum and provenance
-  verification included.
-
-- **`install.sh` recited a first-install checklist when upgrading.** Re-running
-  it to upgrade printed "Before starting it: 1. Set your LibreNMS origin...
-  2. Point the plugin at the secret..." -- steps the operator completed on the
-  original install -- which reads like the script has just reset the
-  configuration it in fact left alone. It now detects an existing binary and
-  says what it replaced, what it preserved, and that the running gateway is
-  still the old one until restarted. The pre-flight summary distinguishes the
-  two cases too.
 
 ## [1.0.8] - 2026-09-08
 

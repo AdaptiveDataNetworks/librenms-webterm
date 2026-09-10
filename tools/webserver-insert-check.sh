@@ -148,6 +148,22 @@ else
     bad "apache redirect pair: proxy landed in the wrong vhost (line $_inc)"
 fi
 
+# ---- a server block written on ONE line ----
+# Appending after the anchor line puts the include outside the block, and nginx
+# rejects the whole file with "location directive is not allowed here".
+WEBSERVER=nginx; VHOST="$T/oneline.nginx"
+printf 'server { listen 80; server_name x; root /opt/librenms/html; }\n' > "$VHOST"
+webterm_configure_webserver >/dev/null
+_inc=$(grep -n 'include .*webterm-proxy.conf;' "$VHOST" | head -1 | cut -d: -f1)
+_close=$(grep -n '^}' "$VHOST" | head -1 | cut -d: -f1)
+if [ -n "$_inc" ] && { [ -z "$_close" ] || [ "$_inc" -lt "$_close" ]; }; then
+    ok "one-line server block: include landed inside the braces"
+else
+    bad "one-line server block: include landed outside the block"
+fi
+grep -q 'listen 80' "$VHOST" && ok "one-line server block: the original directives survived" \
+                             || bad "one-line server block: directives were lost"
+
 # ---- a file with no server block: change nothing ----
 WEBSERVER=nginx; VHOST="$T/no-server-block.conf"
 _before=$(cat "$VHOST")

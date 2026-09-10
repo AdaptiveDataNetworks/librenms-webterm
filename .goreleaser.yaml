@@ -55,6 +55,15 @@ archives:
       # other and the tarball install silently skips proxy setup.
       - packaging/webserver.sh
 
+snapshot:
+  # A snapshot is built from commits AHEAD of the last tag, so it must sort
+  # above it. The default stamps the current tag -- 1.0.9-SNAPSHOT-<sha> --
+  # which nfpm renders as 1.0.9~SNAPSHOT-<sha> for deb, and `~` sorts BELOW
+  # everything. Now that a package repository exists, that made a dev-channel
+  # build look OLDER than the release it is ahead of, so `apt upgrade` would
+  # quietly move a tester backwards onto 1.0.9. incpatch gives 1.0.10-SNAPSHOT.
+  version_template: '{{ incpatch .Version }}-SNAPSHOT-{{ .ShortCommit }}'
+
 checksum:
   name_template: checksums.txt
   algorithm: sha256
@@ -108,6 +117,15 @@ nfpms:
       preinstall: packaging/scripts/preinstall.sh
       postinstall: packaging/scripts/postinstall.sh
       preremove: packaging/scripts/preremove.sh
+
+    rpm:
+      scripts:
+        # %posttrans is the only hook that runs after the OUTGOING package's
+        # %preun, and an upgrade from <= 1.0.9 needs exactly that: those
+        # releases stopped and disabled the unit with no argument guard.
+        # There is no deb equivalent -- postinstall.sh handles that case by
+        # version comparison instead.
+        posttrans: packaging/scripts/posttrans.sh
 
 dockers:
   - image_templates:

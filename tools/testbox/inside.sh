@@ -126,19 +126,55 @@ grep -q '^[[:space:]]*WEBTERM_ALLOWED_ORIGINS=http://localhost$' /etc/librenms-w
     || bad "WEBTERM_ALLOWED_ORIGINS is not http://localhost"
 
 # ------------------------------------------------------------------ upgrade --
-# The bug this catches: a package upgrade that leaves the gateway stopped and
-# disabled, which is what the deb/rpm argument mix-up used to do.
-if [ "$FAMILY" = debian ]; then
-    dpkg -i "$DEB" >/dev/null 2>&1
+# Upgrade from the REAL previous release, not from a second copy of the package
+# under test. The bug this exists to catch is done by the OUTGOING package's
+# maintainer scripts -- 1.0.9's preremove stopped and disabled the unit with no
+# argument guard -- so reinstalling the new package cannot see it. Measured:
+# active+enabled went to inactive+disabled, silently, on both formats.
+if [ "$FAMILY" = debian ]; then PREV_PKG=/prev/prev.deb; else PREV_PKG=/prev/prev.rpm; fi
+
+if [ ! -f "$PREV_PKG" ]; then
+    echo "    SKIP: no ${PREV_TAG:-previous} package available, upgrade case not exercised" >&2
 else
-    rpm -U --nodeps --force "$RPM" >/dev/null 2>&1
+    systemctl stop librenms-webterm-gw >/dev/null 2>&1 || true
+    if [ "$FAMILY" = debian ]; then
+        dpkg -i --force-downgrade "$PREV_PKG" >/dev/null 2>&1
+    else
+        rpm -U --oldpackage --nodeps --force "$PREV_PKG" >/dev/null 2>&1
+    fi
+    systemctl enable --now librenms-webterm-gw >/dev/null 2>&1
+    if systemctl is-active --quiet librenms-webterm-gw && systemctl is-enabled --quiet librenms-webterm-gw; then
+        ok "${PREV_TAG:-previous} installed, running and enabled"
+    else
+        bad "could not get ${PREV_TAG:-previous} into a running state to upgrade from"
+    fi
+
+    if [ "$FAMILY" = debian ]; then
+        dpkg -i "$DEB" >/dev/null 2>&1
+    else
+        rpm -U --nodeps --force "$RPM" >/dev/null 2>&1
+    fi
+    sleep 2
+    systemctl is-active --quiet librenms-webterm-gw \
+        && ok "still running after upgrading from ${PREV_TAG:-previous}" \
+        || bad "upgrading from ${PREV_TAG:-previous} left the gateway STOPPED"
+    systemctl is-enabled --quiet librenms-webterm-gw \
+        && ok "still enabled after upgrading from ${PREV_TAG:-previous}" \
+        || bad "upgrading from ${PREV_TAG:-previous} left the gateway DISABLED"
+
+    # And the reverse must hold: an upgrade must not resurrect a gateway the
+    # operator deliberately stopped on a release that shuts down cleanly.
+    systemctl stop librenms-webterm-gw >/dev/null 2>&1
+    systemctl disable librenms-webterm-gw >/dev/null 2>&1
+    if [ "$FAMILY" = debian ]; then
+        dpkg -i "$DEB" >/dev/null 2>&1
+    else
+        rpm -U --nodeps --force "$RPM" >/dev/null 2>&1
+    fi
+    sleep 2
+    systemctl is-active --quiet librenms-webterm-gw \
+        && bad "a same-version upgrade started a gateway the operator had stopped" \
+        || ok "an upgrade leaves a deliberately stopped gateway alone"
 fi
-sleep 1
-systemctl is-active --quiet librenms-webterm-gw \
-    && ok "gateway still running after a package upgrade" \
-    || bad "package upgrade left the gateway stopped"
-systemctl is-enabled --quiet librenms-webterm-gw \
-    && ok "gateway still enabled after a package upgrade" \
-    || bad "package upgrade left the gateway disabled"
 
 [ "$fails" -eq 0 ] || exit 1

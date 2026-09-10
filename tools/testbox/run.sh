@@ -33,6 +33,24 @@ fi
 DEB=$(ls dist/*_linux_amd64.deb | head -1)
 RPM=$(ls dist/*_linux_amd64.rpm | head -1)
 
+# The upgrade case has to start from a REAL previous release. Installing the
+# package under test twice exercises the new maintainer scripts as both halves
+# of the upgrade, which is precisely the shape that hid a bug where every 1.0.9
+# install came out of the upgrade stopped and disabled: the damage is done by
+# the OUTGOING package's scripts, and those only exist in the old artifact.
+PREV=$(git tag --sort=-v:refname | head -1)
+PREVDIR=$(mktemp -d)
+trap 'rm -rf "$PREVDIR"' EXIT
+PREVBASE="https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/$PREV"
+echo "== fetching $PREV to upgrade from"
+if curl -fsSL -o "$PREVDIR/prev.deb" "$PREVBASE/librenms-webterm-gw_${PREV#v}_linux_amd64.deb" 2>/dev/null \
+   && curl -fsSL -o "$PREVDIR/prev.rpm" "$PREVBASE/librenms-webterm-gw_${PREV#v}_linux_amd64.rpm" 2>/dev/null; then
+    echo "   got $PREV"
+else
+    echo "   WARNING: could not fetch $PREV -- the upgrade case will be SKIPPED, not passed"
+    rm -f "$PREVDIR/prev.deb" "$PREVDIR/prev.rpm"
+fi
+
 for distro in "${DISTROS[@]}"; do
     img="librenms-webterm-testbox:$distro"
     if ! podman image exists "$img"; then
@@ -46,7 +64,7 @@ for distro in "${DISTROS[@]}"; do
         echo ""
         echo "=============== $distro / $ws ==============="
         c=$(podman run -d --systemd=always \
-            -v "$PWD:/src:ro" \
+            -v "$PWD:/src:ro" -v "$PREVDIR:/prev:ro" \
             "$img")
         trap 'podman rm -f "$c" >/dev/null 2>&1 || true' EXIT
 
@@ -56,6 +74,7 @@ for distro in "${DISTROS[@]}"; do
         done
 
         if podman exec "$c" env WS="$ws" DEB="/src/$DEB" RPM="/src/$RPM" \
+                PREV_TAG="$PREV" \
                 bash /src/tools/testbox/inside.sh; then
             echo "  PASS: $distro / $ws"
         else
