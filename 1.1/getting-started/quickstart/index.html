@@ -375,18 +375,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-install-the-gateway" class="md-nav__link">
+  <a href="#2-install-everything" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Install the gateway
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-wire-it-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Wire it up
+      2. Install everything
     </span>
   </a>
   
@@ -1749,18 +1740,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-install-the-gateway" class="md-nav__link">
+  <a href="#2-install-everything" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Install the gateway
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-wire-it-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      3. Wire it up
+      2. Install everything
     </span>
   </a>
   
@@ -1867,84 +1849,45 @@
 </div>
 <p>Enable the plugin in the web UI under <strong>Overview → Plugins → Plugin Admin</strong>.</p>
 <p>Nothing works yet — that is intentional. WebTerm ships default-deny.</p>
-<h2 id="2-install-the-gateway">2. Install the gateway<a class="headerlink" href="#2-install-the-gateway" title="Permanent link">&para;</a></h2>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Debian / Ubuntu</label><label for="__tabbed_1_2">RHEL / Rocky / Alma</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
+<h2 id="2-install-everything">2. Install everything<a class="headerlink" href="#2-install-everything" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>install<span class="w"> </span>-d<span class="w"> </span>-m<span class="w"> </span><span class="m">0755</span><span class="w"> </span>/usr/share/keyrings
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>gpg<span class="w"> </span>--dearmor<span class="w"> </span>-o<span class="w"> </span>/usr/share/keyrings/adn-archive-keyring.gpg
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/apt/sources.list.d/adn.sources<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="s">Types: deb</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="s">URIs: https://packages.adaptivedatanetworks.com/deb</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="s">Suites: stable</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="s">Components: main</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="s">Architectures: amd64 arm64</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="s">Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="s">EOF</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>less<span class="w"> </span>install.sh<span class="w">          </span><span class="c1"># read it before you run it</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>sh<span class="w"> </span>install.sh
 </code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>rpm<span class="w"> </span>--import<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/yum.repos.d/adn.repo<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s">[adn]</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s">name=Adaptive Data Networks</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s">baseurl=https://packages.adaptivedatanetworks.com/rpm/</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s">enabled=1</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s">gpgcheck=1</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s">repo_gpgcheck=1</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s">gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s">EOF</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>dnf<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
-</code></pre></div>
-</div>
-</div>
-</div>
-<p>Adding the repository means <code>apt upgrade</code> and <code>dnf upgrade</code> pick up future
-gateway releases on their own. See <a href="../../install/package-repo/">the package repository</a>
-for the key's fingerprint and how to remove the repository later.</p>
-<details class="info">
-<summary>Without adding the repository</summary>
-<p>Download the package or the installer from the
-<a href="https://github.com/AdaptiveDataNetworks/librenms-webterm/releases">release page</a> instead — see
-<a href="../../install/bare-metal/#2-the-gateway-package">installing on bare metal</a>.</p>
-</details>
-<p>The binary lands at <code>/usr/bin/librenms-webterm-gw</code> and binds <code>127.0.0.1:8377</code>
-only. It is not reachable from outside the host, and it refuses to start
-without a valid 32-byte secret.</p>
-<p>It is deliberately <strong>not</strong> started yet. A gateway running before its allowed
-origins are set refuses every browser connection with a 403 and looks broken.</p>
-<h2 id="3-wire-it-up">3. Wire it up<a class="headerlink" href="#3-wire-it-up" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>librenms-webterm-setup
-</code></pre></div>
-<p>This is the rest of the install in one command: it finds your LibreNMS
-directory and web server, asks for the URL your operators use, adds the proxy
-to your vhost, shares the gateway secret with the LibreNMS user, starts the
-gateway, and checks its own work.</p>
-<p>It shows you the plan and does nothing until you say yes, backs up your vhost
-before touching it, and restores it if your web server rejects the result.
-Every prompt has a flag for unattended runs, and <code>--dry-run</code> prints the plan
-and exits.</p>
+<p>It shows a plan and does nothing until you say yes. Then it adds the
+<a href="../../install/package-repo/">package repository</a> — after checking its signing key
+against the published fingerprint — installs the gateway from it, installs and
+migrates the plugin as the <code>librenms</code> user, adds the WebSocket proxy to your
+vhost, offers the SELinux boolean on RHEL-family hosts, and verifies the whole
+path before it exits.</p>
+<p>Installing the gateway from the repository rather than a downloaded file is what
+makes <code>apt upgrade</code> and <code>dnf upgrade</code> pick up later releases on their own.</p>
 <div class="admonition note">
 <p class="admonition-title">It will ask for your LibreNMS URL</p>
-<p>That one cannot be inferred. <code>APP_URL</code> is unset on a stock LibreNMS and
-reads back as <code>http://localhost</code>, <code>base_url</code> is legitimately a bare path,
-and <code>server_name</code> knows nothing about a TLS terminator in front of it. The
-browser sends the origin <em>it</em> used, so that is the one the gateway must be
-told about — scheme included. A mismatch is rejected deliberately: origin
-checking is what prevents cross-site WebSocket hijacking.</p>
+<p>That one cannot be inferred. <code>APP_URL</code> is unset on a stock LibreNMS and reads
+back as <code>http://localhost</code>, <code>base_url</code> is legitimately a bare path, and
+<code>server_name</code> knows nothing about a TLS terminator in front of it. The browser
+sends the origin <em>it</em> used, so that is the one the gateway must be told about —
+scheme included. A mismatch is rejected deliberately: origin checking is what
+prevents cross-site WebSocket hijacking.</p>
 </div>
+<p>Every prompt has a flag, so it runs unattended:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--origin<span class="w"> </span>https://librenms.example.com<span class="w"> </span>-y
+</code></pre></div>
+<p><code>--dry-run</code> prints the plan and exits. The exit code is <code>webterm:doctor</code>'s, so it
+is safe to gate a playbook on.</p>
+<details class="info">
+<summary>Doing it in pieces instead</summary>
+<p>Add the repository and install the two halves yourself — see
+<a href="../../install/bare-metal/">installing on bare metal</a>. The package ships the
+configuration half as <code>librenms-webterm-setup</code>, so you can install the
+gateway however you like and run only that.</p>
+</details>
 <h2 id="4-confirm-both-halves-agree">4. Confirm both halves agree<a class="headerlink" href="#4-confirm-both-halves-agree" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./lnms<span class="w"> </span>webterm:doctor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
 <p>The setup helper already ran this and exited with its status, so if it finished
 cleanly there is nothing to do here.</p>
@@ -1957,20 +1900,20 @@ The <a href="../../operate/reverse-proxy/">reverse proxy</a> page explains which
 are load-bearing and what breaks without each one.</p>
 </details>
 <h2 id="5-add-a-credential-and-enable-one-device">5. Add a credential and enable one device<a class="headerlink" href="#5-add-a-credential-and-enable-one-device" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./lnms<span class="w"> </span>webterm:credentials:set<span class="w"> </span>--device<span class="o">=</span>core-sw-01<span class="w"> </span>--username<span class="o">=</span>netops
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>./lnms<span class="w"> </span>webterm:target:enable<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./lnms<span class="w"> </span>webterm:credentials:set<span class="w"> </span>--device<span class="o">=</span>core-sw-01<span class="w"> </span>--username<span class="o">=</span>netops
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./lnms<span class="w"> </span>webterm:target:enable<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>You are prompted for the password; it is never passed as an argument, so it stays out of your shell history and out of <code>ps</code>.</p>
 <p>Record the device's host key:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>./lnms<span class="w"> </span>webterm:hostkey-scan<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./lnms<span class="w"> </span>webterm:hostkey-scan<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>Check the fingerprint against what the device reports before accepting it. This is the one step people skip; it is also the step that stops you handing credentials to an impostor.</p>
 <h2 id="6-grant-yourself-access">6. Grant yourself access<a class="headerlink" href="#6-grant-yourself-access" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./lnms<span class="w"> </span>webterm:ability<span class="w"> </span>grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--ability<span class="o">=</span>use
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>./lnms<span class="w"> </span>webterm:grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>./lnms<span class="w"> </span>webterm:ability<span class="w"> </span>grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--ability<span class="o">=</span>use
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>./lnms<span class="w"> </span>webterm:grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>Shell access is deliberately separate from — and narrower than — being able to <em>see</em> a device in LibreNMS. Being an admin is not sufficient.</p>
 <h2 id="7-open-a-terminal">7. Open a terminal<a class="headerlink" href="#7-open-a-terminal" title="Permanent link">&para;</a></h2>
@@ -1982,19 +1925,19 @@ TOTP. If your account has no two-factor enrolled you will be denied with
 <code>step_up_required</code> no matter what else is configured.</p>
 <p>Enrol TOTP in LibreNMS under <strong>Preferences → Two-Factor Auth</strong>, or, if you
 have decided this control is not for you, turn it off:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># as the librenms user</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./lnms<span class="w"> </span>webterm:config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>security.step_up<span class="w"> </span><span class="nb">false</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># as the librenms user</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./lnms<span class="w"> </span>webterm:config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>security.step_up<span class="w"> </span><span class="nb">false</span>
 </code></pre></div>
 <p><code>./lnms webterm:doctor</code> reports which of the two you are in.</p>
 </div>
 <h2 id="when-it-does-not-work">When it does not work<a class="headerlink" href="#when-it-does-not-work" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./lnms<span class="w"> </span>webterm:why<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./lnms<span class="w"> </span>webterm:why<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>This runs the real authorization check and tells you which step failed and the exact command to fix it. Start here before reading logs.</p>
 <p>For gateway-side problems:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>librenms-webterm-gw<span class="w"> </span>-f
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>librenms-webterm-gw<span class="w"> </span>-f
 </code></pre></div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
