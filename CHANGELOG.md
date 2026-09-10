@@ -114,12 +114,17 @@ page, and scopes credentials so one secret can serve a fleet.
 
 ### Changed
 
-- **`webterm:credentials:list` no longer takes `--device=`.** With scopes, "the
-  credentials for this device" is a different question from "the credentials
-  stored", and answering it means precedence, not filtering. Use
-  `webterm:credentials:explain --device=` for that; `credentials:list` now lists
-  everything with its scope. Scripts passing `--device=` will fail rather than
-  silently list the wrong thing.
+- **`webterm:credentials:list --device=` now lists everything that applies to
+  that device**, in the order the resolver uses, with the winner marked. Before
+  scopes it could only mean "that device's row", because that was the only kind
+  there was. Filtering to device-scoped rows alone would now print an empty table
+  for a device that connects perfectly well on a group or global credential,
+  which is the exact misreading this command exists to prevent — so it shows the
+  candidates instead. Never fewer rows than before, and the same query the
+  resolver runs, so the listing cannot disagree with what the device does.
+
+  `webterm:credentials:explain --device=` remains the fuller answer: it names
+  what each candidate beat and why.
 
 - `webterm:credentials:set` and `:forget` take `--global` and `--group=` as well
   as `--device=`. Exactly one is required — there is no default, because

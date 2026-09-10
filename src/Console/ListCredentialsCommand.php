@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AdaptiveDataNetworks\WebTerm\Console;
 
+use AdaptiveDataNetworks\WebTerm\Authorization\Contracts\GroupSource;
 use AdaptiveDataNetworks\WebTerm\Console\Concerns\ResolvesDevices;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialEncrypter;
 use AdaptiveDataNetworks\WebTerm\Credentials\CredentialScope;
@@ -25,12 +26,19 @@ final class ListCredentialsCommand extends Command
 {
     use ResolvesDevices;
 
-    protected $signature = 'webterm:credentials:list';
+    protected $signature = 'webterm:credentials:list
+        {--device= : Only credentials that apply to this device, by hostname or id}';
 
     protected $description = 'List stored SSH credentials and what each one applies to';
 
-    public function handle(): int
+    public function handle(GroupSource $groups): int
     {
+        $reference = $this->option('device');
+
+        if ($reference !== null && $reference !== '') {
+            return $this->listForDevice((string) $reference, $groups);
+        }
+
         $rows = Credential::query()
             ->orderByRaw("case scope_type when 'device' then 0 when 'group' then 1 else 2 end")
             ->orderBy('scope_ref')
@@ -90,6 +98,110 @@ final class ListCredentialsCommand extends Command
         if ($mismatched > 0) {
             $this->warn(sprintf(
                 '%d credential(s) are stored under a different login than the target connects as.',
+                $mismatched
+            ));
+            $this->line('  The target principal wins. Fix either side:');
+            $this->line('    ./lnms webterm:target:enable --device=<device> --principal=<login>');
+            $this->line('    ./lnms webterm:credentials:set --device=<device> --username=<login>');
+        }
+
+        if ($stale > 0) {
+            $this->warn(sprintf('%d credential(s) still use a superseded encryption key.', $stale));
+            $this->line('  Re-encrypt them with: ./lnms webterm:credentials:rekey');
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Everything that applies to one device, in the order the resolver uses.
+     *
+     * This filter existed before scopes and was dropped when they arrived, on the
+     * grounds that "the credentials for this device" had become a precedence
+     * question rather than a filter. That was right about the question and wrong
+     * about the answer: scripts already used the flag, and an operator asking
+     * about a device wants what the device will do.
+     *
+     * So it lists every candidate rather than only device-scoped rows. Filtering
+     * to device scope alone would print an empty table for a device that connects
+     * perfectly well on a group or global credential -- the exact misreading this
+     * command exists to prevent. It is a superset of the pre-scope behaviour: the
+     * device's own row is still there, and never fewer rows than before.
+     *
+     * The candidate set comes from the same query the resolver uses, so this
+     * cannot drift from what actually happens at connect time.
+     */
+    private function listForDevice(string $reference, GroupSource $groups): int
+    {
+        $device = $this->findDevice($reference);
+
+        if ($device === null) {
+            $this->error(sprintf('No such device: %s', $reference));
+
+            return self::FAILURE;
+        }
+
+        $deviceId = (int) $device->device_id;
+        $groupIds = $groups->staticGroupIdsFor($device);
+        $rows = Credential::candidatesFor($deviceId, $groupIds)->get();
+
+        $principal = Target::query()
+            ->where('device_id', $deviceId)
+            ->where('protocol', 'ssh')
+            ->value('principal');
+
+        $this->line('');
+        $this->line(sprintf('  <options=bold>%s</> (device %d)', $device->hostname ?? $deviceId, $deviceId));
+        $this->line(sprintf('  connects as:   %s', $principal ?? '<no target enabled>'));
+        $this->line('');
+
+        if ($rows->isEmpty()) {
+            $this->warn('  No stored credential applies to this device.');
+            $this->line('    ./lnms webterm:credentials:set --device='.($device->hostname ?? $deviceId).' --username=<login>');
+            $this->line('    ./lnms webterm:credentials:set --global --username=<login>');
+
+            return self::SUCCESS;
+        }
+
+        $currentKey = (new CredentialEncrypter)->keyId();
+        $table = [];
+        $mismatched = 0;
+        $stale = 0;
+
+        foreach ($rows as $i => $row) {
+            // Every candidate would be used with THIS device's principal, so the
+            // agreement check is meaningful for shared rows here in a way it is
+            // not in the unfiltered listing.
+            $agrees = $principal === null || $principal === $row->username;
+            $current = $row->key_id === $currentKey;
+
+            $mismatched += $agrees ? 0 : 1;
+            $stale += $current ? 0 : 1;
+
+            $table[] = [
+                $i === 0 ? 'USES' : '',
+                $this->scopeLabel($row->scope_type, $row->scope_ref),
+                $row->method,
+                $row->username,
+                $agrees ? 'yes' : 'NO',
+                $current ? 'current' : 'OLD KEY',
+                $row->updated_at?->toDateTimeString() ?? '-',
+            ];
+        }
+
+        $this->table(
+            ['', 'Applies to', 'Method', 'Stored as', 'Agrees?', 'Key', 'Updated'],
+            $table
+        );
+
+        if ($rows->count() > 1) {
+            $this->line('  Most specific wins: device, then group, then global.');
+            $this->line('  Why, in full:  ./lnms webterm:credentials:explain --device='.($device->hostname ?? $deviceId));
+        }
+
+        if ($mismatched > 0) {
+            $this->warn(sprintf(
+                '%d credential(s) are stored under a different login than this device connects as.',
                 $mismatched
             ));
             $this->line('  The target principal wins. Fix either side:');

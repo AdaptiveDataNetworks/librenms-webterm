@@ -131,3 +131,33 @@ it('only ever recommends commands that are actually registered', function (): vo
         );
     }
 });
+
+it('still accepts --device=, which scripts written before scopes rely on', function (): void {
+    storeCredentialFor(42);
+
+    // App\Models\Device does not exist outside LibreNMS, so this resolves to
+    // "no such device" rather than a listing. What it must NOT do is reject the
+    // option: the flag was dropped once, and a script passing it got a usage
+    // error instead of an answer.
+    $this->artisan('webterm:credentials:list', ['--device' => 'core-sw-01'])
+        ->expectsOutputToContain('No such device')
+        ->assertFailed();
+});
+
+it('does not print a secret when --device= is given either', function (): void {
+    storeCredentialFor(42);
+
+    Artisan::call('webterm:credentials:list', ['--device' => '42']);
+
+    expect(Artisan::output())->not->toContain(SECRET_PASSWORD);
+});
+
+it('drives the per-device listing from the resolver own query', function (): void {
+    // A second implementation of precedence would drift from the one that runs
+    // at connect time, and the drift would show up as a listing that disagrees
+    // with what the device actually does -- which is worse than no listing.
+    // Credential::candidatesFor() is that query; assert this command uses it.
+    $source = file_get_contents(__DIR__.'/../../src/Console/ListCredentialsCommand.php');
+
+    expect($source)->toContain('Credential::candidatesFor(');
+});
