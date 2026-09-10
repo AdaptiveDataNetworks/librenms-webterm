@@ -105,7 +105,7 @@ pub   rsa4096 2026-09-10 [SC] [expires: 2031-09-09]
 uid   Adaptive Data Networks Package Signing <packages@adaptivedatanetworks.com>
 ```
 
-The same fingerprint is published in [SECURITY.md]({{ config.repo_url }}/blob/main/SECURITY.md).
+The same fingerprint is published in [SECURITY.md](https://github.com/AdaptiveDataNetworks/librenms-webterm/blob/main/SECURITY.md).
 If the two disagree, stop and [report it](../security/disclosure.md).
 
 ??? question "Why RSA and not ed25519?"

@@ -77,7 +77,7 @@ for the key's fingerprint and how to remove the repository later.
 ??? info "Without adding the repository"
 
     Download the package or the installer from the
-    [release page]({{ config.repo_url }}/releases) instead — see
+    [release page](https://github.com/AdaptiveDataNetworks/librenms-webterm/releases) instead — see
     [installing on bare metal](../install/bare-metal.md#2-the-gateway-package).
 
 The binary lands at `/usr/bin/librenms-webterm-gw` and binds `127.0.0.1:8377`

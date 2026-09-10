@@ -124,6 +124,22 @@ function relativeTo(string $base, string $path): ?string
     return $real === false ? null : ltrim(str_replace($base, '', $real), '/');
 }
 
+// mkdocs has no template engine here -- mkdocs-macros is not installed -- so a
+// `{{ ... }}` renders literally, and inside a link target `mkdocs build
+// --strict` aborts with "contains an unrecognized relative link". That got past
+// this script once and broke the Docs workflow, which is precisely the failure
+// this script exists to catch before a push.
+foreach ($onDisk as $rel) {
+    $body = file_get_contents($docs.'/'.$rel);
+    if (preg_match_all('/\{\{[^}\n]*\}\}/', $body, $m) === 0) {
+        continue;
+    }
+    foreach (array_unique($m[0]) as $hit) {
+        $errors[] = "mkdocs has no template engine, so this renders literally and "
+            ."breaks --strict inside a link: docs/{$rel}: {$hit}";
+    }
+}
+
 if ($errors !== []) {
     fwrite(STDERR, "check-docs FAILED\n\n");
     foreach ($errors as $e) {
