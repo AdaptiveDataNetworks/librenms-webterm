@@ -7,9 +7,12 @@
 # three files, and fetching two of them produced a script that silently skipped
 # the proxy step and could not reach the package repository.
 #
-# The modules are concatenated ahead of install.sh's body. Its source-loops stay
-# in place and simply find nothing to load, because the functions are already
-# defined -- so the bundled and unbundled forms run the same code path.
+# The modules are concatenated ahead of install.sh's body and its source-loops are
+# REMOVED. Leaving them in was the first attempt and it failed in a way worth
+# recording: install.sh installs the package, which ships its own copy of those
+# modules under /usr/share, so the loop found the RELEASED copy and redefined the
+# functions the bundle had just supplied. A bundle carrying a fix ran the older
+# code and reproduced the old symptom.
 set -eu
 
 cd "$(dirname "$0")/.."

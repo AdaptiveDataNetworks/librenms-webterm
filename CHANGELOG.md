@@ -6,6 +6,66 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.1.2] - 2026-09-10
+
+The documentation described three different installs at once. The quickstart told
+you to install the plugin by hand and then, twelve lines later, to run a script
+that installs it — on the page that advertises itself as the fast path. An audit
+of every page that carries an install instruction found fifty-five problems of
+that shape, most of them left behind when an earlier edit rewrote part of a page
+and not the rest.
+
+Nothing in the software changed. Everything here is what the software says about
+itself.
+
+### Fixed
+
+- **The quickstart no longer installs the plugin twice.** Its sections also ran
+  1, 2, 4, 5, 6, 7 — section 3 had been folded into the installer and the
+  numbering never caught up — with a collapsed block still offering to explain
+  "steps 3 and 4 by hand".
+
+- **`bare-metal.md` had the identical defect**, and it was invisible because the
+  consistency check exempts that page by name: step 1 installed the plugin, and
+  step 3's own sample output said the helper would install it. It now says which
+  to skip, and leads with the one command for readers who do not want the long
+  version.
+
+- **The installer's own `--help` said `--version VER   Required.`** That has been
+  false since 1.1.1 — it is required only with `--from-tarball`. This is the text
+  an operator reads when the docs tell them to `less install.sh`, and it shipped
+  verbatim as a release asset. A CI gate was asserting the old contract, which is
+  what kept it alive; the gate now checks the real rule and that `--help` does not
+  claim otherwise.
+
+- **`upgrading.md` told you to download `webserver.sh`**, which stopped being a
+  release asset in 1.1.1 when the installer became self-contained. That `curl`
+  404s.
+
+- **Three version-skew claims survived** the purge in 1.1.0 — in
+  `librenms-updates.md`, `releasing.md` and `compatibility.md`'s orphaned "Further
+  apart" row — and `upgrading.md` contradicted itself twice on one page, telling
+  the reader a newer gateway accepts an older plugin thirteen lines below an
+  admonition saying they must match exactly. `tools/skew-claim-check.sh` passed
+  throughout, because it matched an ASCII `N-1` and every survivor was written
+  with a Unicode minus sign.
+
+- **Four published-docs links 404'd**, in the README and in the installer's own
+  output. The docs site is versioned with mike, so a deep path needs its version
+  segment. `tools/check-docs.php` now rejects any that omit it.
+
+- **What `apt install` prints** named steps the package and the setup helper
+  already perform, including granting a group membership the same script grants
+  seven lines later. It now points at `librenms-webterm-setup`.
+
+- `SECURITY.md` said fixes were limited to "pre-1.0 development", and the README
+  called the project "pre-release, not yet suitable for production" — twelve
+  releases and a signed package repository later.
+
+- `tools/install-consistency-check.sh`, written for exactly this class of bug,
+  was wired into nothing. It runs in `preflight.sh` now, along with the corrected
+  skew check.
+
 ## [1.1.1] - 2026-09-10
 
 1.1.0's documented install did not work as written. The release page offered a

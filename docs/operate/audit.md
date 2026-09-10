@@ -47,7 +47,7 @@ Audit records carry attacker-influenced strings — hostnames, SSH banners, erro
 
 ## What is NOT recorded
 
-**Session content.** WebTerm does not record keystrokes or terminal output in v1.0. That is a deliberate omission, not an oversight — see [the roadmap](../index.md). It means the audit trail tells you *that* someone opened a shell on a device, and when, but not what they did there. If you need the latter, your device's own logging or a dedicated session-recording product is the answer today.
+**Session content.** WebTerm does not record keystrokes or terminal output. That is a deliberate omission, not an oversight. It means the audit trail tells you *that* someone opened a shell on a device, and when, but not what they did there. If you need the latter, your device's own logging or a dedicated session-recording product is the answer today.
 
 **Credentials.** No credential is written to any sink at any level. There are tests asserting it on both the PHP and Go sides.
 

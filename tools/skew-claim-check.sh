@@ -15,7 +15,10 @@ cd "$(dirname "$0")/.."
 
 fails=0
 # Phrasings that assert tolerance. Anything matching is a claim we cannot keep.
-if git grep -n -i -E 'skew (of|in each direction)|one version (apart|of skew)|N ?/ ?N-1|tolerat[a-z]* (one|a) (protocol|version)' \
+# The hyphen class matters. This check passed for a day while three claims were
+# live, because it matched ASCII "N-1" and every surviving claim was written with
+# U+2212 MINUS SIGN (N-1) by a Markdown editor. Match both, plus the en dash.
+if git grep -n -i -E 'skew (of|in each direction)|one version (apart|of skew)|N ?/ ?N[-\xe2\x80\x93\xe2\x88\x92]1|tolerat[a-z]* (one|a) (protocol|version)|version apart|Further apart' \
         -- ':!tools/skew-claim-check.sh' 2>/dev/null; then
     echo "" >&2
     echo "FAIL: the text above claims version-skew tolerance." >&2

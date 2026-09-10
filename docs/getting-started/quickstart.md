@@ -12,24 +12,7 @@ Ten minutes from nothing to a working terminal on one device, using the **databa
 - Shell access to the LibreNMS server as the `librenms` user.
 - The ability to run one long-lived service on that host.
 
-## 1. Install the plugin
-
-```bash
-# LibreNMS server, as the librenms user
-cd /opt/librenms
-./lnms plugin:add adaptivedatanetworks/librenms-webterm
-php artisan route:clear
-```
-
-!!! failure "Error: artisan must not run as root."
-
-    LibreNMS refuses to run as root. Run `su - librenms` first. If you already ran it as root, see [LibreNMS updates](../install/librenms-updates.md#common-failures).
-
-Enable the plugin in the web UI under **Overview → Plugins → Plugin Admin**.
-
-Nothing works yet — that is intentional. WebTerm ships default-deny.
-
-## 2. Install everything
+## 1. Install everything
 
 ```bash
 # LibreNMS server, as root
@@ -74,17 +57,27 @@ is safe to gate a playbook on.
     configuration half as `librenms-webterm-setup`, so you can install the
     gateway however you like and run only that.
 
-## 4. Confirm both halves agree
+## 2. Enable the plugin in LibreNMS
+
+Under **Overview → Plugins → Plugin Admin**, switch WebTerm on.
+
+The installer sets WebTerm's own `enabled` setting, but LibreNMS keeps a separate
+plugin row of its own and only an administrator in the web UI can flip it.
+
+Nothing can open a shell yet — the plugin ships default-deny. That is the next
+few steps.
+
+## 3. Confirm both halves agree
 
 ```bash
 # LibreNMS server, as the librenms user
 ./lnms webterm:doctor
 ```
 
-The setup helper already ran this and exited with its status, so if it finished
+`install.sh` already ran this and exited with its status, so if it finished
 cleanly there is nothing to do here.
 
-??? info "Doing steps 3 and 4 by hand"
+??? info "Doing the install by hand instead"
 
     Every step, written out — the reverse-proxy stanzas, the secret's group
     permissions, SELinux, and what to set where — is in
@@ -92,7 +85,7 @@ cleanly there is nothing to do here.
     The [reverse proxy](../operate/reverse-proxy.md) page explains which lines
     are load-bearing and what breaks without each one.
 
-## 5. Add a credential and enable one device
+## 4. Add a credential and enable one device
 
 ```bash
 # LibreNMS server, as the librenms user
@@ -111,7 +104,7 @@ Record the device's host key:
 
 Check the fingerprint against what the device reports before accepting it. This is the one step people skip; it is also the step that stops you handing credentials to an impostor.
 
-## 6. Grant yourself access
+## 5. Grant yourself access
 
 ```bash
 # LibreNMS server, as the librenms user
@@ -121,7 +114,7 @@ Check the fingerprint against what the device reports before accepting it. This 
 
 Shell access is deliberately separate from — and narrower than — being able to *see* a device in LibreNMS. Being an admin is not sufficient.
 
-## 7. Open a terminal
+## 6. Open a terminal
 
 Go to the device page for `core-sw-01`. The **Terminal** panel appears in the overview column. Click **Open terminal**, complete the TOTP step-up prompt, and you should land at a shell.
 

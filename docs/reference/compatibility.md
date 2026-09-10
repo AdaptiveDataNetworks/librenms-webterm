@@ -44,6 +44,5 @@ The plugin and the gateway version independently, and LibreNMS's updater re-reso
 |---|---|
 | Same version | Normal operation |
 | Any protocol mismatch | Refused. The plugin raises `GatewayVersionException` and the session is not created |
-| Further apart | Terminal button disabled, with both versions named |
 
 Check with `./lnms webterm:doctor`.

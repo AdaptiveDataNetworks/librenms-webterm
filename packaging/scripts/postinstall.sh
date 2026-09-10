@@ -16,9 +16,8 @@ if [ ! -f /etc/librenms-webterm/gateway.secret ]; then
     echo ""
     echo "A shared secret was generated at /etc/librenms-webterm/gateway.secret"
     echo ""
-    echo "Give LibreNMS read access to that file, then:"
-    echo "  su - librenms"
-    echo "  (the plugin already defaults to /etc/librenms-webterm/gateway.secret -- nothing to set)"
+    echo "The librenms account is already in the librenms-webterm group, so it can"
+    echo "read that file, and the plugin already defaults to that path."
     echo ""
 fi
 
@@ -113,5 +112,9 @@ if webterm_is_upgrade_install "${1:-}" "${2:-}"; then
     exit 0
 fi
 
-echo "Set WEBTERM_ALLOWED_ORIGINS in /etc/librenms-webterm/gateway.env before starting."
-echo "Then: systemctl enable --now librenms-webterm-gw"
+echo "Next:  librenms-webterm-setup"
+echo ""
+echo "That sets the allowed origin, adds the reverse proxy, installs the plugin and"
+echo "starts the gateway. Doing it by hand instead means setting"
+echo "WEBTERM_ALLOWED_ORIGINS in /etc/librenms-webterm/gateway.env first -- a gateway"
+echo "started without one refuses every browser connection with a 403."

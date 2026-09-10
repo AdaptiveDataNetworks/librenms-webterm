@@ -152,10 +152,19 @@ jobs:
             sh -n "$f" || exit 1
           done
 
-      - name: install.sh refuses to run without a pinned version
+      - name: install.sh requires a pinned version only on the tarball path
         run: |
-          if sh packaging/install.sh --dry-run 2>/dev/null; then
-            echo "::error::install.sh should require --version"
+          # From the repository the package manager pins the version and supplies
+          # upgrades, so demanding --version there is meaningless. This gate used
+          # to assert the opposite, which is what kept "--version  Required." in
+          # the installer's own help long after the code stopped requiring it.
+          if sh packaging/install.sh --from-tarball --dry-run 2>/dev/null; then
+            echo "::error::install.sh --from-tarball must refuse to run without --version"
+            exit 1
+          fi
+          # And --help must not claim otherwise.
+          if sh packaging/install.sh --help 2>&1 | grep -qE '^\s*--version VER\s+Required\.'; then
+            echo "::error::install.sh --help still says --version is unconditionally required"
             exit 1
           fi
 

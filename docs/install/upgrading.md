@@ -9,7 +9,9 @@ Plugin and gateway version **independently**, and that is the normal state, not 
 | Same version | Normal |
 | Any protocol mismatch | Refused outright |
 
-The button disabling is deliberate. Failing at connect time — after the user has clicked, authenticated and waited — is a worse experience than not offering the button.
+The terminal tab checks the gateway's advertised protocol range before it offers
+to connect, so a mismatch shows as a refusal with both versions named rather than
+a failure after the operator has clicked and waited.
 
 Check both halves at any time:
 
@@ -93,19 +95,20 @@ rpm -q librenms-webterm-gw 2>/dev/null || dpkg -s librenms-webterm-gw 2>/dev/nul
 
 === "Tarball (install.sh)"
 
-    Fetch the installer belonging to the version you are moving to, then re-run
-    it. It verifies the checksum itself, replaces the binary and the systemd
-    unit, and leaves `gateway.env` and `gateway.secret` untouched.
+    Re-running the installer upgrades an existing install. On a host that can
+    reach the package repository it will move you onto packages, which is the
+    better end state — after that, `apt upgrade` and `dnf upgrade` do this for
+    you. Either way it leaves `gateway.env` and `gateway.secret` untouched.
 
     ```bash
     # as root
     BASE=https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z
     curl -fsSLO $BASE/install.sh
-    curl -fsSLO $BASE/webserver.sh
-    sh install.sh --version vX.Y.Z
+    sh install.sh
     ```
 
-    Fetch both: `install.sh` sources `webserver.sh` for the proxy step. It
+    The published `install.sh` is self-contained — the proxy and repository
+    logic are compiled into it, so there is nothing else to fetch. It
     restarts the gateway itself and reports whether it came back up, so there
     is no separate `systemctl restart` to run.
 
@@ -135,7 +138,9 @@ The upgrade never regenerates the shared secret. If it did, LibreNMS would keep 
 
 ## Order
 
-Upgrade the **gateway first**, then the plugin. A newer gateway accepts an older plugin's protocol version; the reverse is not guaranteed.
+Upgrade **both**, close together. Neither order is safe to leave half-finished:
+the two must agree on the protocol version exactly, so whichever you upgrade
+first, the terminal is refused until the other follows.
 
 ## After any upgrade
 

@@ -140,6 +140,30 @@ foreach ($onDisk as $rel) {
     }
 }
 
+// The docs site is versioned with mike, so every deep path lives under a version
+// segment. A link to /librenms-webterm/install/... returns 404 -- it must be
+// /librenms-webterm/latest/install/... . Two of these shipped in the README and
+// one in the installer's own output before anyone clicked them.
+$unversioned = [];
+foreach (array_merge($onDisk, ['../README.md']) as $rel) {
+    $path = str_starts_with($rel, '../') ? $root.'/'.substr($rel, 3) : $docs.'/'.$rel;
+    if (! is_file($path)) {
+        continue;
+    }
+    if (preg_match_all('#adaptivedatanetworks\.github\.io/librenms-webterm/(?!latest/)[a-z-]+/#', (string) file_get_contents($path), $m)) {
+        foreach (array_unique($m[0]) as $hit) {
+            $unversioned[] = $rel.': '.$hit;
+        }
+    }
+}
+if ($unversioned !== []) {
+    fwrite(STDERR, "check-docs: these published-docs links omit the version segment and 404:\n");
+    foreach ($unversioned as $u) {
+        fwrite(STDERR, "  {$u}\n");
+    }
+    exit(1);
+}
+
 if ($errors !== []) {
     fwrite(STDERR, "check-docs FAILED\n\n");
     foreach ($errors as $e) {

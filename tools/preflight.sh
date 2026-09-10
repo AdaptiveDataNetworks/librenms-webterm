@@ -34,6 +34,7 @@ fi
 echo "== package lifecycle"
 sh tools/package-lifecycle-check.sh
 sh tools/skew-claim-check.sh
+sh tools/install-consistency-check.sh
 sh tools/probe-polarity-check.sh
 sh tools/dist-contents-check.sh
 sh tools/webserver-insert-check.sh

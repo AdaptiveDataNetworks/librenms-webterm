@@ -21,7 +21,7 @@ Never use `$` or `#` prompt prefixes — they break copy-paste. Never interleave
 
 ## Output
 
-**No sample output ships until it has been copy-pasted from a real run.** Invented output is worse than none: readers compare against it and conclude something is broken. CI executes the quickstart and diffs its output against this documentation.
+**No sample output ships until it has been copy-pasted from a real run.** Invented output is worse than none: readers compare against it and conclude something is broken. Sample output is checked by hand against a real run before a release; there is no job that does it for you, so it is on the person making the change.
 
 ## Failure blocks
 

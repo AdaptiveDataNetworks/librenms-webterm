@@ -8,7 +8,8 @@ Credentials come from **HashiCorp Vault** (short-lived signed SSH certificates) 
 [![Packagist](https://img.shields.io/packagist/v/adaptivedatanetworks/librenms-webterm)](https://packagist.org/packages/adaptivedatanetworks/librenms-webterm)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
-> **Status: pre-release, under active development.** Not yet suitable for production. See [the roadmap](#roadmap).
+> **Status: released and in use.** Installed from a signed package repository;
+> see [the roadmap](#roadmap) for what is deliberately not here yet.
 
 ---
 
@@ -70,7 +71,7 @@ sh install.sh
 
 It shows you a plan and does nothing until you say yes. Then it:
 
-- adds the [package repository](https://adaptivedatanetworks.github.io/librenms-webterm/install/package-repo/),
+- adds the [package repository](https://adaptivedatanetworks.github.io/librenms-webterm/latest/install/package-repo/),
   after checking its signing key against the published fingerprint, and installs
   the gateway from it — so later releases arrive with your normal package updates
 - installs and migrates the LibreNMS plugin as the `librenms` user, never as root
@@ -92,7 +93,7 @@ prints the plan and exits.
 <summary>Prefer to do it by hand?</summary>
 
 Add the repository and install the two halves yourself — see
-[installing on bare metal](https://adaptivedatanetworks.github.io/librenms-webterm/install/bare-metal/).
+[installing on bare metal](https://adaptivedatanetworks.github.io/librenms-webterm/latest/install/bare-metal/).
 The setup helper ships in the package as `librenms-webterm-setup`, so you can
 install the gateway however you like and run just the configuration half.
 

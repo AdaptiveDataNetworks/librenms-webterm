@@ -8,6 +8,21 @@ Credentials come from **HashiCorp Vault** — ideally as short-lived signed SSH 
 
     This plugin gives your monitoring system the ability to open interactive shells on your network. That is a significant, deliberate change to your security posture. [Should you enable this?](security/index.md) is an honest guide to when the answer is *no*.
 
+## Installing
+
+One command on the LibreNMS server, as root:
+
+```bash
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+less install.sh
+sh install.sh
+```
+
+It adds the signed [package repository](install/package-repo.md), installs the
+gateway and the plugin, configures the reverse proxy and verifies the result.
+The [quickstart](getting-started/quickstart.md) takes it from there to a working
+terminal.
+
 ## Where to start
 
 | You are | Start here |

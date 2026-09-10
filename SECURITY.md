@@ -34,7 +34,9 @@ Reports of these are still welcome as discussion, but they will be closed as doc
 
 ## Supported versions
 
-During pre-1.0 development, only the latest release receives fixes.
+Only the latest release receives fixes. Plugin and gateway are released
+together and must be upgraded together — they must agree on the protocol
+version exactly.
 
 ## Package signing key
 

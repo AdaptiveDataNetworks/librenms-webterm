@@ -1,5 +1,12 @@
 # Installing from the package repository
 
+!!! tip "`install.sh` does all of this for you"
+
+    The [quickstart](../getting-started/quickstart.md) adds this repository,
+    installs both halves and configures the reverse proxy in one command. This
+    page is for adding the repository on its own — to a golden image, a
+    configuration manager, or a host where you want the gateway and nothing else.
+
 Adding the repository means `apt upgrade` and `dnf upgrade` pick up new gateway
 releases like any other package, instead of you downloading a file each time.
 

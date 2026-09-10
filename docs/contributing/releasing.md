@@ -152,14 +152,16 @@ If `protocol/protocol.json` changed:
 
 - [ ] `PROTOCOL.md` updated in the same commit
 - [ ] Both generated files regenerated and committed
-- [ ] N/N−1 skew still works in both directions
-- [ ] The release notes say so prominently, because plugin and gateway upgrade independently
+- [ ] The release notes say prominently that BOTH halves must be upgraded, because
+      plugin and gateway upgrade independently and a mismatch is refused outright
 
 ## Versioning
 
 Semantic versioning. For this project specifically:
 
-- **Major** — a protocol change that breaks N−1 skew, or a migration that cannot be rolled back.
+- **Major** — a migration that cannot be rolled back, or a change that breaks an
+  interface an operator scripts against. A protocol bump is not itself major:
+  both halves ship together and a mismatch is already refused.
 - **Minor** — new features, new configuration, new protocol fields that older peers can ignore.
 - **Patch** — fixes only.
 

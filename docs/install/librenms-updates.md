@@ -110,7 +110,7 @@ the schema as newer than the code — it is the one thing that will tell you.
 
 The plugin auto-updates with LibreNMS; the gateway does not. This means **mismatched versions are the normal state**, not an edge case.
 
-WebTerm supports the current and previous protocol version (N and N−1). Within that window you get a warning banner and everything keeps working. Outside it, the terminal button disables itself rather than failing at connect time.
+Plugin and gateway must be on the same protocol version. There is no tolerance window: a mismatch is refused, and `webterm:doctor` names both versions. Upgrade the two together.
 
 Check both versions at any time:
 

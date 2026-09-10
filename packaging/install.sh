@@ -2,11 +2,16 @@
 #
 # Install and configure LibreNMS WebTerm, end to end.
 #
-# Deliberately NOT designed for `curl | sh`. It requires an explicit --version,
-# verifies a checksum, prints what it is about to do, and asks before touching
-# anything it did not create -- because piping an unread script from the
-# internet into a root shell, to install a component whose whole job is holding
-# SSH sessions to your network, is not a defensible way to deploy this.
+# Deliberately NOT designed for `curl | sh`. It prints what it is about to do and
+# asks before touching anything it did not create -- because piping an unread
+# script from the internet into a root shell, to install a component whose whole
+# job is holding SSH sessions to your network, is not a defensible way to deploy
+# this.
+#
+# By default it installs the gateway from the package repository, checking that
+# repository's signing key against a fingerprint pinned in this file, so later
+# releases arrive through apt or dnf. --from-tarball installs a pinned release
+# directly instead, and only that path needs --version.
 #
 # Download it, read it, then run it.
 #
@@ -37,9 +42,22 @@ DRY_RUN=0
 
 usage() {
     cat <<USAGE
-Usage: sudo sh install.sh --version vX.Y.Z [options]
+Usage: sudo sh install.sh [options]
 
-  --version VER         Required. The release to install, e.g. v1.1.0
+Installs the gateway from packages.adaptivedatanetworks.com, installs and
+migrates the LibreNMS plugin, configures the reverse proxy, and verifies it.
+
+Where the gateway comes from -- detected, and the repository is preferred
+because a tarball install is never upgraded by anything.
+
+  --from-repository     Add the package repository and install from it. The
+                        default wherever apt or dnf is present and the
+                        repository is reachable.
+  --from-tarball        Download a pinned release instead. Needs --version.
+  --no-install-gateway  Leave the gateway alone entirely.
+  --version VER         The release to install, e.g. v1.1.2. Required ONLY with
+                        --from-tarball; from the repository your package manager
+                        pins the version and supplies upgrades.
 
 Detection overrides -- all of these are detected, and asked about when they
 cannot be. Pass them to run without a terminal.
@@ -61,7 +79,8 @@ Actions -- each defaults to asking.
   --configure-webserver / --no-configure-webserver
   --selinux / --no-selinux
   --install-plugin / --no-install-plugin
-  --prefix DIR          Where the binary goes (default: /usr/bin)
+  --prefix DIR          Where the binary goes on the tarball path
+                        (default: /usr/bin)
 
   -y, --yes             Answer yes to every question. Implies the --*-yes forms.
   --dry-run             Print the plan and stop, changing nothing.
@@ -397,7 +416,7 @@ else
     warn "webserver.sh not found next to this script -- skipping proxy setup"
     say "  It is published beside install.sh on the release page. Download it into"
     say "  the same directory and re-run, or add the proxy by hand:"
-    say "  https://adaptivedatanetworks.github.io/librenms-webterm/operate/reverse-proxy/"
+    say "  https://adaptivedatanetworks.github.io/librenms-webterm/latest/operate/reverse-proxy/"
 fi
 
 # ------------------------------------------------------------------ selinux --

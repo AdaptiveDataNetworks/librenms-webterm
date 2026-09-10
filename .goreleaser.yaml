@@ -191,6 +191,6 @@ release:
     reverse proxy and verifies the result. Existing installs upgrade with
     `apt upgrade` or `dnf upgrade` once the repository is added.
 
-    Plugin and gateway version independently and support one protocol version.
-    There is no skew tolerance today: a mismatch is refused before the terminal
-    opens. Run `./lnms webterm:doctor` after upgrading either.
+    Plugin and gateway ship together and must be upgraded together: they support
+    exactly one protocol version and a mismatch is refused before the terminal
+    opens. Run `./lnms webterm:doctor` after upgrading.

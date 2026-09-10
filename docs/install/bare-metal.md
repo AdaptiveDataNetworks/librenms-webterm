@@ -2,11 +2,24 @@
 
 The classic `/opt/librenms` install with nginx or Apache and php-fpm.
 
-There are two paths. The setup helper does all of it and asks before each
-decision; the manual steps below are the same work written out, for anyone who
-would rather run it themselves or is automating with a configuration manager.
+Most people should not read this page. One command does all of it — see the
+[quickstart](../getting-started/quickstart.md):
+
+```bash
+# LibreNMS server, as root
+curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+less install.sh
+sh install.sh
+```
+
+What follows is that same work written out, step by step, for anyone automating
+with a configuration manager or who wants to see exactly what gets touched.
 
 ## 1. The plugin
+
+Skip this if you are going to run the setup helper in step 3 — it installs and
+migrates the plugin for you, and doing both means answering no to its plugin
+prompt (or passing `--no-install-plugin`).
 
 ```bash
 # LibreNMS server, as the librenms user
@@ -15,7 +28,9 @@ cd /opt/librenms
 php artisan route:clear
 ```
 
-Enable it under **Overview → Plugins → Plugin Admin**.
+Enable it under **Overview → Plugins → Plugin Admin**. That step is yours either
+way: the installer sets WebTerm's own `enabled` setting, but LibreNMS keeps a
+separate plugin row that only an administrator in the web UI can flip.
 
 ??? failure "Error: artisan must not run as root."
 
@@ -113,7 +128,7 @@ What URL do operators use to reach LibreNMS?
   origin: https://librenms.example.com
 
 == Plan
-  * leave the packaged gateway alone (librenms-webterm-gw 1.0.9)
+  * leave the packaged gateway alone (librenms-webterm-gw 1.1.2)
   * set WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com
   * install and migrate the plugin as librenms
   * offer to add the WebTerm proxy to nginx
@@ -168,7 +183,9 @@ librenms-webterm-setup \
 
 `--dry-run` prints the plan and exits. `--no-configure-webserver`,
 `--no-install-plugin`, `--no-selinux` and `--no-install-gateway` each opt out of
-one part. Run it with `--help` for the full list.
+one part, and `--from-tarball` installs a pinned release instead of adding the
+repository. Run it with `--help` for the full list — that is the authority, not
+this page.
 
 The exit code is `webterm:doctor`'s, so it is safe to gate a playbook on.
 
@@ -261,17 +278,21 @@ Work through whatever it reports; every failure names its fix.
 
 ## Installing from the tarball
 
-If you are not using packages, the same script ships in the release tarball
-alongside `webserver.sh`, which it needs:
+If the host cannot reach the package repository, the same script ships in the
+release tarball alongside the two modules it sources, `webserver.sh` and
+`repository.sh`:
 
 ```bash
 # as root
 curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
 tar -xzf librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
 less packaging/install.sh                     # read it first
-sh packaging/install.sh --version vX.Y.Z
+sh packaging/install.sh --from-tarball --version vX.Y.Z
 ```
 
-Here it *does* install the gateway, so `--version` is required: an unpinned
-install cannot be reproduced. It downloads the release, verifies the published
-SHA-256 before unpacking, and refuses to continue if that fails.
+`--from-tarball` is what makes `--version` required: an unpinned tarball install
+cannot be reproduced, and nothing will ever upgrade it. Without that flag, on a
+host that can reach the repository, this same command installs from the
+repository and ignores `--version` — usually what you want. The tarball path
+verifies the published SHA-256 before unpacking and refuses to continue if that
+fails.
