@@ -171,6 +171,14 @@ ln -sfn "$NEW" "$ROOT/public.new"
 mv -T "$ROOT/public.new" "$ROOT/public"
 say "  public -> releases/$STAMP"
 
+# Newly ingested packages inherit whatever label their parent had at creation
+# time, and the release tree hardlinks them, so relabel on every publish rather
+# than trusting the one-time restorecon in setup. Without this the first publish
+# after adding a package serves 403 for that package alone.
+if command -v restorecon >/dev/null 2>&1 && [ "$(getenforce 2>/dev/null)" != Disabled ]; then
+    restorecon -R "$STORE" "$NEW" >/dev/null 2>&1 || true
+fi
+
 ls -1dt "$RELEASES"/*/ 2>/dev/null | tail -n +$((KEEP_RELEASES + 1)) | while read -r old; do
     rm -rf "$old" && say "  pruned $(basename "$old")"
 done

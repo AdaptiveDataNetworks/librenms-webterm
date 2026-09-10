@@ -18,16 +18,27 @@ have() { command -v "$1" >/dev/null 2>&1; }
 [ "$(id -u)" -eq 0 ] || die "run this as root."
 
 step "Packages"
-if have apt-get; then
-    DEBIAN_FRONTEND=noninteractive apt-get update -qq
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        nginx gnupg apt-utils createrepo-c rpm curl ca-certificates >/dev/null
-elif have dnf; then
+# dnf FIRST, deliberately. This script installs EPEL's dpkg and apt-utils on an
+# EL host so it can build the deb repository -- and EPEL's apt package puts
+# apt-get on the PATH. Testing for apt-get first therefore makes the script take
+# the Debian branch on its own second run, on a Rocky box, and fail with
+# "E: Unable to locate package nginx". Debian never has dnf, so this order is
+# unambiguous in both directions.
+if have dnf; then
     # The deb half needs Debian tooling even on an EL host. apt-ftparchive comes
     # from EPEL's `apt` package and dpkg-deb from `dpkg`; without both, the deb
     # repository silently ends up with an empty Packages index rather than
     # failing loudly.
     dnf install -y -q epel-release >/dev/null 2>&1 || true
+    # CRB (PowerTools on EL8) is disabled by default and is the only place
+    # zlib-ng lives. EPEL's dpkg links against libz-ng.so.2, so without CRB the
+    # whole Debian toolchain is uninstallable and the deb half of the repository
+    # cannot be built at all. The error names libz-ng, not CRB, which is why
+    # this is worth doing rather than leaving to the operator.
+    dnf install -y -q dnf-plugins-core >/dev/null 2>&1 || true
+    for _crb in crb powertools codeready-builder-for-rhel-9-x86_64-rpms; do
+        dnf config-manager --set-enabled "$_crb" >/dev/null 2>&1 && break
+    done
     # curl is deliberately absent from this list: EL9 ships curl-minimal, which
     # already provides /usr/bin/curl and CONFLICTS with the full curl package,
     # so naming it here fails the whole transaction.
@@ -38,6 +49,10 @@ elif have dnf; then
         have "$t" || die "$t is missing and is required to build the deb repository.
   On EL it comes from EPEL: dnf install epel-release && dnf install apt-utils dpkg"
     done
+elif have apt-get; then
+    DEBIAN_FRONTEND=noninteractive apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        nginx gnupg apt-utils createrepo-c rpm curl ca-certificates >/dev/null
 else
     die "unsupported distribution: need apt-get or dnf."
 fi
@@ -127,6 +142,53 @@ if nginx -t >/dev/null 2>&1; then
 else
     rm -f "$CONF"
     say "  nginx rejected the config; nothing installed. Run 'nginx -t' to see why."
+fi
+
+step "SELinux"
+if have getenforce && [ "$(getenforce 2>/dev/null)" != Disabled ]; then
+    # nginx runs as httpd_t and may only read httpd_sys_content_t. Nothing under
+    # /srv carries that label by default, so on an enforcing host every request
+    # is denied and the whole repository serves 403 -- with the denial only in
+    # the audit log, not in nginx's error log, which is what makes it puzzling.
+    if ! have semanage; then
+        if have dnf; then
+            dnf install -y -q policycoreutils-python-utils >/dev/null 2>&1 || true
+        elif have apt-get; then
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq policycoreutils-python-utils >/dev/null 2>&1 || true
+        fi
+    fi
+    if have semanage; then
+        # Label ONLY what nginx serves. Labelling the whole tree
+        # httpd_sys_content_t looks tidier and breaks ssh: sshd_t cannot SEARCH
+        # a httpd_sys_content_t directory, so it can no longer traverse $ROOT to
+        # reach $ROOT/.ssh, and every publish fails with
+        #   Could not open user 'adnpkg' authorized keys ...: Permission denied
+        # while the client sees only "Permission denied (publickey)". $ROOT
+        # itself therefore keeps its default type, which both domains can search.
+        # store/ carries the same label as releases/ because the release trees
+        # are HARDLINKED from it, and a hardlink shares its inode and therefore
+        # its SELinux label. Label only releases/ and the metadata serves fine
+        # while every single .deb and .rpm returns 403, because the package
+        # files really are the store's inodes wearing the store's label.
+        for _served in releases store; do
+            semanage fcontext -a -t httpd_sys_content_t "$ROOT/$_served(/.*)?" 2>/dev/null \
+                || semanage fcontext -m -t httpd_sys_content_t "$ROOT/$_served(/.*)?" 2>/dev/null || true
+        done
+        # And drop the over-broad rule if an earlier version of this script set it.
+        semanage fcontext -d "$ROOT(/.*)?" 2>/dev/null || true
+        semanage fcontext -a -t ssh_home_t "$ROOT/\.ssh(/.*)?" 2>/dev/null \
+            || semanage fcontext -m -t ssh_home_t "$ROOT/\.ssh(/.*)?" 2>/dev/null || true
+        semanage fcontext -a -t gpg_secret_t "$ROOT/gnupg(/.*)?" 2>/dev/null \
+            || semanage fcontext -m -t gpg_secret_t "$ROOT/gnupg(/.*)?" 2>/dev/null || true
+        have restorecon && restorecon -RF "$ROOT" >/dev/null 2>&1 || true
+        say "  releases/ and store/ are httpd_sys_content_t; .ssh is ssh_home_t; gnupg is gpg_secret_t"
+    else
+        say "  WARNING: semanage is unavailable and SELinux is $(getenforce)."
+        say "  nginx will be denied read access and serve 403 for everything."
+        say "  Install policycoreutils-python-utils and re-run."
+    fi
+else
+    say "  not enforcing, nothing to do"
 fi
 
 step "Next"
