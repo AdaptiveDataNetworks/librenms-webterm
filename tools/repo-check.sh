@@ -32,7 +32,16 @@ podman run --rm \
     -v "$PWD:/src:ro" -v "$WORK/artifacts:/artifacts:ro" -v "$WORK/repo:/repo" \
     docker.io/library/debian:12 sh /src/tools/repo-lab/build.sh
 
-fails=0
+echo ""
+echo "=============== publish trigger (ssh forced command) ==============="
+# The path nothing else covers: sshd, the forced command, the tag validation,
+# and a real fetch-verify-sign-publish cycle against a locally served release.
+trigger_fails=0
+podman run --rm -v "$PWD:/src:ro" -v "$WORK/artifacts:/artifacts:ro" \
+    docker.io/library/debian:12 sh /src/tools/repo-lab/ssh-trigger.sh \
+    || trigger_fails=1
+
+fails=$trigger_fails
 for client in deb rpm; do
     case $client in
         deb) img=docker.io/library/debian:12 ;;

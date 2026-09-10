@@ -20,7 +20,14 @@
 # already exists and already verifies. It cannot introduce anything.
 set -eu
 
+# sshd passes no environment to a forced command, so anything an operator needs
+# to configure has to be read from a file rather than exported by a login.
+[ -r /etc/adn-repo.conf ] && . /etc/adn-repo.conf
+
 REPO="${ADN_REPO_SOURCE:-AdaptiveDataNetworks/librenms-webterm}"
+# Overridable so the test suite can serve a fake release locally, and so a
+# mirror is possible later without editing this script.
+BASE_URL="${ADN_REPO_BASE_URL:-https://github.com/$REPO/releases/download}"
 ROOT="${ADN_REPO_ROOT:-/srv/adn-packages}"
 LOG="$ROOT/publish.log"
 LOCK="$ROOT/.publish.lock"
@@ -49,7 +56,7 @@ flock -n 9 || die "another publish is already running"
 
 WORK=$(mktemp -d "$ROOT/.incoming.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
-BASE="https://github.com/$REPO/releases/download/$TAG"
+BASE="$BASE_URL/$TAG"
 
 log "fetching checksums"
 curl -fsSL --max-time 120 -o "$WORK/checksums.txt" "$BASE/checksums.txt" \
@@ -91,8 +98,18 @@ for f in "$WORK"/*.deb "$WORK"/*.rpm; do
     mv "$f" "$ROOT/incoming/"
 done
 
-log "building"
-if "$(dirname "$0")/adn-repo-build.sh" >> "$LOG" 2>&1; then
+# adn-repo-setup.sh installs these into /usr/local/bin WITHOUT the .sh suffix,
+# so hardcoding a sibling "adn-repo-build.sh" works from a checkout and fails
+# the moment it is actually installed -- which is the only place it runs.
+BUILD=""
+for candidate in "$(dirname "$0")/adn-repo-build" "$(dirname "$0")/adn-repo-build.sh" \
+                 "$(command -v adn-repo-build 2>/dev/null)"; do
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then BUILD="$candidate"; break; fi
+done
+[ -n "$BUILD" ] || die "cannot find adn-repo-build next to $0 or on PATH"
+
+log "building with $BUILD"
+if "$BUILD" >> "$LOG" 2>&1; then
     log "published $TAG"
 else
     die "build failed -- see $LOG"

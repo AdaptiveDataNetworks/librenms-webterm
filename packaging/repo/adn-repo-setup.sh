@@ -23,22 +23,48 @@ if have apt-get; then
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         nginx gnupg apt-utils createrepo-c rpm curl ca-certificates >/dev/null
 elif have dnf; then
-    dnf install -y -q nginx gnupg2 createrepo_c rpm-sign curl >/dev/null
-    have apt-ftparchive || say "  NOTE: apt-ftparchive is not packaged for EL. Either build the"
-    have apt-ftparchive || say "        deb repository on a Debian host, or install it from source."
+    # The deb half needs Debian tooling even on an EL host. apt-ftparchive comes
+    # from EPEL's `apt` package and dpkg-deb from `dpkg`; without both, the deb
+    # repository silently ends up with an empty Packages index rather than
+    # failing loudly.
+    dnf install -y -q epel-release >/dev/null 2>&1 || true
+    # curl is deliberately absent from this list: EL9 ships curl-minimal, which
+    # already provides /usr/bin/curl and CONFLICTS with the full curl package,
+    # so naming it here fails the whole transaction.
+    dnf install -y -q nginx gnupg2 createrepo_c rpm-sign apt-utils dpkg dpkg-dev >/dev/null 2>&1 \
+        || dnf install -y -q nginx gnupg2 createrepo_c rpm-sign >/dev/null
+    have curl || dnf install -y -q --allowerasing curl >/dev/null 2>&1 || true
+    for t in apt-ftparchive dpkg-deb; do
+        have "$t" || die "$t is missing and is required to build the deb repository.
+  On EL it comes from EPEL: dnf install epel-release && dnf install apt-utils dpkg"
+    done
 else
     die "unsupported distribution: need apt-get or dnf."
 fi
 say "  installed"
 
 step "User and layout"
+# /bin/sh, NOT nologin. sshd runs a forced command through the account's login
+# shell, so a nologin shell makes every publish fail with "This account is
+# currently not available" -- and the restriction buys nothing here anyway,
+# because what constrains this account is the forced command plus `restrict` in
+# authorized_keys, not the shell.
 getent passwd "$USER_NAME" >/dev/null 2>&1 || useradd --system --home-dir "$ROOT" \
-    --shell /usr/sbin/nologin --comment "ADN package repository" "$USER_NAME"
+    --shell /bin/sh --comment "ADN package repository" "$USER_NAME"
+# Correct it on a re-run over an account created by an earlier version.
+[ "$(getent passwd "$USER_NAME" | cut -d: -f7)" = /bin/sh ] || \
+    usermod --shell /bin/sh "$USER_NAME"
 install -d -o "$USER_NAME" -g "$USER_NAME" -m 0755 "$ROOT" "$ROOT/releases" "$ROOT/store"
 install -d -o "$USER_NAME" -g "$USER_NAME" -m 0750 "$ROOT/incoming"
 # The signing key lives here and nothing else may read it.
 install -d -o "$USER_NAME" -g "$USER_NAME" -m 0700 "$ROOT/gnupg"
+# sshd refuses an authorized_keys file whose directory chain is group- or
+# world-writable, and does it quietly -- the login just fails as if the key
+# were wrong.
 install -d -o "$USER_NAME" -g "$USER_NAME" -m 0700 "$ROOT/.ssh"
+touch "$ROOT/.ssh/authorized_keys"
+chown "$USER_NAME:$USER_NAME" "$ROOT/.ssh/authorized_keys"
+chmod 0600 "$ROOT/.ssh/authorized_keys"
 touch "$ROOT/publish.log"; chown "$USER_NAME:$USER_NAME" "$ROOT/publish.log"
 say "  $ROOT laid out, owned by $USER_NAME"
 
