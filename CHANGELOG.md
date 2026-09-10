@@ -6,6 +6,43 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.1.1] - 2026-09-10
+
+1.1.0's documented install did not work as written. The release page offered a
+single `install.sh` that sources two sibling modules, so an operator who fetched
+just that file got a script which skipped the reverse-proxy step and still
+reported success.
+
+### Added
+
+- **`install.sh` installs the gateway from the package repository** by default on
+  any host with apt or dnf, verifying the repository's signing key against the
+  published fingerprint first. Until now the documented install produced a
+  tarball gateway that nothing would ever upgrade, on a project that had just
+  published a signed repository — so "one command installs WebTerm" and
+  "`apt upgrade` keeps it current" are finally the same story.
+
+  `--from-tarball` keeps the previous path for an air-gapped host or one that
+  cannot reach the repository. `--version` is required only there: from the
+  repository the package manager pins the version and supplies upgrades.
+
+### Fixed
+
+- **The release page now offers one self-contained `install.sh`.** It is
+  generated from `packaging/{repository,webserver,install}.sh`, and the generator
+  strips the module source-loops rather than leaving them to find nothing —
+  because `install.sh` installs the package, which ships its own copy of those
+  modules, so the loop loaded the *released* copy and redefined the functions the
+  bundle had just supplied.
+
+- **The installer warned `/webterm/ws returned 101000` on a healthy install.**
+  curl writes its `-w` output twice on an upgraded connection: `101` for the
+  switch, then `000` when the held-open socket hits `--max-time`. No case matched
+  the concatenation, so the catch-all fired. It reads the first code now.
+
+- The installer no longer probes for a reverse proxy when told `--webserver none`,
+  which warned about a proxy the operator had just declined.
+
 ## [1.1.0] - 2026-09-10
 
 WebTerm was administered from a shell. The only page it put inside LibreNMS said
