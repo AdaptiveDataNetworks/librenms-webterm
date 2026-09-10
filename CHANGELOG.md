@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Plugin and gateway are released together and share a version number, but they are **installed separately** and support one protocol version of skew in each direction. Run `./lnms webterm:doctor` after upgrading either.
+Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
 ## [1.0.9] - 2026-09-08
 
