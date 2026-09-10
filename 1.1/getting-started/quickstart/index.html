@@ -366,54 +366,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-install-the-plugin" class="md-nav__link">
+  <a href="#1-install-everything" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Install the plugin
+      1. Install everything
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-install-everything" class="md-nav__link">
+  <a href="#2-enable-the-plugin-in-librenms" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Install everything
+      2. Enable the plugin in LibreNMS
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-confirm-both-halves-agree" class="md-nav__link">
+  <a href="#3-confirm-both-halves-agree" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Confirm both halves agree
+      3. Confirm both halves agree
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-add-a-credential-and-enable-one-device" class="md-nav__link">
+  <a href="#4-add-a-credential-and-enable-one-device" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Add a credential and enable one device
+      4. Add a credential and enable one device
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-grant-yourself-access" class="md-nav__link">
+  <a href="#5-grant-yourself-access" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Grant yourself access
+      5. Grant yourself access
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-open-a-terminal" class="md-nav__link">
+  <a href="#6-open-a-terminal" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Open a terminal
+      6. Open a terminal
     </span>
   </a>
   
@@ -1731,54 +1731,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-install-the-plugin" class="md-nav__link">
+  <a href="#1-install-everything" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Install the plugin
+      1. Install everything
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-install-everything" class="md-nav__link">
+  <a href="#2-enable-the-plugin-in-librenms" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Install everything
+      2. Enable the plugin in LibreNMS
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-confirm-both-halves-agree" class="md-nav__link">
+  <a href="#3-confirm-both-halves-agree" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Confirm both halves agree
+      3. Confirm both halves agree
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-add-a-credential-and-enable-one-device" class="md-nav__link">
+  <a href="#4-add-a-credential-and-enable-one-device" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Add a credential and enable one device
+      4. Add a credential and enable one device
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-grant-yourself-access" class="md-nav__link">
+  <a href="#5-grant-yourself-access" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Grant yourself access
+      5. Grant yourself access
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-open-a-terminal" class="md-nav__link">
+  <a href="#6-open-a-terminal" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Open a terminal
+      6. Open a terminal
     </span>
   </a>
   
@@ -1837,23 +1837,11 @@
 <li>Shell access to the LibreNMS server as the <code>librenms</code> user.</li>
 <li>The ability to run one long-lived service on that host.</li>
 </ul>
-<h2 id="1-install-the-plugin">1. Install the plugin<a class="headerlink" href="#1-install-the-plugin" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/librenms
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>./lnms<span class="w"> </span>plugin:add<span class="w"> </span>adaptivedatanetworks/librenms-webterm
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>php<span class="w"> </span>artisan<span class="w"> </span>route:clear
-</code></pre></div>
-<div class="admonition failure">
-<p class="admonition-title">Error: artisan must not run as root.</p>
-<p>LibreNMS refuses to run as root. Run <code>su - librenms</code> first. If you already ran it as root, see <a href="../../install/librenms-updates/#common-failures">LibreNMS updates</a>.</p>
-</div>
-<p>Enable the plugin in the web UI under <strong>Overview → Plugins → Plugin Admin</strong>.</p>
-<p>Nothing works yet — that is intentional. WebTerm ships default-deny.</p>
-<h2 id="2-install-everything">2. Install everything<a class="headerlink" href="#2-install-everything" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>less<span class="w"> </span>install.sh<span class="w">          </span><span class="c1"># read it before you run it</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>sh<span class="w"> </span>install.sh
+<h2 id="1-install-everything">1. Install everything<a class="headerlink" href="#1-install-everything" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>less<span class="w"> </span>install.sh<span class="w">          </span><span class="c1"># read it before you run it</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>sh<span class="w"> </span>install.sh
 </code></pre></div>
 <p>It shows a plan and does nothing until you say yes. Then it adds the
 <a href="../../install/package-repo/">package repository</a> — after checking its signing key
@@ -1873,8 +1861,8 @@ scheme included. A mismatch is rejected deliberately: origin checking is what
 prevents cross-site WebSocket hijacking.</p>
 </div>
 <p>Every prompt has a flag, so it runs unattended:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--origin<span class="w"> </span>https://librenms.example.com<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--origin<span class="w"> </span>https://librenms.example.com<span class="w"> </span>-y
 </code></pre></div>
 <p><code>--dry-run</code> prints the plan and exits. The exit code is <code>webterm:doctor</code>'s, so it
 is safe to gate a playbook on.</p>
@@ -1885,38 +1873,44 @@ is safe to gate a playbook on.</p>
 configuration half as <code>librenms-webterm-setup</code>, so you can install the
 gateway however you like and run only that.</p>
 </details>
-<h2 id="4-confirm-both-halves-agree">4. Confirm both halves agree<a class="headerlink" href="#4-confirm-both-halves-agree" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lnms<span class="w"> </span>webterm:doctor
+<h2 id="2-enable-the-plugin-in-librenms">2. Enable the plugin in LibreNMS<a class="headerlink" href="#2-enable-the-plugin-in-librenms" title="Permanent link">&para;</a></h2>
+<p>Under <strong>Overview → Plugins → Plugin Admin</strong>, switch WebTerm on.</p>
+<p>The installer sets WebTerm's own <code>enabled</code> setting, but LibreNMS keeps a separate
+plugin row of its own and only an administrator in the web UI can flip it.</p>
+<p>Nothing can open a shell yet — the plugin ships default-deny. That is the next
+few steps.</p>
+<h2 id="3-confirm-both-halves-agree">3. Confirm both halves agree<a class="headerlink" href="#3-confirm-both-halves-agree" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
-<p>The setup helper already ran this and exited with its status, so if it finished
+<p><code>install.sh</code> already ran this and exited with its status, so if it finished
 cleanly there is nothing to do here.</p>
 <details class="info">
-<summary>Doing steps 3 and 4 by hand</summary>
+<summary>Doing the install by hand instead</summary>
 <p>Every step, written out — the reverse-proxy stanzas, the secret's group
 permissions, SELinux, and what to set where — is in
 <a href="../../install/bare-metal/#doing-it-by-hand">installing on bare metal</a>.
 The <a href="../../operate/reverse-proxy/">reverse proxy</a> page explains which lines
 are load-bearing and what breaks without each one.</p>
 </details>
-<h2 id="5-add-a-credential-and-enable-one-device">5. Add a credential and enable one device<a class="headerlink" href="#5-add-a-credential-and-enable-one-device" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./lnms<span class="w"> </span>webterm:credentials:set<span class="w"> </span>--device<span class="o">=</span>core-sw-01<span class="w"> </span>--username<span class="o">=</span>netops
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>./lnms<span class="w"> </span>webterm:target:enable<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<h2 id="4-add-a-credential-and-enable-one-device">4. Add a credential and enable one device<a class="headerlink" href="#4-add-a-credential-and-enable-one-device" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>./lnms<span class="w"> </span>webterm:credentials:set<span class="w"> </span>--device<span class="o">=</span>core-sw-01<span class="w"> </span>--username<span class="o">=</span>netops
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>./lnms<span class="w"> </span>webterm:target:enable<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>You are prompted for the password; it is never passed as an argument, so it stays out of your shell history and out of <code>ps</code>.</p>
 <p>Record the device's host key:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./lnms<span class="w"> </span>webterm:hostkey-scan<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./lnms<span class="w"> </span>webterm:hostkey-scan<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>Check the fingerprint against what the device reports before accepting it. This is the one step people skip; it is also the step that stops you handing credentials to an impostor.</p>
-<h2 id="6-grant-yourself-access">6. Grant yourself access<a class="headerlink" href="#6-grant-yourself-access" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>./lnms<span class="w"> </span>webterm:ability<span class="w"> </span>grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--ability<span class="o">=</span>use
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>./lnms<span class="w"> </span>webterm:grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<h2 id="5-grant-yourself-access">5. Grant yourself access<a class="headerlink" href="#5-grant-yourself-access" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./lnms<span class="w"> </span>webterm:ability<span class="w"> </span>grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--ability<span class="o">=</span>use
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>./lnms<span class="w"> </span>webterm:grant<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>Shell access is deliberately separate from — and narrower than — being able to <em>see</em> a device in LibreNMS. Being an admin is not sufficient.</p>
-<h2 id="7-open-a-terminal">7. Open a terminal<a class="headerlink" href="#7-open-a-terminal" title="Permanent link">&para;</a></h2>
+<h2 id="6-open-a-terminal">6. Open a terminal<a class="headerlink" href="#6-open-a-terminal" title="Permanent link">&para;</a></h2>
 <p>Go to the device page for <code>core-sw-01</code>. The <strong>Terminal</strong> panel appears in the overview column. Click <strong>Open terminal</strong>, complete the TOTP step-up prompt, and you should land at a shell.</p>
 <div class="admonition warning">
 <p class="admonition-title">Step-up needs LibreNMS two-factor enrolled</p>
@@ -1925,19 +1919,19 @@ TOTP. If your account has no two-factor enrolled you will be denied with
 <code>step_up_required</code> no matter what else is configured.</p>
 <p>Enrol TOTP in LibreNMS under <strong>Preferences → Two-Factor Auth</strong>, or, if you
 have decided this control is not for you, turn it off:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># as the librenms user</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./lnms<span class="w"> </span>webterm:config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>security.step_up<span class="w"> </span><span class="nb">false</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># as the librenms user</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>./lnms<span class="w"> </span>webterm:config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>security.step_up<span class="w"> </span><span class="nb">false</span>
 </code></pre></div>
 <p><code>./lnms webterm:doctor</code> reports which of the two you are in.</p>
 </div>
 <h2 id="when-it-does-not-work">When it does not work<a class="headerlink" href="#when-it-does-not-work" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>./lnms<span class="w"> </span>webterm:why<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>./lnms<span class="w"> </span>webterm:why<span class="w"> </span>--user<span class="o">=</span>you<span class="w"> </span>--device<span class="o">=</span>core-sw-01
 </code></pre></div>
 <p>This runs the real authorization check and tells you which step failed and the exact command to fix it. Start here before reading logs.</p>
 <p>For gateway-side problems:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>librenms-webterm-gw<span class="w"> </span>-f
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>librenms-webterm-gw<span class="w"> </span>-f
 </code></pre></div>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>

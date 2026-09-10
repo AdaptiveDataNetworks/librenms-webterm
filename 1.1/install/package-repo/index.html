@@ -1754,6 +1754,13 @@
 
 
 <h1 id="installing-from-the-package-repository">Installing from the package repository<a class="headerlink" href="#installing-from-the-package-repository" title="Permanent link">&para;</a></h1>
+<div class="admonition tip">
+<p class="admonition-title"><code>install.sh</code> does all of this for you</p>
+<p>The <a href="../../getting-started/quickstart/">quickstart</a> adds this repository,
+installs both halves and configures the reverse proxy in one command. This
+page is for adding the repository on its own — to a golden image, a
+configuration manager, or a host where you want the gateway and nothing else.</p>
+</div>
 <p>Adding the repository means <code>apt upgrade</code> and <code>dnf upgrade</code> pick up new gateway
 releases like any other package, instead of you downloading a file each time.</p>
 <p>The plugin half is unaffected: it is a Composer package and continues to come

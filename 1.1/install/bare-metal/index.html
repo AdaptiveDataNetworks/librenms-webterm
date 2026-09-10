@@ -1941,59 +1941,70 @@
 
 <h1 id="installing-on-a-bare-metal-librenms">Installing on a bare-metal LibreNMS<a class="headerlink" href="#installing-on-a-bare-metal-librenms" title="Permanent link">&para;</a></h1>
 <p>The classic <code>/opt/librenms</code> install with nginx or Apache and php-fpm.</p>
-<p>There are two paths. The setup helper does all of it and asks before each
-decision; the manual steps below are the same work written out, for anyone who
-would rather run it themselves or is automating with a configuration manager.</p>
-<h2 id="1-the-plugin">1. The plugin<a class="headerlink" href="#1-the-plugin" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/librenms
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>./lnms<span class="w"> </span>plugin:add<span class="w"> </span>adaptivedatanetworks/librenms-webterm
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>php<span class="w"> </span>artisan<span class="w"> </span>route:clear
+<p>Most people should not read this page. One command does all of it — see the
+<a href="../../getting-started/quickstart/">quickstart</a>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>less<span class="w"> </span>install.sh
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>sh<span class="w"> </span>install.sh
 </code></pre></div>
-<p>Enable it under <strong>Overview → Plugins → Plugin Admin</strong>.</p>
+<p>What follows is that same work written out, step by step, for anyone automating
+with a configuration manager or who wants to see exactly what gets touched.</p>
+<h2 id="1-the-plugin">1. The plugin<a class="headerlink" href="#1-the-plugin" title="Permanent link">&para;</a></h2>
+<p>Skip this if you are going to run the setup helper in step 3 — it installs and
+migrates the plugin for you, and doing both means answering no to its plugin
+prompt (or passing <code>--no-install-plugin</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/librenms
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>./lnms<span class="w"> </span>plugin:add<span class="w"> </span>adaptivedatanetworks/librenms-webterm
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>php<span class="w"> </span>artisan<span class="w"> </span>route:clear
+</code></pre></div>
+<p>Enable it under <strong>Overview → Plugins → Plugin Admin</strong>. That step is yours either
+way: the installer sets WebTerm's own <code>enabled</code> setting, but LibreNMS keeps a
+separate plugin row that only an administrator in the web UI can flip.</p>
 <details class="failure">
 <summary>Error: artisan must not run as root.</summary>
 <p>LibreNMS refuses to run as root. Run <code>su - librenms</code> first. If you already ran commands as root, fix what they left behind:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>chown<span class="w"> </span>-R<span class="w"> </span>librenms:librenms<span class="w"> </span>/opt/librenms/vendor<span class="w"> </span>/opt/librenms/bootstrap/cache
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>chown<span class="w"> </span>-R<span class="w"> </span>librenms:librenms<span class="w"> </span>/opt/librenms/vendor<span class="w"> </span>/opt/librenms/bootstrap/cache
 </code></pre></div>
 </details>
 <h2 id="2-the-gateway-package">2. The gateway package<a class="headerlink" href="#2-the-gateway-package" title="Permanent link">&para;</a></h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Debian / Ubuntu</label><label for="__tabbed_1_2">RHEL / Rocky / Alma</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>install<span class="w"> </span>-d<span class="w"> </span>-m<span class="w"> </span><span class="m">0755</span><span class="w"> </span>/usr/share/keyrings
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>gpg<span class="w"> </span>--dearmor<span class="w"> </span>-o<span class="w"> </span>/usr/share/keyrings/adn-archive-keyring.gpg
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/apt/sources.list.d/adn.sources<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s">Types: deb</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s">URIs: https://packages.adaptivedatanetworks.com/deb</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s">Suites: stable</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s">Components: main</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s">Architectures: amd64 arm64</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s">Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="s">EOF</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>install<span class="w"> </span>-d<span class="w"> </span>-m<span class="w"> </span><span class="m">0755</span><span class="w"> </span>/usr/share/keyrings
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>gpg<span class="w"> </span>--dearmor<span class="w"> </span>-o<span class="w"> </span>/usr/share/keyrings/adn-archive-keyring.gpg
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/apt/sources.list.d/adn.sources<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s">Types: deb</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s">URIs: https://packages.adaptivedatanetworks.com/deb</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s">Suites: stable</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s">Components: main</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s">Architectures: amd64 arm64</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s">Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="s">EOF</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># LibreNMS server, as root</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>rpm<span class="w"> </span>--import<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/yum.repos.d/adn.repo<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="s">[adn]</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="s">name=Adaptive Data Networks</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s">baseurl=https://packages.adaptivedatanetworks.com/rpm/</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s">enabled=1</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s">gpgcheck=1</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s">repo_gpgcheck=1</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s">gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s">EOF</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>dnf<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># LibreNMS server, as root</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>rpm<span class="w"> </span>--import<span class="w"> </span>https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/etc/yum.repos.d/adn.repo<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s">[adn]</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s">name=Adaptive Data Networks</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s">baseurl=https://packages.adaptivedatanetworks.com/rpm/</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s">enabled=1</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s">gpgcheck=1</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s">repo_gpgcheck=1</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s">gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s">EOF</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>dnf<span class="w"> </span>install<span class="w"> </span>librenms-webterm-gw
 </code></pre></div>
 </div>
 </div>
@@ -2003,13 +2014,13 @@ gateway releases on their own. See <a href="../package-repo/">the package reposi
 for the key's fingerprint and how to remove the repository later.</p>
 <details class="info">
 <summary>One-off download instead</summary>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># as root, Debian / Ubuntu</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>apt<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># as root, Debian / Ubuntu</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>apt<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># as root, RHEL / Rocky / Alma</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>dnf<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># as root, RHEL / Rocky / Alma</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>dnf<span class="w"> </span>install<span class="w"> </span>./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
 </code></pre></div>
 </details>
 <p>The package installs the binary, a systemd unit, a <code>librenms-webterm</code> system
@@ -2017,29 +2028,29 @@ user and <code>/etc/librenms-webterm/</code>. It does <strong>not</strong> start
 started before its allowed origins are set refuses every browser connection
 with a 403 and looks broken. That is the next step's job.</p>
 <h2 id="3-run-the-setup-helper">3. Run the setup helper<a class="headerlink" href="#3-run-the-setup-helper" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>librenms-webterm-setup
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>librenms-webterm-setup
 </code></pre></div>
 <p>It finds your LibreNMS directory and web server, asks for anything it cannot
 safely infer, shows you the plan, and does nothing until you say yes.</p>
 <p>Expect roughly this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>== Looking around
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  LibreNMS:    /opt/librenms
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  runs as:     librenms
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  web server:  nginx
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  php-fpm:     php8.2-fpm
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>What URL do operators use to reach LibreNMS?
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>  origin: https://librenms.example.com
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>== Plan
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>  * leave the packaged gateway alone (librenms-webterm-gw 1.0.9)
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>  * set WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>  * install and migrate the plugin as librenms
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>  * offer to add the WebTerm proxy to nginx
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>  * verify with webterm:doctor
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>Proceed? [y/N]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>== Looking around
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  LibreNMS:    /opt/librenms
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>  runs as:     librenms
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>  web server:  nginx
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  php-fpm:     php8.2-fpm
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>What URL do operators use to reach LibreNMS?
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  origin: https://librenms.example.com
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>== Plan
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>  * leave the packaged gateway alone (librenms-webterm-gw 1.1.2)
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>  * set WEBTERM_ALLOWED_ORIGINS=https://librenms.example.com
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>  * install and migrate the plugin as librenms
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>  * offer to add the WebTerm proxy to nginx
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>  * verify with webterm:doctor
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>Proceed? [y/N]
 </code></pre></div>
 <h3 id="why-it-asks-for-the-origin">Why it asks for the origin<a class="headerlink" href="#why-it-asks-for-the-origin" title="Permanent link">&para;</a></h3>
 <p>Because it cannot be derived, and guessing wrong produces a 403 on every
@@ -2051,11 +2062,11 @@ to be told about.</p>
 <h3 id="what-it-does-to-your-web-server-config">What it does to your web server config<a class="headerlink" href="#what-it-does-to-your-web-server-config" title="Permanent link">&para;</a></h3>
 <p>It writes <code>/etc/nginx/webterm-proxy.conf</code> (or the Apache equivalent) and adds a
 single <code>include</code> inside your LibreNMS server block, behind a marker comment:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="c1"># librenms-webterm (managed) -- remove this line to detach</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="kn">include</span><span class="w"> </span><span class="s">/etc/nginx/webterm-proxy.conf</span><span class="p">;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="p">;</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="kn">...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="c1"># librenms-webterm (managed) -- remove this line to detach</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="kn">include</span><span class="w"> </span><span class="s">/etc/nginx/webterm-proxy.conf</span><span class="p">;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">443</span><span class="w"> </span><span class="s">ssl</span><span class="p">;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="kn">...</span>
 </code></pre></div>
 <p>Your vhost is backed up first, your web server's own config test has to pass,
 and anything short of that restores the original byte for byte. Re-running
@@ -2066,21 +2077,23 @@ success and then 404s.</p>
 <p>Decline the offer and it prints the stanzas for you to add yourself.</p>
 <h3 id="unattended">Unattended<a class="headerlink" href="#unattended" title="Permanent link">&para;</a></h3>
 <p>Every prompt has a flag:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>librenms-webterm-setup<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--origin<span class="w"> </span>https://librenms.example.com<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--librenms-dir<span class="w"> </span>/opt/librenms<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--webserver<span class="w"> </span>nginx<span class="w"> </span>--vhost<span class="w"> </span>/etc/nginx/conf.d/librenms.conf<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>--configure-webserver<span class="w"> </span>--selinux<span class="w"> </span>-y
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>librenms-webterm-setup<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--origin<span class="w"> </span>https://librenms.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--librenms-dir<span class="w"> </span>/opt/librenms<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--webserver<span class="w"> </span>nginx<span class="w"> </span>--vhost<span class="w"> </span>/etc/nginx/conf.d/librenms.conf<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span>--configure-webserver<span class="w"> </span>--selinux<span class="w"> </span>-y
 </code></pre></div>
 <p><code>--dry-run</code> prints the plan and exits. <code>--no-configure-webserver</code>,
 <code>--no-install-plugin</code>, <code>--no-selinux</code> and <code>--no-install-gateway</code> each opt out of
-one part. Run it with <code>--help</code> for the full list.</p>
+one part, and <code>--from-tarball</code> installs a pinned release instead of adding the
+repository. Run it with <code>--help</code> for the full list — that is the authority, not
+this page.</p>
 <p>The exit code is <code>webterm:doctor</code>'s, so it is safe to gate a playbook on.</p>
 <h2 id="4-verify">4. Verify<a class="headerlink" href="#4-verify" title="Permanent link">&para;</a></h2>
 <p>The helper finishes by proving the path end to end and then running
 <code>webterm:doctor</code>. To repeat either by hand:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># as the librenms user</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/librenms<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./lnms<span class="w"> </span>webterm:doctor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># as the librenms user</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">cd</span><span class="w"> </span>/opt/librenms<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
 <p>Then continue with the <a href="../../getting-started/quickstart/">quickstart</a> from step
 5 to enable a device.</p>
@@ -2089,17 +2102,17 @@ one part. Run it with <code>--help</code> for the full list.</p>
 <p>Everything the helper does, as individual steps.</p>
 <h3 id="share-the-secret-with-librenms">Share the secret with LibreNMS<a class="headerlink" href="#share-the-secret-with-librenms" title="Permanent link">&para;</a></h3>
 <p>Both processes read the same file. Give the web user read access through the group:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>usermod<span class="w"> </span>-a<span class="w"> </span>-G<span class="w"> </span>librenms-webterm<span class="w"> </span>librenms
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>chown<span class="w"> </span>root:librenms-webterm<span class="w"> </span>/etc/librenms-webterm/gateway.secret
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>chmod<span class="w"> </span><span class="m">0640</span><span class="w"> </span>/etc/librenms-webterm/gateway.secret
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>usermod<span class="w"> </span>-a<span class="w"> </span>-G<span class="w"> </span>librenms-webterm<span class="w"> </span>librenms
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>chown<span class="w"> </span>root:librenms-webterm<span class="w"> </span>/etc/librenms-webterm/gateway.secret
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>chmod<span class="w"> </span><span class="m">0640</span><span class="w"> </span>/etc/librenms-webterm/gateway.secret
 </code></pre></div>
 <p><code>/etc/librenms-webterm/gateway.secret</code> is already the plugin's default, so
 there is nothing to configure. Only if you moved it, add this to
 <code>/opt/librenms/.env</code> — <code>webterm:config</code> refuses the key, because a config row
 pointing somewhere the gateway is not reading fails every session mint with an
 opaque 401:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nv">WEBTERM_GATEWAY_SECRET_FILE</span><span class="o">=</span>/path/to/gateway.secret
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">WEBTERM_GATEWAY_SECRET_FILE</span><span class="o">=</span>/path/to/gateway.secret
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">php-fpm may need restarting</p>
@@ -2107,12 +2120,12 @@ opaque 401:</p>
 </div>
 <h3 id="configure-and-start-the-gateway">Configure and start the gateway<a class="headerlink" href="#configure-and-start-the-gateway" title="Permanent link">&para;</a></h3>
 <p>Edit <code>/etc/librenms-webterm/gateway.env</code> and set your LibreNMS origin:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">WEBTERM_ALLOWED_ORIGINS</span><span class="o">=</span>https://librenms.example.com
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">WEBTERM_ALLOWED_ORIGINS</span><span class="o">=</span>https://librenms.example.com
 </code></pre></div>
 <p>Then:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>librenms-webterm-gw
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>systemctl<span class="w"> </span>status<span class="w"> </span>librenms-webterm-gw
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>librenms-webterm-gw
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>systemctl<span class="w"> </span>status<span class="w"> </span>librenms-webterm-gw
 </code></pre></div>
 <h3 id="reverse-proxy">Reverse proxy<a class="headerlink" href="#reverse-proxy" title="Permanent link">&para;</a></h3>
 <p>See <a href="../../operate/reverse-proxy/">reverse proxy</a> for the nginx and Apache
@@ -2121,27 +2134,31 @@ that look like bugs elsewhere.</p>
 <h3 id="selinux">SELinux<a class="headerlink" href="#selinux" title="Permanent link">&para;</a></h3>
 <p>On RHEL-family systems with SELinux enforcing, allow the web server to make the
 loopback connection:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>setsebool<span class="w"> </span>-P<span class="w"> </span>httpd_can_network_connect<span class="w"> </span>on
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>setsebool<span class="w"> </span>-P<span class="w"> </span>httpd_can_network_connect<span class="w"> </span>on
 </code></pre></div>
 <h3 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># as the librenms user</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>./lnms<span class="w"> </span>webterm:doctor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># as the librenms user</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
 <p>Work through whatever it reports; every failure names its fix.</p>
 <hr />
 <h2 id="installing-from-the-tarball">Installing from the tarball<a class="headerlink" href="#installing-from-the-tarball" title="Permanent link">&para;</a></h2>
-<p>If you are not using packages, the same script ships in the release tarball
-alongside <code>webserver.sh</code>, which it needs:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># as root</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>tar<span class="w"> </span>-xzf<span class="w"> </span>librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>less<span class="w"> </span>packaging/install.sh<span class="w">                     </span><span class="c1"># read it first</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>sh<span class="w"> </span>packaging/install.sh<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
+<p>If the host cannot reach the package repository, the same script ships in the
+release tarball alongside the two modules it sources, <code>webserver.sh</code> and
+<code>repository.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># as root</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>tar<span class="w"> </span>-xzf<span class="w"> </span>librenms-webterm-gw_X.Y.Z_linux_amd64.tar.gz
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>less<span class="w"> </span>packaging/install.sh<span class="w">                     </span><span class="c1"># read it first</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>sh<span class="w"> </span>packaging/install.sh<span class="w"> </span>--from-tarball<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
 </code></pre></div>
-<p>Here it <em>does</em> install the gateway, so <code>--version</code> is required: an unpinned
-install cannot be reproduced. It downloads the release, verifies the published
-SHA-256 before unpacking, and refuses to continue if that fails.</p>
+<p><code>--from-tarball</code> is what makes <code>--version</code> required: an unpinned tarball install
+cannot be reproduced, and nothing will ever upgrade it. Without that flag, on a
+host that can reach the repository, this same command installs from the
+repository and ignores <code>--version</code> — usually what you want. The tarball path
+verifies the published SHA-256 before unpacking and refuses to continue if that
+fails.</p>
 
 
 

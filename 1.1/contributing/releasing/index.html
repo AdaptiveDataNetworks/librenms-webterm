@@ -1933,13 +1933,15 @@ with the next patch release.</p>
 <ul>
 <li>[ ] <code>PROTOCOL.md</code> updated in the same commit</li>
 <li>[ ] Both generated files regenerated and committed</li>
-<li>[ ] N/N−1 skew still works in both directions</li>
-<li>[ ] The release notes say so prominently, because plugin and gateway upgrade independently</li>
+<li>[ ] The release notes say prominently that BOTH halves must be upgraded, because
+      plugin and gateway upgrade independently and a mismatch is refused outright</li>
 </ul>
 <h2 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h2>
 <p>Semantic versioning. For this project specifically:</p>
 <ul>
-<li><strong>Major</strong> — a protocol change that breaks N−1 skew, or a migration that cannot be rolled back.</li>
+<li><strong>Major</strong> — a migration that cannot be rolled back, or a change that breaks an
+  interface an operator scripts against. A protocol bump is not itself major:
+  both halves ship together and a mismatch is already refused.</li>
 <li><strong>Minor</strong> — new features, new configuration, new protocol fields that older peers can ignore.</li>
 <li><strong>Patch</strong> — fixes only.</li>
 </ul>

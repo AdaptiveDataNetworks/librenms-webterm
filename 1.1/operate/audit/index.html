@@ -1839,7 +1839,7 @@
 <h2 id="text-is-sanitised">Text is sanitised<a class="headerlink" href="#text-is-sanitised" title="Permanent link">&para;</a></h2>
 <p>Audit records carry attacker-influenced strings — hostnames, SSH banners, error messages from the far end. Log files are read in terminals, so escape sequences are stripped and newlines collapsed before anything is stored. Without that, a hostname containing a newline could forge an entire log line in your syslog stream.</p>
 <h2 id="what-is-not-recorded">What is NOT recorded<a class="headerlink" href="#what-is-not-recorded" title="Permanent link">&para;</a></h2>
-<p><strong>Session content.</strong> WebTerm does not record keystrokes or terminal output in v1.0. That is a deliberate omission, not an oversight — see <a href="../../">the roadmap</a>. It means the audit trail tells you <em>that</em> someone opened a shell on a device, and when, but not what they did there. If you need the latter, your device's own logging or a dedicated session-recording product is the answer today.</p>
+<p><strong>Session content.</strong> WebTerm does not record keystrokes or terminal output. That is a deliberate omission, not an oversight. It means the audit trail tells you <em>that</em> someone opened a shell on a device, and when, but not what they did there. If you need the latter, your device's own logging or a dedicated session-recording product is the answer today.</p>
 <p><strong>Credentials.</strong> No credential is written to any sink at any level. There are tests asserting it on both the PHP and Go sides.</p>
 <h2 id="alerting">Alerting<a class="headerlink" href="#alerting" title="Permanent link">&para;</a></h2>
 <p>Worth alerting on, in rough order of urgency:</p>

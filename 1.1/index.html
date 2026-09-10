@@ -293,6 +293,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       Where to start
@@ -1646,6 +1655,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#installing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       Where to start
@@ -1684,6 +1702,16 @@
 <p class="admonition-title">Read the security guide first</p>
 <p>This plugin gives your monitoring system the ability to open interactive shells on your network. That is a significant, deliberate change to your security posture. <a href="security/">Should you enable this?</a> is an honest guide to when the answer is <em>no</em>.</p>
 </div>
+<h2 id="installing">Installing<a class="headerlink" href="#installing" title="Permanent link">&para;</a></h2>
+<p>One command on the LibreNMS server, as root:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>less<span class="w"> </span>install.sh
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>sh<span class="w"> </span>install.sh
+</code></pre></div>
+<p>It adds the signed <a href="install/package-repo/">package repository</a>, installs the
+gateway and the plugin, configures the reverse proxy and verifies the result.
+The <a href="getting-started/quickstart/">quickstart</a> takes it from there to a working
+terminal.</p>
 <h2 id="where-to-start">Where to start<a class="headerlink" href="#where-to-start" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

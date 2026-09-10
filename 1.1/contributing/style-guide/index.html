@@ -1801,7 +1801,7 @@
 </code></pre></div>
 <p>Never use <code>$</code> or <code>#</code> prompt prefixes — they break copy-paste. Never interleave output inside a command fence; show output in its own block.</p>
 <h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p><strong>No sample output ships until it has been copy-pasted from a real run.</strong> Invented output is worse than none: readers compare against it and conclude something is broken. CI executes the quickstart and diffs its output against this documentation.</p>
+<p><strong>No sample output ships until it has been copy-pasted from a real run.</strong> Invented output is worse than none: readers compare against it and conclude something is broken. Sample output is checked by hand against a real run before a release; there is no job that does it for you, so it is on the person making the change.</p>
 <h2 id="failure-blocks">Failure blocks<a class="headerlink" href="#failure-blocks" title="Permanent link">&para;</a></h2>
 <p>Every anticipated failure gets a collapsible block titled with the <strong>literal error string</strong> the reader will see, so that pasting the error into search finds this page:</p>
 <details class="failure">

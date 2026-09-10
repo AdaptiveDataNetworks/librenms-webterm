@@ -1883,7 +1883,7 @@ migrations see none. <code>webterm:doctor</code> detects this case specifically 
 the schema as newer than the code — it is the one thing that will tell you.</p>
 <h2 id="version-skew">Version skew<a class="headerlink" href="#version-skew" title="Permanent link">&para;</a></h2>
 <p>The plugin auto-updates with LibreNMS; the gateway does not. This means <strong>mismatched versions are the normal state</strong>, not an edge case.</p>
-<p>WebTerm supports the current and previous protocol version (N and N−1). Within that window you get a warning banner and everything keeps working. Outside it, the terminal button disables itself rather than failing at connect time.</p>
+<p>Plugin and gateway must be on the same protocol version. There is no tolerance window: a mismatch is refused, and <code>webterm:doctor</code> names both versions. Upgrade the two together.</p>
 <p>Check both versions at any time:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># LibreNMS server, as the librenms user</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>./lnms<span class="w"> </span>webterm:doctor

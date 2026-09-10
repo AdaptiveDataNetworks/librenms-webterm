@@ -1774,7 +1774,9 @@
 </tr>
 </tbody>
 </table>
-<p>The button disabling is deliberate. Failing at connect time — after the user has clicked, authenticated and waited — is a worse experience than not offering the button.</p>
+<p>The terminal tab checks the gateway's advertised protocol range before it offers
+to connect, so a mismatch shows as a refusal with both versions named rather than
+a failure after the operator has clicked and waited.</p>
 <p>Check both halves at any time:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># as the librenms user</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>./lnms<span class="w"> </span>webterm:doctor
@@ -1840,16 +1842,17 @@ was running is restarted onto the new binary.</p>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<p>Fetch the installer belonging to the version you are moving to, then re-run
-it. It verifies the checksum itself, replaces the binary and the systemd
-unit, and leaves <code>gateway.env</code> and <code>gateway.secret</code> untouched.</p>
+<p>Re-running the installer upgrades an existing install. On a host that can
+reach the package repository it will move you onto packages, which is the
+better end state — after that, <code>apt upgrade</code> and <code>dnf upgrade</code> do this for
+you. Either way it leaves <code>gateway.env</code> and <code>gateway.secret</code> untouched.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># as root</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nv">BASE</span><span class="o">=</span>https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span><span class="nv">$BASE</span>/install.sh
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span><span class="nv">$BASE</span>/webserver.sh
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>sh<span class="w"> </span>install.sh<span class="w"> </span>--version<span class="w"> </span>vX.Y.Z
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>sh<span class="w"> </span>install.sh
 </code></pre></div>
-<p>Fetch both: <code>install.sh</code> sources <code>webserver.sh</code> for the proxy step. It
+<p>The published <code>install.sh</code> is self-contained — the proxy and repository
+logic are compiled into it, so there is nothing else to fetch. It
 restarts the gateway itself and reports whether it came back up, so there
 is no separate <code>systemctl restart</code> to run.</p>
 </div>
@@ -1874,7 +1877,9 @@ click fail. A gateway that has never been heard from is treated as fine —
 an unchecked gateway must not hide the terminal on a fresh install.</p>
 </div>
 <h2 id="order">Order<a class="headerlink" href="#order" title="Permanent link">&para;</a></h2>
-<p>Upgrade the <strong>gateway first</strong>, then the plugin. A newer gateway accepts an older plugin's protocol version; the reverse is not guaranteed.</p>
+<p>Upgrade <strong>both</strong>, close together. Neither order is safe to leave half-finished:
+the two must agree on the protocol version exactly, so whichever you upgrade
+first, the terminal is refused until the other follows.</p>
 <h2 id="after-any-upgrade">After any upgrade<a class="headerlink" href="#after-any-upgrade" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>./lnms<span class="w"> </span>webterm:doctor
 </code></pre></div>
