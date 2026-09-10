@@ -37,15 +37,13 @@ To pin an exact version, see [LibreNMS updates](librenms-updates.md#pinning-an-e
 
 ## Upgrading the gateway
 
-!!! info "There will be a package repository"
+!!! tip "The package repository upgrades the gateway for you"
 
-    `packages.adaptivedatanetworks.com` is built and tested but not serving yet.
-    Once it is, `apt upgrade` and `dnf upgrade` will pick up new gateway releases
-    on their own — see [the package repository](package-repo.md).
+    If you added [the package repository](package-repo.md), `apt upgrade` and
+    `dnf upgrade` pick up new gateway releases on their own and the rest of this
+    section does not apply.
 
-    Until then, releases are published as GitHub release assets only, so your
-    package manager will never find a new gateway by itself. Point it at the
-    downloaded file, as below.
+    The instructions below are for installs that fetch release assets directly.
 
 First, check how the gateway was installed. The two paths do not mix: a tarball
 install writes files your package manager does not know about, and letting

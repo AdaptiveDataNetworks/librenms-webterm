@@ -1,14 +1,5 @@
 # Installing from the package repository
 
-!!! warning "Not live yet"
-
-    `packages.adaptivedatanetworks.com` is not serving yet. Until it is, install
-    the gateway from the [release assets](bare-metal.md#2-the-gateway-package).
-
-    Everything on this page is built and tested — a container test drives real
-    `apt` and real `dnf` against a signed repository on every change — but the
-    host itself still has to be stood up. **Remove this admonition when it is.**
-
 Adding the repository means `apt upgrade` and `dnf upgrade` pick up new gateway
 releases like any other package, instead of you downloading a file each time.
 
@@ -99,12 +90,23 @@ does and how to run it unattended.
 
 ## Verifying the key
 
-The signing key is RSA 4096. Check the fingerprint against the one published in
-the repository's `SECURITY.md` before trusting it:
+The signing key is RSA 4096, valid until 2031-09-09. Check its fingerprint
+before trusting it:
 
 ```bash
-gpg --show-keys --with-fingerprint <(curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc)
+curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc | gpg --show-keys
 ```
+
+It must print exactly:
+
+```text
+pub   rsa4096 2026-09-10 [SC] [expires: 2031-09-09]
+      1880C40E19DC890F8F008D0CF7297BB14290D3DF
+uid   Adaptive Data Networks Package Signing <packages@adaptivedatanetworks.com>
+```
+
+The same fingerprint is published in [SECURITY.md]({{ config.repo_url }}/blob/main/SECURITY.md).
+If the two disagree, stop and [report it](../security/disclosure.md).
 
 ??? question "Why RSA and not ed25519?"
 

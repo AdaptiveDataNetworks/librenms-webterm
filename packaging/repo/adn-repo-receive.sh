@@ -23,6 +23,10 @@ set -eu
 # sshd passes no environment to a forced command, so anything an operator needs
 # to configure has to be read from a file rather than exported by a login.
 [ -r /etc/adn-repo.conf ] && . /etc/adn-repo.conf
+# `gh attestation verify` needs a token even for a public repository, and sshd
+# gives a forced command no environment, so the token has to come from the file
+# and be exported explicitly for gh to see it.
+[ -n "${GH_TOKEN:-}" ] && export GH_TOKEN
 
 REPO="${ADN_REPO_SOURCE:-AdaptiveDataNetworks/librenms-webterm}"
 # Overridable so the test suite can serve a fake release locally, and so a

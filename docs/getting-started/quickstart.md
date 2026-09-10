@@ -35,30 +35,50 @@ Nothing works yet — that is intentional. WebTerm ships default-deny.
 
     ```bash
     # LibreNMS server, as root
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
-    apt install ./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    install -d -m 0755 /usr/share/keyrings
+    curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc \
+      | gpg --dearmor -o /usr/share/keyrings/adn-archive-keyring.gpg
+
+    cat > /etc/apt/sources.list.d/adn.sources <<'EOF'
+    Types: deb
+    URIs: https://packages.adaptivedatanetworks.com/deb
+    Suites: stable
+    Components: main
+    Architectures: amd64 arm64
+    Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg
+    EOF
+
+    apt update && apt install librenms-webterm-gw
     ```
 
 === "RHEL / Rocky / Alma"
 
     ```bash
     # LibreNMS server, as root
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
-    dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
+    rpm --import https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
+
+    cat > /etc/yum.repos.d/adn.repo <<'EOF'
+    [adn]
+    name=Adaptive Data Networks
+    baseurl=https://packages.adaptivedatanetworks.com/rpm/
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=1
+    gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
+    EOF
+
+    dnf install librenms-webterm-gw
     ```
 
-=== "No packages"
+Adding the repository means `apt upgrade` and `dnf upgrade` pick up future
+gateway releases on their own. See [the package repository](../install/package-repo.md)
+for the key's fingerprint and how to remove the repository later.
 
-    ```bash
-    # LibreNMS server, as root
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/install.sh
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download/webserver.sh
-    less install.sh          # read it before you run it
-    sh install.sh --version vX.Y.Z
-    ```
+??? info "Without adding the repository"
 
-    Both files, in the same directory: `install.sh` sources `webserver.sh` for
-    the proxy step and skips it if it is not there.
+    Download the package or the installer from the
+    [release page]({{ config.repo_url }}/releases) instead — see
+    [installing on bare metal](../install/bare-metal.md#2-the-gateway-package).
 
 The binary lands at `/usr/bin/librenms-webterm-gw` and binds `127.0.0.1:8377`
 only. It is not reachable from outside the host, and it refuses to start

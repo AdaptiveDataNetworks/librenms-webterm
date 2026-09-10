@@ -31,15 +31,56 @@ Enable it under **Overview → Plugins → Plugin Admin**.
 === "Debian / Ubuntu"
 
     ```bash
-    # as root
-    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
-    apt install ./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    # LibreNMS server, as root
+    install -d -m 0755 /usr/share/keyrings
+    curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc \
+      | gpg --dearmor -o /usr/share/keyrings/adn-archive-keyring.gpg
+
+    cat > /etc/apt/sources.list.d/adn.sources <<'EOF'
+    Types: deb
+    URIs: https://packages.adaptivedatanetworks.com/deb
+    Suites: stable
+    Components: main
+    Architectures: amd64 arm64
+    Signed-By: /usr/share/keyrings/adn-archive-keyring.gpg
+    EOF
+
+    apt update && apt install librenms-webterm-gw
     ```
 
 === "RHEL / Rocky / Alma"
 
     ```bash
-    # as root
+    # LibreNMS server, as root
+    rpm --import https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
+
+    cat > /etc/yum.repos.d/adn.repo <<'EOF'
+    [adn]
+    name=Adaptive Data Networks
+    baseurl=https://packages.adaptivedatanetworks.com/rpm/
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=1
+    gpgkey=https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc
+    EOF
+
+    dnf install librenms-webterm-gw
+    ```
+
+Adding the repository means `apt upgrade` and `dnf upgrade` pick up future
+gateway releases on their own. See [the package repository](package-repo.md)
+for the key's fingerprint and how to remove the repository later.
+
+??? info "One-off download instead"
+
+    ```bash
+    # as root, Debian / Ubuntu
+    curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    apt install ./librenms-webterm-gw_X.Y.Z_linux_amd64.deb
+    ```
+
+    ```bash
+    # as root, RHEL / Rocky / Alma
     curl -fsSLO https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/download/vX.Y.Z/librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
     dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm
     ```

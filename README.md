@@ -71,24 +71,25 @@ php artisan route:clear
 Then enable it under **Overview → Plugins → Plugin Admin**, and install the gateway:
 
 ```bash
-# A distribution package, then the setup helper it ships:
-dnf install ./librenms-webterm-gw_X.Y.Z_linux_amd64.rpm   # or apt install ./..._amd64.deb
+# Debian / Ubuntu, as root
+curl -fsSL https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc \
+  | gpg --dearmor -o /usr/share/keyrings/adn-archive-keyring.gpg
+printf 'Types: deb\nURIs: https://packages.adaptivedatanetworks.com/deb\nSuites: stable\nComponents: main\nArchitectures: amd64 arm64\nSigned-By: /usr/share/keyrings/adn-archive-keyring.gpg\n' \
+  > /etc/apt/sources.list.d/adn.sources
+apt update && apt install librenms-webterm-gw
+
+# Then, either way:
 librenms-webterm-setup
 ```
 
-The helper finds your LibreNMS install and web server, asks for the URL your
-operators use, adds the WebSocket proxy to your vhost, and verifies the result.
-It shows the plan before touching anything, and every prompt has a flag for
-unattended runs.
+RHEL, Rocky and Alma use the matching `/etc/yum.repos.d/adn.repo` — see the
+[package repository](https://adaptivedatanetworks.github.io/librenms-webterm/install/package-repo/)
+page, which also carries the signing key's fingerprint.
 
-Without packages, the same script and its helper are release assets:
-
-```bash
-BASE=https://github.com/AdaptiveDataNetworks/librenms-webterm/releases/latest/download
-curl -fsSLO $BASE/install.sh && curl -fsSLO $BASE/webserver.sh
-# Read them. Then:
-sh install.sh --version vX.Y.Z
-```
+The setup helper finds your LibreNMS install and web server, asks for the URL
+your operators use, adds the WebSocket proxy to your vhost, and verifies the
+result. It shows the plan before touching anything, and every prompt has a flag
+for unattended runs.
 
 Nothing can open a shell yet — the plugin ships default-deny. The [10-minute quickstart](docs/getting-started/quickstart.md) takes you from here to a working terminal.
 

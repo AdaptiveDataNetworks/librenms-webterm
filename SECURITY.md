@@ -35,3 +35,24 @@ Reports of these are still welcome as discussion, but they will be closed as doc
 ## Supported versions
 
 During pre-1.0 development, only the latest release receives fixes.
+
+## Package signing key
+
+Packages published to `packages.adaptivedatanetworks.com` are signed with:
+
+```text
+pub   rsa4096 2026-09-10 [SC] [expires: 2031-09-09]
+      1880 C40E 19DC 890F 8F00  8D0C F729 7BB1 4290 D3DF
+uid   Adaptive Data Networks Package Signing <packages@adaptivedatanetworks.com>
+```
+
+Fetch it from `https://packages.adaptivedatanetworks.com/adn-archive-keyring.asc`
+and check the fingerprint against the line above before trusting it. If they do
+not match, do not install anything and report it as described above.
+
+The private half exists only on the repository host, in a directory readable by
+one unprivileged system account. It is never present in GitHub Actions: the
+release workflow holds a key that can run exactly one command on that host —
+`publish vX.Y.Z` — and carries no artifact content at all. The host fetches the
+release from GitHub itself and verifies the published checksums before signing
+anything.
