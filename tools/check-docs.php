@@ -135,7 +135,7 @@ foreach ($onDisk as $rel) {
         continue;
     }
     foreach (array_unique($m[0]) as $hit) {
-        $errors[] = "mkdocs has no template engine, so this renders literally and "
+        $errors[] = 'mkdocs has no template engine, so this renders literally and '
             ."breaks --strict inside a link: docs/{$rel}: {$hit}";
     }
 }
