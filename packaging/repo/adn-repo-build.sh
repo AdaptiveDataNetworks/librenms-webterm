@@ -156,6 +156,15 @@ gpg_batch --default-key "$SIGN_UID" --detach-sign --armor \
     -o "$NEW/rpm/repodata/repomd.xml.asc" "$NEW/rpm/repodata/repomd.xml"
 say "  rpm: repodata built and repomd.xml signed"
 
+# --- the landing page, if there is one ---
+# Every publish builds a fresh releases/<stamp>/ tree and swaps the symlink, so
+# anything dropped straight into the live tree disappears at the next release.
+# The page therefore lives in the store and is copied forward like the packages.
+if [ -f "$STORE/index.html" ]; then
+    cp -f "$STORE/index.html" "$NEW/index.html"
+    say "  carried index.html forward"
+fi
+
 # --- the public key, both forms ---
 # apt accepts either, but the bytes must match the name: armored content in a
 # file named .gpg fails with NO_PUBKEY and "is not signed".
