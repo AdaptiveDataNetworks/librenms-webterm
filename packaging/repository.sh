@@ -35,6 +35,18 @@ webterm_repo_fetch_key() {
     return 0
 }
 
+# Is OUR repository already configured? A gateway installed from a downloaded
+# .deb or .rpm looks identical to one installed from the repository -- the
+# package database cannot tell you where the file came from -- so this is the
+# only way to distinguish "managed and getting upgrades" from "stranded".
+webterm_repo_configured() {
+    [ -f /etc/apt/sources.list.d/adn.sources ] && return 0
+    [ -f /etc/yum.repos.d/adn.repo ] && return 0
+    grep -rqs "$WEBTERM_REPO_HOST" /etc/apt/sources.list /etc/apt/sources.list.d \
+        /etc/yum.repos.d 2>/dev/null && return 0
+    return 1
+}
+
 webterm_install_from_repository() {
     _key=$(mktemp)
     webterm_repo_fetch_key "$_key" || { rm -f "$_key"; return 1; }

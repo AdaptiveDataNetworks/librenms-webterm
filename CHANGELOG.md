@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.1.3] - 2026-09-13
+
+An operator who installed the gateway from a downloaded `.deb` or `.rpm` — which
+is what everyone did before 1.1.1, because there was no repository yet — got
+nothing from re-running the installer. It saw a package, said "leave the packaged
+gateway alone", and left them on a version nothing would ever upgrade.
+
+### Fixed
+
+- **The installer adopts a hand-installed package onto the repository.** A
+  package installed from a downloaded file is indistinguishable in the package
+  database from one installed from a repository; the only way to tell "managed"
+  from "stranded" is whether a repository is actually configured. When one is
+  not, the installer now offers to add it and upgrade through it, leaving
+  `gateway.env` and `gateway.secret` untouched. Verified from a real 1.0.9 rpm
+  install: 1.0.9 to 1.1.3, repository added, secret byte-identical.
+
+- **The plan said "replace the binary" on that path.** Every install that already
+  has a gateway has a non-empty previous version, so that branch matched before
+  either repository branch — on the one screen where the operator decides whether
+  to let the thing run.
+
 ## [1.1.2] - 2026-09-10
 
 The documentation described three different installs at once. The quickstart told

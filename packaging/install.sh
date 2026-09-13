@@ -35,6 +35,7 @@ CONFIGURE_WEBSERVER="ask"
 INSTALL_GATEWAY="auto"
 # auto: prefer the package repository, because a tarball gateway is never upgraded.
 GATEWAY_SOURCE="auto"
+ADOPTING_PACKAGE=0
 CONFIGURE_SELINUX="ask"
 INSTALL_PLUGIN="ask"
 ASSUME_YES=0
@@ -173,7 +174,21 @@ done
 if [ "$INSTALL_GATEWAY" = auto ]; then
     if { [ -f /etc/debian_version ] && dpkg -s librenms-webterm-gw >/dev/null 2>&1; } \
        || { command -v rpm >/dev/null 2>&1 && rpm -q librenms-webterm-gw >/dev/null 2>&1; }; then
-        INSTALL_GATEWAY=no
+        # A package is installed. That does NOT mean it is maintained: a gateway
+        # installed from a downloaded .deb or .rpm is indistinguishable in the
+        # package database from one installed from the repository, and nothing
+        # will ever upgrade the former. Adopting it costs one repository file and
+        # is the difference between "packaged" and "packaged and stranded".
+        if command -v webterm_repo_configured >/dev/null 2>&1 && ! webterm_repo_configured \
+           && { command -v apt-get >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 \
+                || command -v yum >/dev/null 2>&1; } \
+           && webterm_repo_available; then
+            INSTALL_GATEWAY=yes
+            GATEWAY_SOURCE=repository
+            ADOPTING_PACKAGE=1
+        else
+            INSTALL_GATEWAY=no
+        fi
     else
         INSTALL_GATEWAY=yes
     fi
@@ -282,16 +297,26 @@ PREVIOUS=""
 [ -x "$PREFIX/librenms-webterm-gw" ] && PREVIOUS="$("$PREFIX/librenms-webterm-gw" version 2>/dev/null || echo 'an unknown version')"
 
 step "Plan"
+# Order matters here. `-n "$PREVIOUS"` is true for EVERY install that already has
+# a gateway, including the repository ones, so testing it first announced "replace
+# the binary" on the adoption path -- on the one screen where the operator decides
+# whether to let this run. The source branches go first.
 if [ "$INSTALL_GATEWAY" = no ]; then
     say "  * leave the packaged gateway alone (${PREVIOUS:-already installed})"
-elif [ -n "$PREVIOUS" ]; then
-    say "  * replace $PREFIX/librenms-webterm-gw (currently $PREVIOUS)"
+elif [ "$GATEWAY_SOURCE" = repository ] && [ "$ADOPTING_PACKAGE" = 1 ]; then
+    say "  * ${PREVIOUS:-the gateway} is installed from a package, but no repository"
+    say "    is configured, so nothing would ever upgrade it. Add the"
+    say "    $WEBTERM_REPO_HOST repository (checking its signing key"
+    say "    against the published fingerprint) and upgrade through it."
     say "  * leave $CONFDIR/gateway.env and gateway.secret untouched"
 elif [ "$GATEWAY_SOURCE" = repository ]; then
     say "  * add the $WEBTERM_REPO_HOST package repository, after checking its"
     say "    signing key against the published fingerprint"
     say "  * install librenms-webterm-gw from it, so later releases arrive with"
     say "    your normal package updates"
+elif [ -n "$PREVIOUS" ]; then
+    say "  * replace $PREFIX/librenms-webterm-gw (currently $PREVIOUS)"
+    say "  * leave $CONFDIR/gateway.env and gateway.secret untouched"
 else
     say "  * download and verify $TARBALL"
     say "  * install the gateway, create its user and $CONFDIR"
