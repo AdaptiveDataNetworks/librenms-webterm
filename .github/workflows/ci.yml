@@ -213,7 +213,7 @@ jobs:
           php-version: '8.2'
           extensions: pdo_mysql
           coverage: none
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
 
       - name: Migrate, inspect the schema, then roll back
         env:
