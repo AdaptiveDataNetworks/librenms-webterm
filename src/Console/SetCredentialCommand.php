@@ -114,19 +114,25 @@ final class SetCredentialCommand extends Command
 
         $this->info(sprintf('Stored an encrypted %s credential for %s.', $method->value, $scopeLabel));
 
-        if ($principal !== null && $principal !== $username) {
-            $this->line('');
-            $this->warn(sprintf(
-                'This device connects as "%s", not "%s" -- the target principal wins.',
-                $principal,
-                $username
-            ));
-            $this->line('  Fix whichever is wrong:');
-            $this->line(sprintf('    ./lnms webterm:target:enable --device=%s --principal=%s', $scopeRef, $username));
-            $this->line(sprintf('    ./lnms webterm:credentials:set --device=%s --username=%s', $scopeRef, $principal));
-        }
-
-        if ($scopeType !== CredentialScope::Device) {
+        // One branch on the scope, not two. These were written as separate ifs --
+        // one testing $principal, one testing $scopeType -- which said the same
+        // thing twice through a proxy variable: $principal is non-null only for a
+        // device scope. Static analysis followed that correlation and reported the
+        // second test as always false, which was a fair complaint about the shape
+        // rather than the logic.
+        if ($scopeType === CredentialScope::Device) {
+            if ($principal !== null && $principal !== $username) {
+                $this->line('');
+                $this->warn(sprintf(
+                    'This device connects as "%s", not "%s" -- the target principal wins.',
+                    $principal,
+                    $username
+                ));
+                $this->line('  Fix whichever is wrong:');
+                $this->line(sprintf('    ./lnms webterm:target:enable --device=%s --principal=%s', $scopeRef, $username));
+                $this->line(sprintf('    ./lnms webterm:credentials:set --device=%s --username=%s', $scopeRef, $principal));
+            }
+        } else {
             $this->line('');
             $this->line(sprintf('  This applies to %s, and is overridden by any device-scoped credential.', $scopeLabel));
             $this->line('  Check what a given device will use:');

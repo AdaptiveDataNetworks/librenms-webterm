@@ -15,6 +15,9 @@ echo "== composer validate"        && composer validate --strict --no-check-lock
 echo "== dependency guard"         && php tools/composer-guard.php
 echo "== documentation"            && php tools/check-docs.php
 echo "== code style"               && vendor/bin/pint --test
+echo "== dependencies match a fresh resolve"
+sh tools/deps-current-check.sh
+
 echo "== static analysis"          && vendor/bin/phpstan analyse --no-progress
 echo "== tests"                    && vendor/bin/pest
 

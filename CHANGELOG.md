@@ -6,6 +6,35 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Plugin and gateway are released together and share a version number, but they are **installed separately** and each supports exactly one protocol version. There is no skew tolerance: any mismatch is refused before the terminal opens, and the plugin raises `GatewayVersionException` rather than creating a session. Run `./lnms webterm:doctor` after upgrading either.
 
+## [1.1.4] - 2026-09-14
+
+v1.1.3 was tagged while CI was red, and the reason is worth writing down because
+it will happen again otherwise.
+
+`composer.lock` is deliberately not committed — this is a library, and a library
+that ships a lock imposes its dependency choices on the application installing
+it. The consequence is that CI resolves dev dependencies fresh on every run,
+while a developer's `vendor/` stays pinned by a lock only they have. Static
+analysis locally and static analysis in CI were therefore not the same analysis.
+`larastan` 3.12 landed between two runs and found something 3.11 did not, so a
+commit touching only a changelog and two shell scripts turned CI red, and
+`preflight.sh` reported OK on top of it.
+
+### Fixed
+
+- **`webterm:credentials:set` branched on the credential scope twice**, once
+  directly and once through `$principal`, which is non-null only for a
+  device-scoped credential. Static analysis followed that correlation and
+  reported the second test as unreachable — a fair complaint about the shape
+  rather than the logic. It is one explicit branch now.
+
+### Added
+
+- **`tools/deps-current-check.sh`**, run by `preflight.sh` before static
+  analysis: it fails when `vendor/` does not match a fresh resolve, and names the
+  packages that differ. A green preflight sitting on top of a red CI is worse
+  than no preflight, because it is trusted.
+
 ## [1.1.3] - 2026-09-13
 
 An operator who installed the gateway from a downloaded `.deb` or `.rpm` — which
